@@ -181,7 +181,9 @@ Migration `043_shalimar_consent_and_delivery_safety.sql` adds the consent
 ledger, hard suppression fields, recipient idempotency keys and campaign cost
 fields. Start with `MESSAGING_DELIVERY_MODE=dry-run` from
 `.env.local.example`; imported contacts remain unknown and cannot receive
-marketing messages until consent is recorded. See `docs/AUDIT.md`,
+marketing messages until consent is recorded. Both `MESSAGING_DELIVERY_MODE`
+and the separate `MESSAGING_LIVE_APPROVED=true` flag are required before any
+outbound Meta helper can run. See `docs/AUDIT.md`,
 `docs/COMPLIANCE.md` and `docs/PROVIDER_RESEARCH.md` for the dated decision
 record.
 

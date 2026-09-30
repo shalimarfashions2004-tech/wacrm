@@ -15,6 +15,11 @@ export default defineConfig({
       ENCRYPTION_KEY:
         "0000000000000000000000000000000000000000000000000000000000000000",
       META_APP_SECRET: "test-meta-app-secret",
+      // Unit tests exercise the Meta adapter with mocked network calls. The
+      // application defaults remain dry-run; this only prevents the safety
+      // gate from masking transport and persistence behaviour in tests.
+      MESSAGING_DELIVERY_MODE: "live",
+      MESSAGING_LIVE_APPROVED: "true",
     },
     clearMocks: true,
   },

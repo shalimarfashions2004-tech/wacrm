@@ -47,6 +47,10 @@ import {
   templateBodyParams,
   templateContentText,
 } from '@/lib/whatsapp/template-body';
+import {
+  DELIVERY_DISABLED_MESSAGE,
+  isLiveDeliveryApproved,
+} from '@/lib/whatsapp/delivery-policy';
 
 export const MEDIA_KINDS = ['image', 'video', 'document', 'audio'] as const;
 export const VALID_MESSAGE_TYPES = [
@@ -217,6 +221,14 @@ export async function sendMessageToConversation(
     templateName,
     interactivePayload,
   });
+
+  if (!isLiveDeliveryApproved()) {
+    throw new SendMessageError(
+      'delivery_disabled',
+      DELIVERY_DISABLED_MESSAGE,
+      409,
+    );
+  }
 
   const isMediaKind = (MEDIA_KINDS as readonly string[]).includes(messageType);
 

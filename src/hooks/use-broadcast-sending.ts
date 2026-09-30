@@ -8,7 +8,11 @@ import {
   batchRetryDelayMs,
 } from '@/lib/broadcast-retry';
 import { normalizeKey } from '@/lib/contacts/dedupe';
-import { Contact, MessageTemplate } from '@/types';
+import { Contact, ContactConsent, MessageTemplate } from '@/types';
+import {
+  consentCategoryForTemplate,
+  filterContactsForCategory,
+} from '@/lib/whatsapp/consent';
 
 export type CustomFieldOperator = 'is' | 'is_not' | 'contains';
 
@@ -215,6 +219,33 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
     return contacts;
   }
 
+  async function hydrateConsent(
+    supabase: ReturnType<typeof createClient>,
+    contacts: Contact[],
+  ): Promise<Contact[]> {
+    if (contacts.length === 0) return contacts;
+    const { data, error } = await supabase
+      .from('contact_consents')
+      .select('id, contact_id, account_id, channel, category, status, source, wording_version, consented_at, revoked_at, evidence')
+      .eq('account_id', accountId)
+      .in('contact_id', contacts.map((contact) => contact.id));
+    if (error) {
+      throw new Error(
+        `Consent records are unavailable. Apply migration 043 before sending: ${error.message}`,
+      );
+    }
+    const byContact = new Map<string, ContactConsent[]>();
+    for (const row of (data ?? []) as ContactConsent[]) {
+      const list = byContact.get(row.contact_id) ?? [];
+      list.push(row);
+      byContact.set(row.contact_id, list);
+    }
+    return contacts.map((contact) => ({
+      ...contact,
+      consent: byContact.get(contact.id) ?? [],
+    }));
+  }
+
   /**
    * CSV uploads arrive as raw phone/name pairs, not DB rows. Before we
    * can insert broadcast_recipients (whose contact_id FKs contacts.id),
@@ -369,10 +400,23 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
 
       // ── Step 1: Resolve audience contacts ─────────────────────────
       setProgress(5);
-      const contacts = await resolveAudience(payload.audience);
+      const audienceContacts = await resolveAudience(payload.audience);
+      const contactsWithConsent = await hydrateConsent(
+        supabase,
+        audienceContacts,
+      );
+      const consentCategory = consentCategoryForTemplate(payload.template.category);
+      const { eligible: contacts, suppressed } = filterContactsForCategory(
+        contactsWithConsent,
+        consentCategory,
+      );
 
       if (contacts.length === 0) {
-        throw new Error('No contacts found for this audience.');
+        throw new Error(
+          suppressed.length > 0
+            ? 'No contacts have the required consent for this campaign.'
+            : 'No contacts found for this audience.',
+        );
       }
 
       // ── Step 2: Create broadcast row ──────────────────────────────
@@ -391,6 +435,8 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
             tagIds: payload.audience.tagIds,
             customField: payload.audience.customField,
             excludeTagIds: payload.audience.excludeTagIds,
+            consentCategory,
+            suppressedCount: suppressed.length,
           },
           status: 'sending',
           total_recipients: contacts.length,
@@ -436,6 +482,9 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
         broadcast_id: broadcast.id,
         contact_id: contact.id,
         status: 'pending' as const,
+        // Stable across retries and worker resumes; migration 043 enforces
+        // uniqueness per broadcast/contact pair.
+        idempotency_key: `${broadcast.id}:${contact.id}`,
         template_params: paramsByContact.get(contact.id) ?? [],
       }));
 
@@ -497,6 +546,9 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
           .filter((r) => r.contact?.phone)
           .map((r) => ({
             phone: r.contact!.phone as string,
+            contactId: r.contact_id,
+            idempotencyKey:
+              r.idempotency_key ?? `${broadcast.id}:${r.contact_id}`,
             // Read back off the row rather than re-resolved, so this
             // pass and any later resume send identical params.
             params: Array.isArray(r.template_params) ? r.template_params : [],

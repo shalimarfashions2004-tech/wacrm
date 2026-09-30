@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyOptOut, createConsentEvent, isOptOutMessage, isSuppressedForCategory } from './consent';
+import { applyOptOut, consentCategoryForTemplate, createConsentEvent, filterContactsForCategory, isOptOutMessage, isSuppressedForCategory } from './consent';
 
 describe('Shalimar consent guard', () => {
   it('recognises English and Malayalam opt-out tokens', () => {
@@ -15,5 +15,12 @@ describe('Shalimar consent guard', () => {
     const contact = { id: 'c1', user_id: 'u1', account_id: 'a1', phone: '+919876543210', created_at: '', updated_at: '', consent: [row] };
     expect(isSuppressedForCategory(contact, 'marketing')).toBe(false);
     expect(isSuppressedForCategory(applyOptOut(contact), 'marketing')).toBe(true);
+  });
+  it('maps template categories and filters marketing without evidence', () => {
+    expect(consentCategoryForTemplate('Utility')).toBe('utility');
+    expect(consentCategoryForTemplate('Authentication')).toBe('authentication');
+    expect(consentCategoryForTemplate('Marketing')).toBe('marketing');
+    const contact = { id: 'c1', suppressed_at: null, suppression_reason: null, consent: [] } as never;
+    expect(filterContactsForCategory([contact], 'marketing').suppressed).toHaveLength(1);
   });
 });

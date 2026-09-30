@@ -456,6 +456,12 @@ export interface Broadcast {
    * send. Added in migration 038.
    */
   delivery_locked_at?: string | null;
+  /** Delivery controls added in migration 043. */
+  delivery_mode?: 'dry-run' | 'live';
+  live_approval_status?: 'pending' | 'approved' | 'revoked';
+  provider_name?: string | null;
+  estimated_cost_inr?: number | null;
+  budget_limit_inr?: number | null;
   created_at: string;
 }
 
@@ -487,6 +493,12 @@ export interface BroadcastRecipient {
    * Added in migration 038; null on rows created before it.
    */
   template_params?: string[] | null;
+  /** Stable retry key added in migration 043. */
+  idempotency_key?: string | null;
+  attempt_count?: number;
+  suppressed_reason?: string | null;
+  provider_message_id?: string | null;
+  cost_inr?: number | null;
   created_at: string;
   contact?: Contact;
 }

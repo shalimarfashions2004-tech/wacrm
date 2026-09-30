@@ -41,7 +41,7 @@ export class DryRunProvider implements MessagingProvider {
   async health() { return { ok: true, provider: this.name, mode: this.mode }; }
 }
 
-export function createMessagingProvider(mode: DeliveryMode = (process.env.MESSAGING_DELIVERY_MODE as DeliveryMode) || 'dry-run'): MessagingProvider {
+export function createMessagingProvider(mode: DeliveryMode = 'dry-run'): MessagingProvider {
   if (mode !== 'dry-run') throw new Error('Live provider wiring is approval-gated; use the Meta adapter only after credentials and consent controls are reviewed');
   return new DryRunProvider();
 }

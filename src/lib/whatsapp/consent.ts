@@ -7,6 +7,13 @@ export const CONSENT_CATEGORIES: readonly ConsentCategory[] = [
   'authentication',
 ];
 
+export function consentCategoryForTemplate(category: string | null | undefined): ConsentCategory {
+  const normalized = (category ?? '').toLowerCase();
+  if (normalized === 'utility') return 'utility';
+  if (normalized === 'authentication') return 'authentication';
+  return 'marketing';
+}
+
 const OPT_OUT_PATTERN = /^(stop|unsubscribe|remove|cancel|opt[ -]?out|വേണ്ട|ഒഴിവാക്കുക)$/iu;
 
 export function isOptOutMessage(text: string | null | undefined): boolean {
@@ -36,4 +43,17 @@ export function createConsentEvent(input: Omit<ContactConsent, 'id'>): Omit<Cont
 
 export function applyOptOut(contact: Contact, reason = 'recipient_request', at = new Date().toISOString()): Contact {
   return { ...contact, suppressed_at: at, suppression_reason: reason, consent: (contact.consent ?? []).map((row) => row.category === 'marketing' && row.channel === 'whatsapp' ? { ...row, status: 'opted_out', revoked_at: at } : row) };
+}
+
+export function filterContactsForCategory(
+  contacts: Contact[],
+  category: ConsentCategory,
+): { eligible: Contact[]; suppressed: Contact[] } {
+  const eligible: Contact[] = [];
+  const suppressed: Contact[] = [];
+  for (const contact of contacts) {
+    if (isSuppressedForCategory(contact, category)) suppressed.push(contact);
+    else eligible.push(contact);
+  }
+  return { eligible, suppressed };
 }

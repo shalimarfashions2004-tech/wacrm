@@ -15,6 +15,11 @@ import {
   rateLimitResponse,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
+import {
+  DELIVERY_DISABLED_MESSAGE,
+  getDeliveryMode,
+  isLiveDeliveryApproved,
+} from '@/lib/whatsapp/delivery-policy'
 
 interface BroadcastResult {
   phone: string
@@ -73,6 +78,13 @@ export async function POST(request: Request) {
     // Nothing about that is recoverable after the fact, so the check has
     // to happen here.
     const { supabase, accountId, userId } = await requireRole('agent')
+
+    if (!isLiveDeliveryApproved()) {
+      return NextResponse.json(
+        { error: DELIVERY_DISABLED_MESSAGE, mode: getDeliveryMode() },
+        { status: 409 },
+      )
+    }
 
     // Per-user broadcast budget. Note: this limits how often a user
     // can *start* a campaign, not how many messages go out inside

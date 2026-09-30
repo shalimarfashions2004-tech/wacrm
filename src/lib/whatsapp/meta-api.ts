@@ -10,9 +10,19 @@
  */
 
 import { isBusinessScopedUserId } from './wa-identity'
+import {
+  DELIVERY_DISABLED_MESSAGE,
+  isLiveDeliveryApproved,
+} from './delivery-policy'
 
 const META_API_VERSION = 'v21.0'
 const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`
+
+function assertOutboundDeliveryAllowed(): void {
+  if (!isLiveDeliveryApproved()) {
+    throw new Error(DELIVERY_DISABLED_MESSAGE)
+  }
+}
 
 export interface MetaSendResult {
   messageId: string
@@ -357,6 +367,7 @@ export interface SendTextMessageArgs {
 export async function sendTextMessage(
   args: SendTextMessageArgs
 ): Promise<MetaSendResult> {
+  assertOutboundDeliveryAllowed()
   const { phoneNumberId, accessToken, to, text, contextMessageId } = args
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const body: Record<string, unknown> = {
@@ -414,6 +425,7 @@ export interface SendMediaMessageArgs {
 export async function sendMediaMessage(
   args: SendMediaMessageArgs,
 ): Promise<MetaSendResult> {
+  assertOutboundDeliveryAllowed()
   const { phoneNumberId, accessToken, to, kind, link, caption, filename, contextMessageId } = args
   if (!link) throw new Error('sendMediaMessage requires a link.')
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
@@ -499,6 +511,7 @@ export interface SendTemplateMessageArgs {
 export async function sendTemplateMessage(
   args: SendTemplateMessageArgs
 ): Promise<MetaSendResult> {
+  assertOutboundDeliveryAllowed()
   const {
     phoneNumberId,
     accessToken,
@@ -802,6 +815,7 @@ export interface SendReactionMessageArgs {
 export async function sendReactionMessage(
   args: SendReactionMessageArgs
 ): Promise<MetaSendResult> {
+  assertOutboundDeliveryAllowed()
   const { phoneNumberId, accessToken, to, targetMessageId, emoji } = args
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
@@ -853,6 +867,7 @@ export interface SendTypingIndicatorArgs {
 export async function sendTypingIndicator(
   args: SendTypingIndicatorArgs
 ): Promise<void> {
+  assertOutboundDeliveryAllowed()
   const { phoneNumberId, accessToken, messageId } = args
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const response = await fetch(url, {
@@ -936,6 +951,7 @@ export interface SendInteractiveButtonsArgs {
 export async function sendInteractiveButtons(
   args: SendInteractiveButtonsArgs
 ): Promise<MetaSendResult> {
+  assertOutboundDeliveryAllowed()
   const {
     phoneNumberId, accessToken, to,
     bodyText, headerText, footerText, buttons, contextMessageId,
@@ -1043,6 +1059,7 @@ export interface SendInteractiveListArgs {
 export async function sendInteractiveList(
   args: SendInteractiveListArgs
 ): Promise<MetaSendResult> {
+  assertOutboundDeliveryAllowed()
   const {
     phoneNumberId, accessToken, to,
     bodyText, buttonLabel, headerText, footerText, sections, contextMessageId,
