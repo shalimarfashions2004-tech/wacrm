@@ -173,6 +173,18 @@ Key pages:
 - **Data** — Supabase (Postgres + Auth + Storage + RLS).
 - **WhatsApp** — Meta Cloud API (official WhatsApp Business API).
 
+## Shalimar Connect safety baseline
+
+The Shalimar fork keeps outbound delivery in `dry-run` mode until a reviewed
+Meta configuration, approved templates and evidence-backed consent are ready.
+Migration `043_shalimar_consent_and_delivery_safety.sql` adds the consent
+ledger, hard suppression fields, recipient idempotency keys and campaign cost
+fields. Start with `MESSAGING_DELIVERY_MODE=dry-run` from
+`.env.local.example`; imported contacts remain unknown and cannot receive
+marketing messages until consent is recorded. See `docs/AUDIT.md`,
+`docs/COMPLIANCE.md` and `docs/PROVIDER_RESEARCH.md` for the dated decision
+record.
+
 ## Contributing
 
 This is a template, not a collaborative product — the expected flow is

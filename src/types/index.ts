@@ -124,6 +124,27 @@ export interface Contact {
   /** Hydrated by queries that embed `contact_tags(tags(*))` (e.g. the
    *  Inbox conversation list, for tag filtering). Absent otherwise. */
   tags?: Tag[];
+  /** Consent is stored in contact_consents (migration 043), not inferred from import. */
+  consent?: ContactConsent[];
+  suppressed_at?: string | null;
+  suppression_reason?: string | null;
+}
+
+export type ConsentCategory = 'marketing' | 'utility' | 'service' | 'authentication';
+export type ConsentStatus = 'opted_in' | 'opted_out' | 'unknown';
+
+export interface ContactConsent {
+  id?: string;
+  contact_id: string;
+  account_id: string;
+  channel: 'whatsapp' | 'sms' | 'email' | 'rcs';
+  category: ConsentCategory;
+  status: ConsentStatus;
+  source: string;
+  wording_version: string;
+  consented_at?: string | null;
+  revoked_at?: string | null;
+  evidence?: Record<string, unknown> | null;
 }
 
 export interface Tag {
