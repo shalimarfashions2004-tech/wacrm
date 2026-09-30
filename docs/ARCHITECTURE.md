@@ -2,6 +2,8 @@
 
 The existing Next.js/Supabase architecture remains the product base. The new boundary is:
 
+For Shalimar Connect, Supabase is the canonical application backend. Firebase belongs to a separate dashboard and is intentionally outside this repository's data path; do not add Firebase reads or writes here without an explicit migration decision and a source-of-truth plan.
+
 `UI/API → consent and approval preflight → broadcast plan → provider adapter → Meta webhook normalizer → recipient/message status`
 
 `contact_consents` is the evidence ledger. `contacts.suppressed_at` is the immediate hard stop. `broadcast_recipients.idempotency_key` is the stable `(broadcast, contact)` delivery key. `delivery_locked_at` remains the pass-level mutex. `MESSAGING_DELIVERY_MODE=dry-run` is the default until live credentials and approval are present.
