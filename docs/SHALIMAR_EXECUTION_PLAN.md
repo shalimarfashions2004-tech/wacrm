@@ -38,11 +38,11 @@ Purpose: connect the right Meta business assets and prepare the real database wi
 
 - [ ] Confirm Meta Business Portfolio, WABA, phone number and app are connected.
 - [ ] Confirm the Meta app has the required WhatsApp permissions and webhook settings.
-- [ ] Select the intended Supabase project for Shalimar.
+- [x] Select the intended Supabase project for Shalimar (`shalimar`, ref `houjlpiyafcanxsabmsk`).
 - [ ] Apply migration 043 first to a disposable Supabase project.
 - [ ] Verify consent tables, suppression fields, idempotency index and row-level security.
 - [ ] Apply the migration to the intended project after the disposable check.
-- [ ] Store secrets only in the local/deployment secret store; never commit them.
+- [x] Store the Supabase URL and keys only in the Vercel deployment secret store; keep Meta/encryption placeholders until the owner supplies the correct production values.
 
 Exit condition: Meta connection is readback-verified and Supabase migration 043 is applied and verified.
 

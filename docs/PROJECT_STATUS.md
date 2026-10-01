@@ -23,6 +23,7 @@ This document is the working project board. The execution plan remains the detai
 | Project documentation | Complete | Architecture, deployment, issue, cost and execution records exist. | `docs/` |
 | Meta connection | Partially verified | Shalimar Chrome session readback: portfolio `S&F` (`1134016885720209`), Test WABA (`1103682202588508`), test number `+1 555-150-8712` is Connected/High, S&F app (`1498212839029923`) is in development, WhatsApp use case is enabled and Configure Webhooks is complete. | Register phone, add payment for business-initiated messages, complete one approved test message |
 | Supabase project and Auth configuration | Complete for authentication; schema pending | The `shalimar` project is selected, healthy, and connected to Vercel. Site URL and CRM/local redirect patterns are configured. | Apply and verify migration 043 before data workflows |
+| Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` is present in Supabase Auth Users. The owner must accept the invitation and set the password before dashboard/RLS acceptance testing. | Confirm email, sign in, verify account row and account-scoped reads |
 | Supabase migration 043 | Not yet verified | Must be replayed on a disposable project, then applied to the intended Shalimar project. | Migration replay evidence and RLS checks |
 | CRM hosting and domain | Complete for the hosted shell | Vercel deployment is Ready, `crm.shalimarfashions.com` is Production with HTTPS, and `/login` plus `/signup` load without the previous fetch error. | Create a test account, then verify account-scoped dashboard reads |
 | Contact import and consent evidence | Not started | We need an approved source file/system and contact-by-contact consent evidence. | Import preview and sign-off record |
@@ -208,7 +209,7 @@ Any failed check blocks the next gate until the issue is fixed or the owner reco
 | Priority | Action | Owner | Dependency | Done when |
 |---|---|---|---|---|
 | P0 | Record Meta app, Business Portfolio, WABA, phone, permission and webhook readback. | Meta administrator | Access to Meta account | IDs/settings are captured without secrets |
-| P0 | Select the intended Shalimar Supabase project and confirm the environment owner. | Shalimar owner + backend developer | Owner decision | Project URL/role is recorded in the private deployment record |
+| P0 | Select the intended Shalimar Supabase project and confirm the environment owner. | Shalimar owner + backend developer | Owner decision | **Done:** `shalimar` project and owner are recorded in the private deployment record |
 | P0 | Replay migration 043 on a disposable Supabase project. | Backend developer + QA | M1 project available | Tables, indexes and RLS assertions pass |
 | P1 | Create a contact import sample with consent evidence columns. | Operations lead | Source file/system identified | Sample reviewed and rejected rows explainable |
 | P1 | Run the dry-run campaign and save the recipient/cost/idempotency report. | QA + operations | M1 and sample audience | No external message is sent; report is reproducible |
