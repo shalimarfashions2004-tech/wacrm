@@ -199,6 +199,7 @@ Any failed check blocks the next gate until the issue is fixed or the owner reco
 | 2026-10-01 | AI remains a later, human-approved phase. | Messaging and data controls must be stable before automation. | Product and AI reviewers. |
 | 2026-10-01 | User reports Meta is ready; it remains an unverified dependency until app, WABA, phone, permissions and webhook are read back. | A login or dashboard appearance alone does not prove usable integration. | Meta administrator + QA at M1. |
 | 2026-10-01 | Meta readback completed in the Shalimar Chrome profile. | The S&F portfolio, Test WABA, connected/high-quality test number, S&F app and green Configure Webhooks step are visible. Production phone registration, payment and send-message steps remain incomplete. | Meta administrator + QA; finish only with approved test and Supabase evidence. |
+| 2026-10-01 | Keep Supabase Auth for the current Shalimar release; defer Clerk to a planned migration. | This codebase uses Supabase Auth across the dashboard and UUID foreign keys/RLS policies tied to `auth.users`. Clerk's native Supabase integration is supported, but would require coordinated identity mapping, profile sync and RLS changes. | Project manager + backend developer; revisit only as a versioned auth migration with a disposable database and rollback plan. |
 
 ## Immediate next actions
 

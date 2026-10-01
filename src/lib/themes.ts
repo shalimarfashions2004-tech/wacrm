@@ -23,7 +23,10 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export const DEFAULT_THEME: ThemeId = "violet";
+// Shalimar's default is warm saffron on ink. Violet remains available as
+// an optional user-selected theme, but the first-run experience should feel
+// like the brand and a premium operations workspace.
+export const DEFAULT_THEME: ThemeId = "amber";
 
 export const STORAGE_KEY = "wacrm.theme";
 
