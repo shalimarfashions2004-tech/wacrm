@@ -1,6 +1,6 @@
 # Shalimar CRM domain deployment
 
-Status: Vercel project ready; CRM subdomain connected; real Supabase configuration pending  
+Status: Vercel project ready; CRM subdomain connected; Supabase Auth configuration verified; database migration pending
 Target: `https://crm.shalimarfashions.com`
 
 ## What is already known
@@ -42,16 +42,16 @@ Set these in the host dashboard, never in Git or chat:
 - `MESSAGING_LIVE_APPROVED=false`
 - `MESSAGING_PROVIDER=meta-cloud`
 
-The intended Shalimar Supabase project and migration 043 must be verified before the deployment is called functional. The project was restored from a paused state on 2026-10-01; its dashboard currently reports healthy. No real Meta token or production secret belongs in a repository file.
+The intended Shalimar Supabase project was restored from a paused state on 2026-10-01; its dashboard currently reports healthy. Vercel now has the project URL, browser key and protected server key for Production and Preview. Supabase Auth uses `https://crm.shalimarfashions.com` as the site URL and allows the CRM and local callback patterns. No real Meta token or production secret belongs in a repository file.
 
-The current Vercel project has only safe placeholder values so the build can be verified. Replace the Supabase values in Vercel’s Environment Variables screen before inviting users or calling the CRM live. Keep `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` until the full Meta and consent checklist is approved.
+`ENCRYPTION_KEY` and `META_APP_SECRET` remain placeholders until the owner supplies the correct production values through the secret store. Keep `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` until the full Meta and consent checklist is approved.
 
 ## Release checks
 
-1. Host creates a preview deployment from the Shalimar branch. **Done:** production deployment is ready at the temporary Vercel URL.
-2. Build, typecheck and tests pass.
-3. `/login` and `/signup` render over HTTPS.
-4. Supabase email redirect URLs allow `https://crm.shalimarfashions.com/auth/callback`.
+1. Host creates a preview deployment from the Shalimar branch. **Done:** production deployment is ready and `crm.shalimarfashions.com` returns HTTP 200.
+2. Typecheck and the full Vitest suite pass (1,083 tests). The hosted Vercel build is Ready; a local build requires Supabase environment variables.
+3. **Done:** `/login` and `/signup` render over HTTPS without the previous fetch error.
+4. **Done:** Supabase site URL and redirect allow-list include the CRM and local callback patterns.
 5. Done: the `crm` CNAME is added in GoDaddy; verify HTTPS/TLS readback after any future DNS edits.
 6. A test account can sign in and reach `/dashboard`.
 7. Dashboard reads account-scoped data without cross-account access.
