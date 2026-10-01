@@ -4,6 +4,8 @@ Updated: 2026-10-01
 Repository branch: `feature/shalimar-connect-platform`
 Backend decision: Supabase is the Shalimar backend. Firebase belongs to a different dashboard and is out of scope.
 
+Project board: [PROJECT_STATUS.md](./PROJECT_STATUS.md) — owners, acceptance checks, risks and immediate actions.
+
 ## Plain-English goal
 
 Give Shalimar one safe workspace for contacts, WhatsApp conversations, broadcasts, consent, follow-up work and later AI assistance.
@@ -116,4 +118,3 @@ Exit condition: the owner signs off the launch checklist and live mode is delibe
 - Do not use production credentials in this repository or chat.
 - Do not run destructive migrations.
 - Do not create provider spending commitments without owner approval.
-
