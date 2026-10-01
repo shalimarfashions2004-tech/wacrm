@@ -11,6 +11,8 @@ Target: `https://crm.shalimarfashions.com`
 - WhatsApp delivery stays in dry-run mode during deployment.
 - Vercel project: `shalimar-connect` in the Shalimar account.
 - Current deployment URL: `https://shalimar-connect-4tej02yux-shalimarfashions2004-9466.vercel.app`.
+- Supabase project: `shalimar` (`houjlpiyafcanxsabmsk`) in the Shalimar organization.
+- Supabase project URL: `https://houjlpiyafcanxsabmsk.supabase.co`.
 
 ## Recommended hosting path
 
@@ -40,7 +42,7 @@ Set these in the host dashboard, never in Git or chat:
 - `MESSAGING_LIVE_APPROVED=false`
 - `MESSAGING_PROVIDER=meta-cloud`
 
-The intended Shalimar Supabase project and migration 043 must be verified before the deployment is called functional. No real Meta token or production secret belongs in a repository file.
+The intended Shalimar Supabase project and migration 043 must be verified before the deployment is called functional. The project was restored from a paused state on 2026-10-01; its dashboard currently reports healthy. No real Meta token or production secret belongs in a repository file.
 
 The current Vercel project has only safe placeholder values so the build can be verified. Replace the Supabase values in Vercel’s Environment Variables screen before inviting users or calling the CRM live. Keep `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` until the full Meta and consent checklist is approved.
 
