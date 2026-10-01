@@ -54,6 +54,8 @@ Dashboard → **Authentication → URL Configuration**:
 Changes take effect immediately, but an email that was already sent
 keeps the link it was sent with — request a fresh one to test.
 
+The application URL is the project URL from Supabase **Project Settings → API / Connect**, for example `https://abcdefghijklmnop.supabase.co`. Do not use `auth.supabase.io` as `NEXT_PUBLIC_SUPABASE_URL`; that is not the URL of a Shalimar project. The app builds the Auth API path (`/auth/v1`) from the project URL automatically.
+
 ### Self-hosted Supabase (Docker)
 
 The Studio page under **Authentication → URL Configuration does not
