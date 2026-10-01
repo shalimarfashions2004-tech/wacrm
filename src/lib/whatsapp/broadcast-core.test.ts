@@ -81,6 +81,32 @@ function makeDb(rpcResult: { data: unknown; error: unknown }) {
         };
         return chain;
       }
+      if (table === 'contacts') {
+        const chain: Record<string, unknown> = {
+          select: () => chain,
+          eq: () => chain,
+          in: () => chain,
+          then: (resolve: (value: unknown) => unknown) =>
+            resolve({
+              data: [{ id: 'c1', account_id: 'acc', suppressed_at: null, suppression_reason: null }],
+              error: null,
+            }),
+        };
+        return chain;
+      }
+      if (table === 'contact_consents') {
+        const chain: Record<string, unknown> = {
+          select: () => chain,
+          eq: () => chain,
+          in: () => chain,
+          then: (resolve: (value: unknown) => unknown) =>
+            resolve({
+              data: [{ contact_id: 'c1', account_id: 'acc', channel: 'whatsapp', category: 'marketing', status: 'opted_in' }],
+              error: null,
+            }),
+        };
+        return chain;
+      }
       if (table === 'broadcasts' || table === 'broadcast_recipients') {
         calls.usedDirectInsert++;
         return {

@@ -22,6 +22,11 @@ import { BroadcastError, type BroadcastPlan } from '@/lib/whatsapp/broadcast-cor
 import { decrypt } from '@/lib/whatsapp/encryption';
 import { resolveTemplateRow } from '@/lib/whatsapp/template-body';
 import { sanitizePhoneForMeta, isValidE164 } from '@/lib/whatsapp/phone-utils';
+import type { ContactConsent } from '@/types';
+import {
+  consentCategoryForTemplate,
+  isSuppressedForCategory,
+} from '@/lib/whatsapp/consent';
 
 /** Which recipients a resume pass picks up. */
 export type ResumeScope = 'pending' | 'failed' | 'all';
@@ -113,12 +118,26 @@ export interface ResumePlan {
    * they stop blocking the broadcast's terminal status.
    */
   unsendable: number;
+  /** Rows stopped because consent was revoked or suppression was active. */
+  suppressed: number;
 }
 
 interface RecipientRow {
   id: string;
+  contact_id?: string | null;
   template_params: unknown;
-  contact: { phone?: string | null } | { phone?: string | null }[] | null;
+  contact:
+    | {
+        phone?: string | null;
+        suppressed_at?: string | null;
+        suppression_reason?: string | null;
+      }
+    | {
+        phone?: string | null;
+        suppressed_at?: string | null;
+        suppression_reason?: string | null;
+      }[]
+    | null;
 }
 
 /** Supabase renders an embedded to-one join as an object or a 1-array. */
@@ -158,7 +177,9 @@ export async function planBroadcastResume(
   const statuses = scopeStatuses(scope);
   const { data: rawRows, error: recError } = await db
     .from('broadcast_recipients')
-    .select('id, template_params, contact:contacts(phone)')
+    .select(
+      'id, contact_id, template_params, contact:contacts(phone,suppressed_at,suppression_reason)',
+    )
     .eq('broadcast_id', broadcastId)
     .in('status', statuses)
     // Oldest first, so repeated capped passes chew through the backlog
@@ -192,19 +213,6 @@ export async function planBroadcastResume(
       .in('id', unsendable);
   }
 
-  const slice = sendable.slice(0, RESUME_MAX_PER_REQUEST);
-  const remaining = sendable.length - slice.length;
-
-  if (slice.length === 0) {
-    throw new BroadcastError(
-      'nothing_to_resume',
-      scope === 'failed'
-        ? 'This broadcast has no failed recipients to retry'
-        : 'This broadcast has no recipients left to send',
-      400
-    );
-  }
-
   const { data: config, error: configError } = await db
     .from('whatsapp_config')
     .select('*')
@@ -232,6 +240,73 @@ export async function planBroadcastResume(
     );
   }
 
+  const consentCategory = consentCategoryForTemplate(
+    resolvedTemplate.row?.category ?? 'Marketing',
+  );
+  const contactIds = sendable
+    .map((row) => row.contact_id)
+    .filter((id): id is string => Boolean(id));
+  const { data: consentRows, error: consentError } = await db
+    .from('contact_consents')
+    .select(
+      'id, contact_id, account_id, channel, category, status, source, wording_version, consented_at, revoked_at, evidence',
+    )
+    .eq('account_id', accountId)
+    .eq('channel', 'whatsapp')
+    .in('contact_id', contactIds);
+  if (consentError || contactIds.length !== sendable.length) {
+    throw new BroadcastError(
+      'consent_unavailable',
+      'Consent records are unavailable. Apply migration 043 before resuming.',
+      503,
+    );
+  }
+  const consentsByContact = new Map<string, ContactConsent[]>();
+  for (const row of consentRows ?? []) {
+    const rowsForContact = consentsByContact.get(row.contact_id) ?? [];
+    rowsForContact.push(row);
+    consentsByContact.set(row.contact_id, rowsForContact);
+  }
+  const suppressedIds: string[] = [];
+  const consentEligible = sendable.filter((row) => {
+    const contact = Array.isArray(row.contact) ? row.contact[0] : row.contact;
+    const allowed = !isSuppressedForCategory(
+      {
+        suppressed_at: contact?.suppressed_at ?? null,
+        suppression_reason: contact?.suppression_reason ?? null,
+        consent: consentsByContact.get(row.contact_id!) ?? [],
+      },
+      consentCategory,
+    );
+    if (!allowed) suppressedIds.push(row.id);
+    return allowed;
+  });
+  if (suppressedIds.length > 0) {
+    await db
+      .from('broadcast_recipients')
+      .update({
+        status: 'failed',
+        suppressed_reason: 'consent_revoked_or_suppressed',
+        error_message: 'Recipient consent is not available for this send',
+      })
+      .in('id', suppressedIds);
+  }
+
+  const slice = consentEligible.slice(0, RESUME_MAX_PER_REQUEST);
+  const remaining = consentEligible.length - slice.length;
+
+  if (slice.length === 0) {
+    throw new BroadcastError(
+      'nothing_to_resume',
+      suppressedIds.length > 0
+        ? 'This broadcast has no recipients with the required consent to send'
+        : scope === 'failed'
+          ? 'This broadcast has no failed recipients to retry'
+          : 'This broadcast has no recipients left to send',
+      suppressedIds.length > 0 ? 422 : 400,
+    );
+  }
+
   const plan: BroadcastPlan = {
     broadcastId,
     templateName: broadcast.template_name,
@@ -249,7 +324,12 @@ export async function planBroadcastResume(
     rejected: 0,
   };
 
-  return { plan, remaining, unsendable: unsendable.length };
+  return {
+    plan,
+    remaining,
+    unsendable: unsendable.length,
+    suppressed: suppressedIds.length,
+  };
 }
 
 /**

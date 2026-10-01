@@ -26,8 +26,12 @@ import {
   isRecipientNotAllowedError,
 } from '@/lib/whatsapp/phone-utils';
 import { resolveTemplateRow } from '@/lib/whatsapp/template-body';
-import type { MessageTemplate } from '@/types';
+import type { ContactConsent, MessageTemplate } from '@/types';
 import { findOrCreateContact } from '@/lib/api/v1/contacts';
+import {
+  consentCategoryForTemplate,
+  isSuppressedForCategory,
+} from '@/lib/whatsapp/consent';
 
 /** Thrown by createBroadcast on a caller-visible failure; route maps it. */
 export class BroadcastError extends Error {
@@ -186,6 +190,59 @@ export async function createBroadcast(
     );
   }
 
+  // Consent is checked again at the server boundary so API-key callers
+  // cannot bypass the dashboard's audience filter. Missing consent data is
+  // a hard error: a partial or stale read must never become a send.
+  const consentCategory = consentCategoryForTemplate(
+    templateRow?.category ?? 'Marketing',
+  );
+  const contactIds = deduped.map((recipient) => recipient.contactId);
+  const { data: contactRows, error: contactError } = await db
+    .from('contacts')
+    .select('id, account_id, suppressed_at, suppression_reason')
+    .eq('account_id', accountId)
+    .in('id', contactIds);
+  const { data: consentRows, error: consentError } = await db
+    .from('contact_consents')
+    .select(
+      'id, contact_id, account_id, channel, category, status, source, wording_version, consented_at, revoked_at, evidence',
+    )
+    .eq('account_id', accountId)
+    .eq('channel', 'whatsapp')
+    .in('contact_id', contactIds);
+  if (contactError || consentError) {
+    throw new BroadcastError(
+      'consent_unavailable',
+      'Consent records are unavailable. Apply migration 043 before sending.',
+      503,
+    );
+  }
+
+  const consentsByContact = new Map<string, ContactConsent[]>();
+  for (const row of consentRows ?? []) {
+    const rows = consentsByContact.get(row.contact_id) ?? [];
+    rows.push(row);
+    consentsByContact.set(row.contact_id, rows);
+  }
+  const contactById = new Map(
+    (contactRows ?? []).map((row) => [row.id, {
+      ...row,
+      consent: consentsByContact.get(row.id) ?? [],
+    }]),
+  );
+  const consentEligible = deduped.filter((recipient) => {
+    const contact = contactById.get(recipient.contactId);
+    return contact && !isSuppressedForCategory(contact, consentCategory);
+  });
+  const consentSuppressed = deduped.length - consentEligible.length;
+  if (consentEligible.length === 0) {
+    throw new BroadcastError(
+      'consent_required',
+      'No recipients have the required WhatsApp consent for this campaign.',
+      422,
+    );
+  }
+
   // Persist the broadcast + its recipients. The count columns
   // (sent/delivered/read/replied/failed) are owned by the DB aggregate
   // trigger (migrations 003/005) and derived purely from
@@ -209,11 +266,11 @@ export async function createBroadcast(
       p_name: name || `API broadcast (${templateName})`,
       p_template_name: templateName,
       p_template_language: resolvedTemplate.language,
-      p_total_recipients: deduped.length,
-      p_contact_ids: deduped.map((r) => r.contactId),
+      p_total_recipients: consentEligible.length,
+      p_contact_ids: consentEligible.map((r) => r.contactId),
       // Frozen per-recipient params (migration 038) — without them a
       // resume of this broadcast has no way to reconstruct {{1}}.
-      p_template_params: deduped.map((r) => r.params),
+      p_template_params: consentEligible.map((r) => r.params),
     }
   );
   if (createErr || !createdRows || createdRows.length === 0) {
@@ -225,7 +282,7 @@ export async function createBroadcast(
 
   // Pair each inserted recipient row back to its phone/params by
   // contact_id — unambiguous now that duplicates are collapsed.
-  const byContact = new Map(deduped.map((r) => [r.contactId, r]));
+  const byContact = new Map(consentEligible.map((r) => [r.contactId, r]));
   const planned: PlannedRecipient[] = createdRows.map(
     (row: { recipient_id: string; contact_id: string }) => {
       const r = byContact.get(row.contact_id)!;
@@ -241,7 +298,7 @@ export async function createBroadcast(
     accessToken,
     templateRow,
     planned,
-    rejected,
+    rejected: rejected + consentSuppressed,
   };
 }
 

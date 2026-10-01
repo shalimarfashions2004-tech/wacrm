@@ -42,10 +42,22 @@ import {
   deliverBroadcast,
   BroadcastError,
 } from '@/lib/whatsapp/broadcast-core';
+import {
+  DELIVERY_DISABLED_MESSAGE,
+  isLiveDeliveryApproved,
+} from '@/lib/whatsapp/delivery-policy';
 
 export async function POST(request: Request) {
   try {
     const ctx = await requireApiKey(request, 'broadcasts:send');
+
+    // Fail before persisting a broadcast when outbound delivery is disabled.
+    // The shared Meta helper remains a second safety gate, but callers should
+    // receive a clear response instead of an accepted campaign that later
+    // becomes failed asynchronously.
+    if (!isLiveDeliveryApproved()) {
+      return fail('delivery_disabled', DELIVERY_DISABLED_MESSAGE, 409);
+    }
 
     const body = (await request.json().catch(() => null)) as Record<
       string,

@@ -24,7 +24,15 @@ ALTER TABLE contact_consents ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Account members manage contact consent" ON contact_consents;
 CREATE POLICY "Account members manage contact consent" ON contact_consents FOR ALL
   USING (is_account_member(account_id, 'agent'))
-  WITH CHECK (is_account_member(account_id, 'agent'));
+  WITH CHECK (
+    is_account_member(account_id, 'agent')
+    AND EXISTS (
+      SELECT 1
+      FROM contacts c
+      WHERE c.id = contact_consents.contact_id
+        AND c.account_id = contact_consents.account_id
+    )
+  );
 
 ALTER TABLE contacts
   ADD COLUMN IF NOT EXISTS suppressed_at TIMESTAMPTZ,

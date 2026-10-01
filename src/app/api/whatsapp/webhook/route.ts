@@ -22,6 +22,7 @@ import {
   handleTemplateWebhookChange,
   isTemplateWebhookField,
 } from '@/lib/whatsapp/template-webhook'
+import { persistInboundOptOut } from '@/lib/whatsapp/inbound-opt-out'
 
 // The `after()` callback in POST runs within this route's max duration.
 // Inbound processing can fan out to per-media Meta verification calls, so
@@ -688,6 +689,17 @@ async function processMessage(
   )
   if (!contactOutcome) return
   const contactRecord = contactOutcome.contact
+
+  // A customer STOP-style message is a compliance event, not just inbox
+  // content. Persist suppression before continuing so a failed write causes
+  // webhook retry rather than leaving outbound marketing enabled.
+  await persistInboundOptOut(supabaseAdmin(), {
+    accountId,
+    contactId: contactRecord.id,
+    messageId: message.id,
+    text: message.type === 'text' ? message.text?.body : null,
+    at: new Date(parseInt(message.timestamp) * 1000).toISOString(),
+  })
 
   // Find or create conversation
   const convResult = await findOrCreateConversation(

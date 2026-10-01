@@ -156,6 +156,18 @@ function planDb(fx: PlanFixture, writes: PlanWrites = {}): SupabaseClient {
           if (table === 'message_templates') {
             return resolve({ data: fx.templates ?? [], error: null });
           }
+          if (table === 'contact_consents') {
+            return resolve({
+              data: (fx.recipients ?? []).map((row) => ({
+                contact_id: row.contact_id,
+                account_id: 'acct-1',
+                channel: 'whatsapp',
+                category: 'marketing',
+                status: 'opted_in',
+              })),
+              error: null,
+            });
+          }
           return resolve({ data: [], error: null });
         },
       };
@@ -179,6 +191,7 @@ function recipient(
 ) {
   return {
     id,
+    contact_id: id,
     template_params: params,
     contact: phone ? { phone } : null,
   };

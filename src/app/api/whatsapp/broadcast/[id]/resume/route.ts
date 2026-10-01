@@ -37,6 +37,10 @@ import {
   rateLimitResponse,
   RATE_LIMITS,
 } from '@/lib/rate-limit';
+import {
+  DELIVERY_DISABLED_MESSAGE,
+  isLiveDeliveryApproved,
+} from '@/lib/whatsapp/delivery-policy';
 
 // The fan-out below is sequential over up to 1 000 recipients.
 export const maxDuration = 300;
@@ -52,6 +56,13 @@ export async function POST(
     // write, and viewers are read-only. Resuming is no different — it
     // puts real messages on real phones.
     const { supabase, accountId, userId } = await requireRole('agent');
+
+    if (!isLiveDeliveryApproved()) {
+      return NextResponse.json(
+        { error: DELIVERY_DISABLED_MESSAGE },
+        { status: 409 },
+      );
+    }
 
     const limit = checkRateLimit(
       `broadcast-resume:${userId}`,
@@ -82,7 +93,7 @@ export async function POST(
     }
     claimedId = id;
 
-    const { plan, remaining, unsendable } = await planBroadcastResume(
+    const { plan, remaining, unsendable, suppressed } = await planBroadcastResume(
       supabase,
       accountId,
       id,
@@ -122,6 +133,8 @@ export async function POST(
         remaining,
         // Recipients stamped failed up front for want of a phone number.
         unsendable,
+        // Recipients stopped because consent was revoked or suppression was active.
+        suppressed,
       },
       { status: 202 }
     );
