@@ -1,6 +1,6 @@
 # Shalimar CRM domain deployment
 
-Status: Vercel project ready; custom subdomain pending GoDaddy DNS update  
+Status: Vercel project ready; CRM subdomain connected; real Supabase configuration pending  
 Target: `https://crm.shalimarfashions.com`
 
 ## What is already known
@@ -22,7 +22,7 @@ Vercel currently shows this exact DNS record for the custom subdomain:
 |---|---|---|---|
 | CNAME | `crm` | `aa82c31b3c6585b9.vercel-dns-017.com.` | Routes `crm.shalimarfashions.com` to the CRM deployment |
 
-The domain has been added to Vercel and is currently marked “Invalid Configuration” until this record is present at GoDaddy.
+The record is now present and Vercel shows `crm.shalimarfashions.com` as **Production**. HTTPS is responding successfully; keep the DNS record unchanged.
 
 Do not replace the apex `shalimarfashions.com` records until the existing public site has an approved replacement. The first release only needs the `crm` subdomain.
 
@@ -50,7 +50,7 @@ The current Vercel project has only safe placeholder values so the build can be 
 2. Build, typecheck and tests pass.
 3. `/login` and `/signup` render over HTTPS.
 4. Supabase email redirect URLs allow `https://crm.shalimarfashions.com/auth/callback`.
-5. Add the `crm` CNAME above in GoDaddy, then verify DNS resolves and the host provisions TLS.
+5. Done: the `crm` CNAME is added in GoDaddy; verify HTTPS/TLS readback after any future DNS edits.
 6. A test account can sign in and reach `/dashboard`.
 7. Dashboard reads account-scoped data without cross-account access.
 8. A dry-run campaign produces a plan without sending an external message.
