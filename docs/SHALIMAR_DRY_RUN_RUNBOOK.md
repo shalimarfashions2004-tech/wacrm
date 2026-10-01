@@ -15,7 +15,7 @@ each person does, what evidence proves it worked, and what must remain stopped.
 | Code safety gate | Ready | `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` are the safe defaults. | Developer |
 | Consent and suppression code | Ready for database verification | Campaigns fail closed when migration 043 is unavailable or consent is missing. | Developer + compliance |
 | Automated checks | Passed | Typecheck, lint with warnings only, full tests and Webpack build passed in the foundation phase. | Tester |
-| Meta business assets | Not readback-verified | The open Chrome tab currently shows the Meta login page. No portfolio, WABA, phone or app state can be confirmed until the owner logs in. | Owner |
+| Meta business assets | Partially verified | Shalimar Chrome readback shows S&F portfolio `1134016885720209`, Test WABA `1103682202588508`, test number `+1 555-150-8712` Connected/High, S&F app `1498212839029923`, WhatsApp use case enabled and Configure Webhooks complete. Production phone registration, payment and test-send steps remain open. | Owner |
 | Supabase target project | Not confirmed | No production URL, service key or database readback is stored in the repository. | Owner |
 | Migration 043 | Ready to replay, not applied | Must be tested on a disposable Supabase project before the intended project. | Developer + database owner |
 | Real message sending | Stopped | No live credentials or live approval have been entered; no real messages have been sent. | Owner |

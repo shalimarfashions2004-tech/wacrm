@@ -21,10 +21,10 @@ This document is the working project board. The execution plan remains the detai
 | Repository and branch | Complete | Existing CRM was inspected and Shalimar work is isolated on the feature branch. | Git history and [execution plan](./SHALIMAR_EXECUTION_PLAN.md) |
 | Safety code | Complete | Dry-run default, separate live approval flag, consent filtering and recipient idempotency are implemented. | Tests, typecheck and production build passed |
 | Project documentation | Complete | Architecture, deployment, issue, cost and execution records exist. | `docs/` |
-| Meta connection | Reported ready; verify | User reports Meta is ready, but the app, WABA, phone, permissions and webhook still need readback verification. | Meta connection checklist below |
+| Meta connection | Partially verified | Shalimar Chrome session readback: portfolio `S&F` (`1134016885720209`), Test WABA (`1103682202588508`), test number `+1 555-150-8712` is Connected/High, S&F app (`1498212839029923`) is in development, WhatsApp use case is enabled and Configure Webhooks is complete. | Register phone, add payment for business-initiated messages, complete one approved test message |
 | Supabase migration 043 | Not yet verified | Must be replayed on a disposable project, then applied to the intended Shalimar project. | Migration replay evidence and RLS checks |
 | Contact import and consent evidence | Not started | We need an approved source file/system and contact-by-contact consent evidence. | Import preview and sign-off record |
-| End-to-end test message | Not started | No real message should be sent until Meta, Supabase and consent checks pass. | One approved test conversation |
+| End-to-end test message | Not started | Meta shows the send-message step is still incomplete; no real message should be sent until Supabase and consent checks pass. | One approved test conversation |
 | Live launch | Disabled | Live mode requires explicit business approval and both environment gates. | `MESSAGING_DELIVERY_MODE=live` + `MESSAGING_LIVE_APPROVED=true` |
 
 ## Roles and accountability
@@ -198,6 +198,7 @@ Any failed check blocks the next gate until the issue is fixed or the owner reco
 | 2026-10-01 | Migration 043 must be replayed on a disposable project before the intended project. | Catch schema/RLS mistakes without risking production records. | Backend developer; attach replay output to release record. |
 | 2026-10-01 | AI remains a later, human-approved phase. | Messaging and data controls must be stable before automation. | Product and AI reviewers. |
 | 2026-10-01 | User reports Meta is ready; it remains an unverified dependency until app, WABA, phone, permissions and webhook are read back. | A login or dashboard appearance alone does not prove usable integration. | Meta administrator + QA at M1. |
+| 2026-10-01 | Meta readback completed in the Shalimar Chrome profile. | The S&F portfolio, Test WABA, connected/high-quality test number, S&F app and green Configure Webhooks step are visible. Production phone registration, payment and send-message steps remain incomplete. | Meta administrator + QA; finish only with approved test and Supabase evidence. |
 
 ## Immediate next actions
 
