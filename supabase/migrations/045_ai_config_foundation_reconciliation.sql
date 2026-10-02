@@ -16,9 +16,15 @@ CREATE TABLE IF NOT EXISTS ai_configs (
   auto_reply_enabled boolean NOT NULL DEFAULT false,
   auto_reply_max_per_conversation integer NOT NULL DEFAULT 3
     CHECK (auto_reply_max_per_conversation BETWEEN 1 AND 20),
+  handoff_agent_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  embeddings_api_key text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE ai_configs
+  ADD COLUMN IF NOT EXISTS handoff_agent_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS embeddings_api_key text;
 
 ALTER TABLE ai_configs ENABLE ROW LEVEL SECURITY;
 
