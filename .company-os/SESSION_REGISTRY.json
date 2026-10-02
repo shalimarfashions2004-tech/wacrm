@@ -1,1 +1,365 @@
-{"sessions":[],"updated_at":null}
+{
+  "sessions": [
+    {
+      "session_id": "SESSION-PRODUCT-REQ-20261002-123600",
+      "team": "product",
+      "role": "product specialist",
+      "objective": "Confirm retailer messaging goals, scope, and measurable outcomes",
+      "assigned_task_ids": [
+        "TASK-PRODUCT-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-product",
+      "worktree_path": null,
+      "dependencies": [],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-RESEARCH-REQ-20261002-123600",
+      "team": "research",
+      "role": "research specialist",
+      "objective": "Verify provider pricing, policy, consent, and compliance constraints",
+      "assigned_task_ids": [
+        "TASK-RESEARCH-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-research",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-PRODUCT-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-ARCHITECTURE-REQ-20261002-123600",
+      "team": "architecture",
+      "role": "architecture specialist",
+      "objective": "Design safer, cheaper messaging flow and failure boundaries",
+      "assigned_task_ids": [
+        "TASK-ARCH-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-architecture",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-PRODUCT-001",
+        "TASK-RESEARCH-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-DESIGN-REQ-20261002-123600",
+      "team": "design",
+      "role": "design specialist",
+      "objective": "Define staff messaging states, cost preview, and accessible error flows",
+      "assigned_task_ids": [
+        "TASK-DESIGN-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-design",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-PRODUCT-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-FRONTEND-REQ-20261002-123600",
+      "team": "frontend",
+      "role": "frontend specialist",
+      "objective": "Implement approved messaging UI changes",
+      "assigned_task_ids": [
+        "TASK-FRONTEND-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-frontend",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-DESIGN-001",
+        "TASK-ARCH-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-BACKEND-REQ-20261002-123600",
+      "team": "backend",
+      "role": "backend specialist",
+      "objective": "Implement consent, idempotency, retry, and cost controls",
+      "assigned_task_ids": [
+        "TASK-BACKEND-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-backend",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-ARCH-001",
+        "TASK-RESEARCH-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-DATA-REQ-20261002-123600",
+      "team": "data",
+      "role": "data specialist",
+      "objective": "Review message/audit/cost data model and migration safety",
+      "assigned_task_ids": [
+        "TASK-DATA-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-data",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-ARCH-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-AI-AUTOMATION-REQ-20261002-123600",
+      "team": "ai-automation",
+      "role": "ai-automation specialist",
+      "objective": "Assess automation opportunities with human approval and cost limits",
+      "assigned_task_ids": [
+        "TASK-AI-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-ai-automation",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-RESEARCH-001",
+        "TASK-ARCH-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-QA-REQ-20261002-123600",
+      "team": "qa",
+      "role": "qa specialist",
+      "objective": "Create independent acceptance and regression test plan",
+      "assigned_task_ids": [
+        "TASK-QA-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-qa",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-FRONTEND-001",
+        "TASK-BACKEND-001",
+        "TASK-DATA-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-SECURITY-REQ-20261002-123600",
+      "team": "security",
+      "role": "security specialist",
+      "objective": "Threat model messaging, webhooks, secrets, PII, and rate limits",
+      "assigned_task_ids": [
+        "TASK-SECURITY-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-security",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-ARCH-001",
+        "TASK-BACKEND-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-DEVOPS-REQ-20261002-123600",
+      "team": "devops",
+      "role": "devops specialist",
+      "objective": "Prepare staging observability, rollback, and cost monitoring gates",
+      "assigned_task_ids": [
+        "TASK-DEVOPS-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-devops",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-BACKEND-001",
+        "TASK-DATA-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-DOCUMENTATION-REQ-20261002-123600",
+      "team": "documentation",
+      "role": "documentation specialist",
+      "objective": "Document staff workflow, runbooks, and release notes",
+      "assigned_task_ids": [
+        "TASK-DOCS-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-documentation",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-QA-001",
+        "TASK-SECURITY-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "independent-review",
+      "native_session": false,
+      "successor_session_id": null
+    },
+    {
+      "session_id": "SESSION-INDEPENDENT-REVIEW-REQ-20261002-123600",
+      "team": "independent-review",
+      "role": "independent-review specialist",
+      "objective": "Independently review requirements, evidence, and release readiness",
+      "assigned_task_ids": [
+        "TASK-REVIEW-001"
+      ],
+      "files_owned": [],
+      "branch": "feature/req-20261002-123600-independent-review",
+      "worktree_path": null,
+      "dependencies": [
+        "TASK-QA-001",
+        "TASK-SECURITY-001",
+        "TASK-DOCS-001"
+      ],
+      "skills": [
+        "existing repository tools",
+        "Company OS evidence workflow"
+      ],
+      "start_time": null,
+      "last_heartbeat": "2026-10-02T11:36:00.957727Z",
+      "status": "QUEUED",
+      "current_result": null,
+      "next_action": "Read handoff and begin discovery when approved",
+      "handoff_destination": "orchestrator",
+      "native_session": false,
+      "successor_session_id": null
+    }
+  ],
+  "updated_at": "2026-10-02T11:36:00.957727Z"
+}

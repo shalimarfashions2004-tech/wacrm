@@ -1,1 +1,365 @@
-{"tasks":[],"updated_at":null}
+{
+  "tasks": [
+    {
+      "task_id": "TASK-PRODUCT-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Confirm retailer messaging goals, scope, and measurable outcomes",
+      "description": "Confirm retailer messaging goals, scope, and measurable outcomes",
+      "owning_team": "product",
+      "owning_session": "SESSION-PRODUCT-REQ-20261002-123600",
+      "dependencies": [],
+      "status": "QUEUED",
+      "priority": "P2",
+      "risk_level": "MEDIUM",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Document acceptance tests and evidence"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-product",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-RESEARCH-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Verify provider pricing, policy, consent, and compliance constraints",
+      "description": "Verify provider pricing, policy, consent, and compliance constraints",
+      "owning_team": "research",
+      "owning_session": "SESSION-RESEARCH-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-PRODUCT-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P1",
+      "risk_level": "HIGH",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Record dated primary sources and compliance evidence"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-research",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-ARCH-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Design safer, cheaper messaging flow and failure boundaries",
+      "description": "Design safer, cheaper messaging flow and failure boundaries",
+      "owning_team": "architecture",
+      "owning_session": "SESSION-ARCHITECTURE-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-PRODUCT-001",
+        "TASK-RESEARCH-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P1",
+      "risk_level": "HIGH",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Architecture review and failure-mode analysis"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-architecture",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-DESIGN-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Define staff messaging states, cost preview, and accessible error flows",
+      "description": "Define staff messaging states, cost preview, and accessible error flows",
+      "owning_team": "design",
+      "owning_session": "SESSION-DESIGN-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-PRODUCT-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P2",
+      "risk_level": "MEDIUM",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "UX acceptance and accessibility review"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-design",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-FRONTEND-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Implement approved messaging UI changes",
+      "description": "Implement approved messaging UI changes",
+      "owning_team": "frontend",
+      "owning_session": "SESSION-FRONTEND-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-DESIGN-001",
+        "TASK-ARCH-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P2",
+      "risk_level": "MEDIUM",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Unit, integration, responsive, accessibility checks"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-frontend",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-BACKEND-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Implement consent, idempotency, retry, and cost controls",
+      "description": "Implement consent, idempotency, retry, and cost controls",
+      "owning_team": "backend",
+      "owning_session": "SESSION-BACKEND-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-ARCH-001",
+        "TASK-RESEARCH-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P1",
+      "risk_level": "CRITICAL",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Authorization, duplicate, retry, and failure-path tests"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-backend",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-DATA-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Review message/audit/cost data model and migration safety",
+      "description": "Review message/audit/cost data model and migration safety",
+      "owning_team": "data",
+      "owning_session": "SESSION-DATA-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-ARCH-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P1",
+      "risk_level": "HIGH",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Migration dry run, rollback, integrity checks"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-data",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-AI-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Assess automation opportunities with human approval and cost limits",
+      "description": "Assess automation opportunities with human approval and cost limits",
+      "owning_team": "ai-automation",
+      "owning_session": "SESSION-AI-AUTOMATION-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-RESEARCH-001",
+        "TASK-ARCH-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P2",
+      "risk_level": "HIGH",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Prompt/output safety and approval-gate tests"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-ai-automation",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-QA-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Create independent acceptance and regression test plan",
+      "description": "Create independent acceptance and regression test plan",
+      "owning_team": "qa",
+      "owning_session": "SESSION-QA-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-FRONTEND-001",
+        "TASK-BACKEND-001",
+        "TASK-DATA-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P1",
+      "risk_level": "HIGH",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Run happy-path, failure-path, permissions, and recovery tests"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-qa",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-SECURITY-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Threat model messaging, webhooks, secrets, PII, and rate limits",
+      "description": "Threat model messaging, webhooks, secrets, PII, and rate limits",
+      "owning_team": "security",
+      "owning_session": "SESSION-SECURITY-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-ARCH-001",
+        "TASK-BACKEND-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P0",
+      "risk_level": "CRITICAL",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Security review and secret/dependency scan"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-security",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-DEVOPS-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Prepare staging observability, rollback, and cost monitoring gates",
+      "description": "Prepare staging observability, rollback, and cost monitoring gates",
+      "owning_team": "devops",
+      "owning_session": "SESSION-DEVOPS-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-BACKEND-001",
+        "TASK-DATA-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P2",
+      "risk_level": "HIGH",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Local CI/release checklist; no deployment"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-devops",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-DOCS-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Document staff workflow, runbooks, and release notes",
+      "description": "Document staff workflow, runbooks, and release notes",
+      "owning_team": "documentation",
+      "owning_session": "SESSION-DOCUMENTATION-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-QA-001",
+        "TASK-SECURITY-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P3",
+      "risk_level": "LOW",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Docs lint and runbook walkthrough"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-documentation",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    },
+    {
+      "task_id": "TASK-REVIEW-001",
+      "request_id": "REQ-20261002-123600",
+      "title": "Independently review requirements, evidence, and release readiness",
+      "description": "Independently review requirements, evidence, and release readiness",
+      "owning_team": "independent-review",
+      "owning_session": "SESSION-INDEPENDENT-REVIEW-REQ-20261002-123600",
+      "dependencies": [
+        "TASK-QA-001",
+        "TASK-SECURITY-001",
+        "TASK-DOCS-001"
+      ],
+      "status": "QUEUED",
+      "priority": "P1",
+      "risk_level": "HIGH",
+      "files_or_modules_owned": [],
+      "acceptance_criteria": [
+        "Traceable to normalized request",
+        "Evidence stored before completion"
+      ],
+      "required_tests": [
+        "Return APPROVED, CONDITIONAL, REJECTED, or INSUFFICIENT EVIDENCE"
+      ],
+      "evidence_paths": [],
+      "branch": "feature/req-20261002-123600-independent-review",
+      "commit": null,
+      "reviewer": "independent-review",
+      "blockers": []
+    }
+  ],
+  "updated_at": "2026-10-02T11:36:00.957727Z"
+}
