@@ -53,12 +53,24 @@ export function DealsSettings() {
   async function handleSave() {
     if (!accountId || !dirty) return;
     setSaving(true);
-    const { error } = await supabase
+    const nextCurrency = selected.trim().toUpperCase();
+    const { data, error } = await supabase
       .from("accounts")
-      .update({ default_currency: selected })
-      .eq("id", accountId);
-    if (error) {
-      toast.error(t("saveFailed"));
+      .update({ default_currency: nextCurrency })
+      .eq("id", accountId)
+      .select("id, default_currency")
+      .maybeSingle();
+    if (error || !data) {
+      // An UPDATE without .select() can return no error when RLS filters
+      // every row. Requiring the returned account makes missing migration
+      // 021 or an admin policy mismatch visible instead of a false success.
+      const detail = error?.message ?? "no account row was updated; check migration 021 and admin access";
+      console.error("[DealsSettings] default currency save failed", {
+        accountId,
+        currency: nextCurrency,
+        error: error ?? detail,
+      });
+      toast.error(`${t("saveFailed")}: ${detail}`);
       setSaving(false);
       return;
     }

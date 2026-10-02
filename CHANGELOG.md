@@ -9,6 +9,40 @@ Versions follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Pre-1.0, `MINOR` bumps cover new modules; `PATCH` bumps cover bug fixes
 and polish.
 
+## Unreleased — 2026-10-02
+
+### Fixed
+
+- **Currency switching in the inbox contact sidebar.** Deal values in the
+  contact panel bypassed the shared formatter and displayed a literal `$` (or
+  a raw ISO code) plus locale-only grouping. The panel now uses the deal's
+  saved currency and falls back to the account default, matching pipeline and
+  dashboard formatting for USD, INR, and every supported currency.
+- **Lowercase and padded currency codes.** Currency values read from imports or
+  older rows are normalized before formatting, so values such as ` inr ` no
+  longer fall through to an invalid-code rendering path.
+- **Reliable default-currency saves.** Settings now verifies that the account
+  row was actually returned after the update. RLS-filtered zero-row updates and
+  missing migration 021 are reported with an actionable error instead of a
+  false success or generic failure.
+
+### Verification
+
+- Baseline unit suite: **95 files, 1,083 tests passed**; post-fix suite:
+  **95 files, 1,085 tests passed**; targeted currency suite: **12 tests passed**.
+- Broadcast safety subset: **8 files, 65 tests passed** (audience parsing,
+  consent/dry-run gates, idempotency, retry/resume and rate limits).
+- TypeScript check: **passed** after the fix.
+- ESLint: **0 errors, 39 existing warnings** (mostly hook dependencies and
+  unused imports in unrelated screens).
+- Production build: compilation succeeded but prerendering remains blocked by
+  missing Supabase URL/key in the local environment (`/forgot-password`).
+  This is an environment configuration blocker, not a compile error.
+- The remaining known UI/runtime follow-up is to clear the existing lint
+  warnings and verify authenticated browser flows against a configured
+  Supabase/Vercel environment; no live provider or deployment state is claimed
+  from this local run.
+
 ## [0.8.1] — 2026-07-10
 
 Fixes inbound chats fragmenting into multiple threads for the same

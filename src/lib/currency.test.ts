@@ -22,6 +22,10 @@ describe("formatCurrency", () => {
     expect(formatCurrency(10, "")).toBe(formatCurrency(10, DEFAULT_CURRENCY));
   });
 
+  it("normalizes whitespace and lowercase ISO codes", () => {
+    expect(formatCurrency(1234, " inr ")).toBe(formatCurrency(1234, "INR"));
+  });
+
   it("coerces non-finite values to 0", () => {
     expect(formatCurrency(Number.NaN, "USD")).toContain("0");
   });
@@ -61,5 +65,9 @@ describe("formatCurrencyShort", () => {
 
   it("falls back to the code prefix for unknown currencies (no throw)", () => {
     expect(formatCurrencyShort(1_000, "ZZZ")).toBe("ZZZ 1.0k");
+  });
+
+  it("normalizes compact currency codes too", () => {
+    expect(formatCurrencyShort(1_000, " inr ")).toBe("₹1.0k");
   });
 });

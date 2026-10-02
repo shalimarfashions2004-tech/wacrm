@@ -62,7 +62,7 @@ export function formatCurrency(
   value: number,
   currency: string = DEFAULT_CURRENCY,
 ): string {
-  const code = (currency || DEFAULT_CURRENCY).trim();
+  const code = (currency || DEFAULT_CURRENCY).trim().toUpperCase();
   const amount = Number(value) || 0;
   try {
     return new Intl.NumberFormat(undefined, {
@@ -89,7 +89,7 @@ export function formatCurrencyShort(
   value: number,
   currency: string = DEFAULT_CURRENCY,
 ): string {
-  const code = currency || DEFAULT_CURRENCY;
+  const code = (currency || DEFAULT_CURRENCY).trim().toUpperCase();
   const symbol = CURRENCIES.find((c) => c.code === code)?.symbol ?? `${code} `;
   return `${symbol}${formatCompactNumber(value)}`;
 }
