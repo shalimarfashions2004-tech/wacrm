@@ -17,6 +17,13 @@ import {
 
 const META_API_VERSION = 'v21.0'
 const META_API_BASE = `https://graph.facebook.com/${META_API_VERSION}`
+const META_REQUEST_TIMEOUT_MS = 15_000
+
+/** Keep provider outages from leaving settings and delivery requests pending forever. */
+function metaFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const signal = init?.signal ?? AbortSignal.timeout(META_REQUEST_TIMEOUT_MS)
+  return fetch(input, { ...init, signal })
+}
 
 function assertOutboundDeliveryAllowed(): void {
   if (!isLiveDeliveryApproved()) {
@@ -134,7 +141,7 @@ export async function verifyPhoneNumber(
 ): Promise<MetaPhoneInfo> {
   const { phoneNumberId, accessToken } = args
   const url = `${META_API_BASE}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!response.ok) {
@@ -203,7 +210,7 @@ export async function registerPhoneNumber(
 ): Promise<RegisterPhoneNumberResult> {
   const { phoneNumberId, accessToken, pin } = args
   const url = `${META_API_BASE}/${phoneNumberId}/register`
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -241,7 +248,7 @@ export async function subscribeWabaToApp(
 ): Promise<void> {
   const { wabaId, accessToken } = args
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}` },
   })
@@ -279,7 +286,7 @@ export async function listWabaPhoneNumbers(
   let url: string | undefined =
     `${META_API_BASE}/${wabaId}/phone_numbers?fields=id,display_phone_number,verified_name&limit=100`
   for (let page = 0; url && page < 5; page++) {
-    const response = await fetch(url, {
+    const response = await metaFetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     if (!response.ok) {
@@ -318,7 +325,7 @@ export async function getSubscribedApps(
 ): Promise<SubscribedApp[]> {
   const { wabaId, accessToken } = args
   const url = `${META_API_BASE}/${wabaId}/subscribed_apps`
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!response.ok) {
