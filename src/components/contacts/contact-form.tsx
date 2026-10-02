@@ -235,7 +235,7 @@ export function ContactForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-popover border-border text-popover-foreground sm:max-w-md">
+      <DialogContent className="rounded-[28px] border-border bg-popover p-6 text-popover-foreground sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-popover-foreground">
             {isEdit ? t('editTitle') : t('addTitle')}
@@ -257,7 +257,7 @@ export function ContactForm({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('namePlaceholder')}
-              className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+              className="h-10 rounded-full border-border bg-card-2 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
@@ -274,7 +274,7 @@ export function ContactForm({
               }}
               onBlur={checkDuplicate}
               placeholder={t('phonePlaceholder')}
-              className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+              className="h-10 rounded-full border-border bg-card-2 text-foreground placeholder:text-muted-foreground"
             />
             {dupMatch ? (
               <div
@@ -319,7 +319,7 @@ export function ContactForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('emailPlaceholder')}
-              className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+              className="h-10 rounded-full border-border bg-card-2 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
@@ -332,7 +332,7 @@ export function ContactForm({
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder={t('companyPlaceholder')}
-              className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
+              className="h-10 rounded-full border-border bg-card-2 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
@@ -356,7 +356,7 @@ export function ContactForm({
                       key={tag.id}
                       type="button"
                       onClick={() => toggleTag(tag.id)}
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors cursor-pointer ${
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
                         selected
                           ? 'ring-2 ring-primary ring-offset-1 ring-offset-border'
                           : 'opacity-60 hover:opacity-100'
@@ -375,19 +375,19 @@ export function ContactForm({
             )}
           </div>
 
-          <DialogFooter className="bg-popover border-border">
+          <DialogFooter className="border-border bg-popover pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-border text-muted-foreground hover:bg-muted"
+              className="rounded-full border-border bg-card-2 text-muted-foreground hover:bg-pale-lime hover:text-foreground"
             >
               {t('cancel')}
             </Button>
             <Button
               type="submit"
               disabled={saving || checkingDup || (!isEdit && !!dupMatch?.exact)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
             >
               {saving && <Loader2 className="size-4 animate-spin" />}
               {isEdit ? t('update') : t('create')}

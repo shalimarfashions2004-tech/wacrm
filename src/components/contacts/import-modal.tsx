@@ -429,7 +429,7 @@ export function ImportModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,720px)] flex-col gap-0 overflow-hidden border-border/80 bg-popover p-0 text-popover-foreground sm:max-w-2xl">
+      <DialogContent className="flex max-h-[min(90vh,720px)] flex-col gap-0 overflow-hidden rounded-[28px] border-border/80 bg-popover p-0 text-popover-foreground sm:max-w-2xl">
         <div className="shrink-0 space-y-4 border-b border-border/80 px-6 pt-6 pb-5">
           <DialogHeader className="gap-1.5">
             <DialogTitle className="text-lg text-popover-foreground">
@@ -457,7 +457,7 @@ export function ImportModal({
                 fileInputRef.current?.click();
             }}
             className={cn(
-              'group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-5 transition-all',
+              'group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[22px] border border-dashed p-6 transition-all',
               file
                 ? 'border-primary/35 bg-primary/[0.04]'
                 : 'hover:border-primary/40 border-border/80 bg-background/40 hover:bg-background/70'
@@ -465,7 +465,7 @@ export function ImportModal({
           >
             {file ? (
               <>
-                <div className="bg-primary/15 ring-primary/25 flex size-10 items-center justify-center rounded-lg ring-1">
+                <div className="flex size-11 items-center justify-center rounded-full bg-pale-lime ring-1 ring-primary/25">
                   <FileText className="text-primary size-5" />
                 </div>
                 <p
@@ -480,7 +480,7 @@ export function ImportModal({
               </>
             ) : (
               <>
-                <div className="flex size-10 items-center justify-center rounded-lg bg-muted/80 ring-1 ring-border/80 transition-colors group-hover:bg-muted">
+                <div className="flex size-11 items-center justify-center rounded-full bg-card-2 ring-1 ring-border/80 transition-colors group-hover:bg-pale-lime">
                   <Upload className="size-5 text-muted-foreground group-hover:text-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -519,11 +519,11 @@ export function ImportModal({
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-xl border border-border ring-1 ring-border/50">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card ring-1 ring-border/50">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[32rem] text-xs">
                     <thead>
-                      <tr className="border-b border-border bg-background/60">
+                      <tr className="border-b border-border bg-card-2">
                         <th className="px-3 py-2 text-left font-medium whitespace-nowrap text-muted-foreground">
                           {t('columns.phone')}
                         </th>
@@ -549,7 +549,7 @@ export function ImportModal({
                       {preview.map((row, i) => (
                         <tr
                           key={i}
-                          className="bg-popover/40 transition-colors hover:bg-muted/30"
+                          className="bg-card transition-colors hover:bg-card-2"
                         >
                           <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
                             <PreviewCell
@@ -602,7 +602,7 @@ export function ImportModal({
           )}
 
           {result && (
-            <div className="rounded-xl border border-border bg-background/50 p-4">
+            <div className="rounded-2xl border border-border bg-card-2 p-5">
               <p className="text-sm font-medium text-popover-foreground">{t('importComplete')}</p>
               <div className="mt-3 flex flex-wrap gap-3">
                 {result.imported > 0 && (
@@ -666,12 +666,12 @@ export function ImportModal({
           )}
         </div>
 
-        <DialogFooter className="mt-0 shrink-0 gap-2 border-t border-border/80 bg-background/50 px-6 py-4 sm:justify-end">
+        <DialogFooter className="mt-0 shrink-0 gap-2 border-t border-border/80 bg-card-2 px-6 py-4 sm:justify-end">
           <Button
             type="button"
             variant="outline"
             onClick={() => handleOpenChange(false)}
-            className="border-border text-muted-foreground hover:bg-muted"
+            className="rounded-full border-border bg-card text-muted-foreground hover:bg-pale-lime hover:text-foreground"
           >
             {result ? t('close') : t('cancel')}
           </Button>
@@ -680,7 +680,7 @@ export function ImportModal({
               type="button"
               disabled={parsedRows.length === 0 || importing}
               onClick={handleImport}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
             >
               {importing && <Loader2 className="size-4 animate-spin" />}
               {parsedRows.length > 0 ? t('importBtn', { count: parsedRows.length }) : t('importBtn', { count: 0 })}

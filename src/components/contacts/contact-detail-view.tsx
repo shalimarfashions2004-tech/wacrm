@@ -393,30 +393,30 @@ export function ContactDetailView({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-popover border-border text-popover-foreground sm:max-w-lg w-full p-0"
+        className="w-full border-border bg-popover p-0 text-popover-foreground sm:max-w-lg"
       >
         {loading || !contact ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="size-6 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="flex flex-col h-full">
+          <div className="flex h-full flex-col">
             {/* Header */}
-            <SheetHeader className="p-4 border-b border-border/50">
+            <SheetHeader className="border-b border-border/70 p-6">
               <div className="flex items-center gap-3">
-                <Avatar className="size-12 bg-muted border border-border">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                <Avatar className="size-14 border border-border bg-pale-lime">
+                  <AvatarFallback className="bg-pale-lime text-sm font-medium text-foreground">
                     {getInitials(contact.name)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <SheetTitle className="text-popover-foreground truncate">
+                <div className="min-w-0 flex-1">
+                  <SheetTitle className="truncate text-lg font-light text-popover-foreground">
                     {contact.name || t('unnamed')}
                   </SheetTitle>
-                  <SheetDescription className="text-muted-foreground text-xs mt-0.5">
+                  <SheetDescription className="mt-1 text-xs text-muted-foreground">
                     {t('contactDetailsDesc')}
                   </SheetDescription>
-                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <button
                       onClick={copyPhone}
                       className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
@@ -444,12 +444,12 @@ export function ContactDetailView({
                   </div>
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-5">
                 <Button
                   size="sm"
                   onClick={() => setTemplatePickerOpen(true)}
                   disabled={sendingTemplate}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="h-10 rounded-full bg-primary px-4 text-primary-foreground hover:bg-primary-hover"
                 >
                   {sendingTemplate ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -462,49 +462,49 @@ export function ContactDetailView({
             </SheetHeader>
 
             {/* Tabs */}
-            <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
-              <TabsList className="bg-muted/50 border-b border-border mx-4 mt-3">
+            <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col">
+              <TabsList className="mx-5 mt-4 rounded-full border border-border bg-card-2 p-1">
                 <TabsTrigger
                   value="details"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
+                  className="rounded-full text-muted-foreground data-active:bg-foreground data-active:text-background"
                 >
                   {t('tabs.details')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="tags"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
+                  className="rounded-full text-muted-foreground data-active:bg-foreground data-active:text-background"
                 >
                   {t('tabs.tags')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="notes"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
+                  className="rounded-full text-muted-foreground data-active:bg-foreground data-active:text-background"
                 >
                   {t('tabs.notes')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="custom"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
+                  className="rounded-full text-muted-foreground data-active:bg-foreground data-active:text-background"
                 >
                   {t('tabs.custom')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="deals"
-                  className="data-active:bg-muted data-active:text-primary text-muted-foreground"
+                  className="rounded-full text-muted-foreground data-active:bg-foreground data-active:text-background"
                 >
                   {t('tabs.deals')}
                 </TabsTrigger>
               </TabsList>
 
               {/* Details Tab */}
-              <TabsContent value="details" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="details" className="flex-1 overflow-y-auto px-5 py-5">
                 <div className="space-y-3">
                   <div className="space-y-1.5">
                     <Label className="text-muted-foreground text-xs">{t('name')}</Label>
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="bg-muted border-border text-foreground h-8 text-sm"
+                      className="h-10 rounded-full border-border bg-card-2 text-sm text-foreground"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -514,7 +514,7 @@ export function ContactDetailView({
                     <Input
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
-                      className="bg-muted border-border text-foreground h-8 text-sm"
+                      className="h-10 rounded-full border-border bg-card-2 text-sm text-foreground"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -522,7 +522,7 @@ export function ContactDetailView({
                     <Input
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      className="bg-muted border-border text-foreground h-8 text-sm"
+                      className="h-10 rounded-full border-border bg-card-2 text-sm text-foreground"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -530,13 +530,13 @@ export function ContactDetailView({
                     <Input
                       value={editCompany}
                       onChange={(e) => setEditCompany(e.target.value)}
-                      className="bg-muted border-border text-foreground h-8 text-sm"
+                      className="h-10 rounded-full border-border bg-card-2 text-sm text-foreground"
                     />
                   </div>
                   <Button
                     onClick={saveDetails}
                     disabled={savingDetails}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                    className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
                     size="sm"
                   >
                     {savingDetails ? (
@@ -550,7 +550,7 @@ export function ContactDetailView({
               </TabsContent>
 
               {/* Tags Tab */}
-              <TabsContent value="tags" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="tags" className="flex-1 overflow-y-auto px-5 py-5">
                 <div className="space-y-3">
                   <p className="text-xs text-muted-foreground">
                     {t('tagsTab.clickTagDesc')}
@@ -589,18 +589,18 @@ export function ContactDetailView({
               </TabsContent>
 
               {/* Notes Tab */}
-              <TabsContent value="notes" className="flex-1 flex flex-col min-h-0 px-4 py-3">
+              <TabsContent value="notes" className="flex min-h-0 flex-1 flex-col px-5 py-5">
                 <div className="space-y-2 mb-3">
                   <Textarea
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
                     placeholder={t('notesTab.placeholder')}
-                    className="bg-muted border-border text-foreground placeholder:text-muted-foreground min-h-[60px] text-sm resize-none"
+                    className="min-h-[80px] resize-none rounded-2xl border-border bg-card-2 text-sm text-foreground placeholder:text-muted-foreground"
                   />
                   <Button
                     onClick={addNote}
                     disabled={!newNote.trim() || savingNote}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    className="h-9 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
                     size="sm"
                   >
                     {savingNote ? (
@@ -625,7 +625,7 @@ export function ContactDetailView({
                     notes.map((note) => (
                       <div
                         key={note.id}
-                        className="rounded-lg bg-muted/50 border border-border/50 p-3 group"
+                        className="group rounded-2xl border border-border/70 bg-card-2 p-4"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm text-muted-foreground whitespace-pre-wrap flex-1">
@@ -654,7 +654,7 @@ export function ContactDetailView({
               </TabsContent>
 
               {/* Custom Fields Tab */}
-              <TabsContent value="custom" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="custom" className="flex-1 overflow-y-auto px-5 py-5">
                 {loadingCustom ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -679,14 +679,14 @@ export function ContactDetailView({
                             }))
                           }
                           placeholder={t('enterCustomField', { name: field.field_name })}
-                          className="bg-muted border-border text-foreground h-8 text-sm placeholder:text-muted-foreground"
+                          className="h-10 rounded-full border-border bg-card-2 text-sm text-foreground placeholder:text-muted-foreground"
                         />
                       </div>
                     ))}
                     <Button
                       onClick={saveCustomFields}
                       disabled={savingCustom}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                      className="h-10 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
                       size="sm"
                     >
                       {savingCustom ? (
@@ -701,7 +701,7 @@ export function ContactDetailView({
               </TabsContent>
 
               {/* Deals Tab */}
-              <TabsContent value="deals" className="flex-1 overflow-y-auto px-4 py-3">
+              <TabsContent value="deals" className="flex-1 overflow-y-auto px-5 py-5">
                 {loadingDeals ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="size-5 animate-spin text-primary" />
@@ -713,7 +713,7 @@ export function ContactDetailView({
                     {deals.map((deal) => (
                       <div
                         key={deal.id}
-                        className="rounded-lg border border-border bg-muted/50 p-3"
+                        className="rounded-2xl border border-border/70 bg-card-2 p-4"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-sm font-medium text-foreground">
