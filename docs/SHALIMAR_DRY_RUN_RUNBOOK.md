@@ -14,12 +14,12 @@ each person does, what evidence proves it worked, and what must remain stopped.
 |---|---|---|---|
 | Code safety gate | Ready | `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` are the safe defaults. | Developer |
 | Consent and suppression code | Ready for database verification | Campaigns fail closed when migration 043 is unavailable or consent is missing. | Developer + compliance |
-| Automated checks | Passed | Typecheck passed; lint exits cleanly; 95 Vitest files and 1,085 tests passed. Broadcast subset: 8 files and 65 tests covering audience parsing, consent/dry-run gates, idempotency, retry/resume and rate limits. | Tester |
-| Meta business assets | Blocked in CRM readback | Hosted Settings → WhatsApp reports an expired access token (`190/463`), an empty WABA ID, and the number as not registered. The Broadcast wizard therefore has no approved templates. | Owner |
+| Automated checks | Passed | Typecheck passed; lint exits cleanly; 96 Vitest files and 1,096 tests passed. Broadcast subset: 8 files and 65 tests covering audience parsing, consent/dry-run gates, idempotency, retry/resume and rate limits. | Tester |
+| Meta business assets | Connected; test-number registration banner remains | Hosted Settings → WhatsApp validates the permanent token, confirms WABA `3105529616452879` is subscribed to the app, and reads phone `1228692947003388`. The Meta test number has no PIN, so CRM intentionally keeps local registration empty. Template sync succeeded. | Owner + developer |
 | Supabase target project | Confirmed | Shalimar project `shalimar` (`houjlpiyafcanxsabmsk`) is healthy; Vercel Production and Preview have the project URL and protected keys. Schema migration remains pending. | Owner + developer |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` appears in Supabase Auth Users; complete the invitation from the Shalimar mailbox before dashboard acceptance testing. | Owner + tester |
 | Migration 043 | Ready to replay, not applied | Must be tested on a disposable Supabase project before the intended project. | Developer + database owner |
-| Real message sending | Stopped | The approved single-recipient live attempt was rejected by Meta because the recipient was not on the allowed list. Production was returned to `dry-run`; no broadcast was sent. | Owner |
+| Real message sending | Stopped | The approved single-recipient live attempt was rejected by Meta because the recipient was not on the allowed list. Production remains `dry-run`; the current broadcast test was saved as Draft and no broadcast was sent. | Owner |
 
 “Ready” in this table means the work can proceed to its verification step. It
 does not mean production messaging is enabled.
@@ -52,10 +52,11 @@ The developer then uses Settings → WhatsApp connection → **Test API
 Connection** and records the result. A pass requires the phone metadata check,
 WABA ownership check and WABA subscription check to succeed.
 
-Current readback fails before those checks: Meta reports error `190/463` for an
-expired token, the WABA ID is blank, and the phone is marked not registered.
-Regenerate a permanent system-user token, enter the correct WABA ID, save the
-configuration and run **Test API Connection** again before syncing templates.
+The current readback passes the token, WABA ownership and subscription checks.
+The test phone still shows a separate “Not registered” banner because Meta's
+test number has no two-step PIN; this is expected for the test flow and is not
+a reason to paste a fake PIN. A production number needs its real 6-digit PIN
+before relying on registration-dependent behavior.
 
 ## Gate 2 — Supabase migration replay
 
@@ -117,10 +118,15 @@ Run a dry-run campaign using an approved template. The expected result is:
 - a second attempt does not create a duplicate recipient row;
 - the campaign result is auditable in Supabase.
 
-The automated dry-run provider and broadcast logic pass locally. A hosted
-campaign remains **pending verification** until migration 043, consent rows,
-an approved staging audience, a synced template and the dashboard readback are
-available in the intended Shalimar Supabase project.
+The automated dry-run provider and broadcast logic pass locally. The hosted
+wizard has now been exercised safely: Meta templates synced, `hello_world` was
+selected with an All Contacts audience estimated at 2, and the campaign was
+saved as `Shalimar dry-run broadcast test 2026-10-02` with status **Draft**.
+No send action was taken. The synced templates are Meta/Jasper's Market sample
+templates, so the draft is test evidence only and must not be sent to
+customers. The audited campaign remains pending until migration 043, consent
+rows and a Shalimar-approved template are verified in the intended Supabase
+project.
 
 If migration 043 is missing, the campaign must stop with the migration error.
 That is a safe failure, not a test failure to work around.
@@ -154,6 +160,10 @@ For each gate, record only the minimum evidence needed:
 | Result | `pass`, `fail`, or `pending verification` |
 | Evidence | Screenshot, query output, test run or Meta readback reference kept privately |
 | Next action | One concrete fix or approval needed |
+
+| Date/time | Gate | Owner | Environment | Result | Evidence | Next action |
+|---|---|---|---|---|---|---|
+| 2026-10-02T15:00:00Z | Hosted broadcast wizard dry-run setup | QA + operations | hosted Shalimar CRM | pass (draft only) | Meta templates synced; `hello_world` + All Contacts estimated 2; draft `Shalimar dry-run broadcast test 2026-10-02` saved; no external send | Verify migration 043 and consent, then replace sample template with Shalimar-approved copy |
 
 Do not attach tokens, phonebooks, customer exports or private customer
 messages to the repository issue or chat.
