@@ -201,7 +201,7 @@ export function PipelineSettings({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-popover border-border max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto rounded-[28px] border-border bg-popover sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-popover-foreground">{t("managePipeline")}</DialogTitle>
         </DialogHeader>
@@ -223,14 +223,14 @@ export function PipelineSettings({
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="border-border bg-transparent text-muted-foreground hover:bg-muted"
+                className="rounded-full border-border bg-card-2 text-muted-foreground hover:bg-pale-lime hover:text-foreground"
               >
                 {t("cancel")}
               </Button>
               <Button
                 onClick={handleDeletePipeline}
                 disabled={deleting}
-                className="bg-red-600 text-white hover:bg-red-700"
+                className="rounded-full bg-red-600 text-white hover:bg-red-700"
               >
                 {deleting ? t("deleting") : t("deletePipelineBtn")}
               </Button>
@@ -244,7 +244,7 @@ export function PipelineSettings({
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="border-border bg-muted text-foreground"
+                  className="h-10 rounded-full border-border bg-card-2 text-foreground"
                 />
               </div>
 
@@ -259,7 +259,7 @@ export function PipelineSettings({
                     items={localStages.map((s) => s.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-2 rounded-2xl bg-card-2 p-3">
                       {localStages.map((stage, index) => (
                         <SortableStageRow
                           key={stage.id}
@@ -307,7 +307,7 @@ export function PipelineSettings({
                     value={newStageName}
                     onChange={(e) => setNewStageName(e.target.value)}
                     placeholder={t("newStageNamePlaceholder")}
-                    className="border-border bg-muted text-sm text-foreground"
+                    className="h-9 rounded-full border-border bg-card-2 text-sm text-foreground"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleAddStage();
                     }}
@@ -317,7 +317,7 @@ export function PipelineSettings({
                     size="sm"
                     onClick={handleAddStage}
                     disabled={!newStageName.trim()}
-                    className="shrink-0 border-border bg-transparent text-muted-foreground hover:bg-muted"
+                    className="shrink-0 rounded-full border-border bg-card text-muted-foreground hover:bg-pale-lime hover:text-foreground"
                   >
                     <Plus className="mr-1 h-3 w-3" />
                     {t("add")}
@@ -328,31 +328,31 @@ export function PipelineSettings({
               <Button
                 variant="outline"
                 onClick={onCreateNewPipeline}
-                className="w-full border-border bg-transparent text-muted-foreground hover:bg-muted"
+                className="h-10 w-full rounded-full border-border bg-card-2 text-muted-foreground hover:bg-pale-lime hover:text-foreground"
               >
                 <Plus className="mr-1 h-3 w-3" />
                 {t("createNewPipeline")}
               </Button>
             </div>
 
-            <DialogFooter className="border-border bg-popover/50">
+            <DialogFooter className="border-border bg-card-2">
               <Button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="mr-auto bg-red-600 text-white hover:bg-red-700"
+                className="mr-auto rounded-full bg-red-600 text-white hover:bg-red-700"
               >
                 {t("deletePipeline")}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="border-border bg-transparent text-muted-foreground hover:bg-muted"
+                className="rounded-full border-border bg-card text-muted-foreground hover:bg-pale-lime hover:text-foreground"
               >
                 {t("cancel")}
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
               >
                 {saving ? t("saving") : t("saveChanges")}
               </Button>
@@ -393,7 +393,7 @@ function SortableStageRow({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 rounded-lg border border-border bg-muted p-2"
+      className="flex items-center gap-2 rounded-2xl border border-border bg-card-2 p-3"
     >
       <button
         type="button"
@@ -408,7 +408,7 @@ function SortableStageRow({
       <Input
         value={stage.name}
         onChange={(e) => onNameChange(e.target.value)}
-        className="h-7 flex-1 border-transparent bg-transparent text-sm text-foreground focus:border-border"
+        className="h-9 flex-1 rounded-full border-transparent bg-card text-sm text-foreground focus:border-border"
       />
       <Button
         variant="ghost"
@@ -447,7 +447,7 @@ function ColorSwatch({
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-6 z-20 flex flex-wrap gap-1 rounded-lg border border-border bg-popover p-2 shadow-lg w-36">
+          <div className="absolute left-0 top-6 z-20 flex w-36 flex-wrap gap-1 rounded-2xl border border-border bg-popover p-2 shadow-lg">
             {colors.map((c) => (
               <button
                 key={c}

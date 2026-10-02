@@ -249,23 +249,23 @@ export function DealForm({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-popover border-border text-popover-foreground sm:max-w-lg w-full p-0"
+        className="w-full border-border bg-popover p-0 text-popover-foreground sm:max-w-lg"
       >
         <div className="flex h-full flex-col">
-          <SheetHeader className="border-b border-border/50 p-4">
-            <SheetTitle className="text-popover-foreground">
+          <SheetHeader className="border-b border-border/70 p-6">
+            <SheetTitle className="text-lg font-light text-popover-foreground">
               {deal ? t("editDeal") : t("newDeal")}
             </SheetTitle>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 space-y-5 overflow-y-auto p-6">
             <div className="grid gap-2">
               <Label className="text-muted-foreground">{t("title")}</Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t("titlePlaceholder")}
-                className="border-border bg-muted text-foreground"
+                className="h-10 rounded-full border-border bg-card-2 text-foreground"
               />
             </div>
 
@@ -274,7 +274,7 @@ export function DealForm({
               <select
                 value={contactId}
                 onChange={(e) => setContactId(e.target.value)}
-                className="h-9 w-full rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="h-10 w-full rounded-full border border-border bg-card-2 px-4 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
               >
                 <option value="">{t("selectContact")}</option>
                 {contacts.map((c) => (
@@ -287,7 +287,7 @@ export function DealForm({
               {linkedConversation && (
                 <Link
                   href="/inbox"
-                  className="mt-1 inline-flex items-center gap-1.5 self-start rounded-md bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20"
+                  className="mt-1 inline-flex items-center gap-1.5 self-start rounded-full bg-pale-lime px-3 py-1.5 text-xs text-foreground hover:bg-primary/20"
                 >
                   <MessageSquare className="h-3 w-3" />
                   {t("linkToConversation")}
@@ -305,7 +305,7 @@ export function DealForm({
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder="0"
-                    className="border-border bg-muted pl-7 text-foreground"
+                    className="h-10 rounded-full border-border bg-card-2 pl-9 text-foreground"
                   />
                 </div>
               </div>
@@ -314,7 +314,7 @@ export function DealForm({
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none focus:border-primary"
+                  className="h-10 w-full rounded-full border border-border bg-card-2 px-4 text-sm text-foreground outline-none focus:border-primary"
                 >
                   {CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -331,7 +331,7 @@ export function DealForm({
                 type="date"
                 value={expectedCloseDate}
                 onChange={(e) => setExpectedCloseDate(e.target.value)}
-                className="border-border bg-muted text-foreground"
+                className="h-10 rounded-full border-border bg-card-2 text-foreground"
               />
             </div>
 
@@ -340,7 +340,7 @@ export function DealForm({
               <select
                 value={stageId}
                 onChange={(e) => setStageId(e.target.value)}
-                className="h-9 w-full rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none focus:border-primary"
+                className="h-10 w-full rounded-full border border-border bg-card-2 px-4 text-sm text-foreground outline-none focus:border-primary"
               >
                 {stages.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -355,7 +355,7 @@ export function DealForm({
               <select
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                className="h-9 w-full rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground outline-none focus:border-primary"
+                className="h-10 w-full rounded-full border border-border bg-card-2 px-4 text-sm text-foreground outline-none focus:border-primary"
               >
                 <option value="">{t("unassigned")}</option>
                 {profiles.map((p) => (
@@ -372,12 +372,12 @@ export function DealForm({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={t("notesPlaceholder")}
-                className="min-h-[100px] border-border bg-muted text-foreground"
+                className="min-h-[100px] rounded-2xl border-border bg-card-2 text-foreground"
               />
             </div>
 
             {deal && (
-              <div className="space-y-2 rounded-lg border border-border bg-muted/50 p-3">
+              <div className="space-y-2 rounded-2xl border border-border bg-card-2 p-4">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {t("status")}
                 </p>
@@ -386,7 +386,7 @@ export function DealForm({
                     type="button"
                     onClick={() => handleStatusChange("won")}
                     disabled={!!statusAction || deal.status === "won"}
-                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="h-10 flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
                   >
                     {statusAction === "won" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -401,7 +401,7 @@ export function DealForm({
                     type="button"
                     onClick={() => handleStatusChange("lost")}
                     disabled={!!statusAction || deal.status === "lost"}
-                    className="flex-1 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                    className="h-10 flex-1 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
                   >
                     {statusAction === "lost" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -419,7 +419,7 @@ export function DealForm({
                     variant="ghost"
                     onClick={() => handleStatusChange("open")}
                     disabled={!!statusAction}
-                    className="w-full text-muted-foreground hover:text-foreground"
+                    className="w-full rounded-full text-muted-foreground hover:bg-pale-lime hover:text-foreground"
                   >
                     {t("reopenDeal")}
                   </Button>
@@ -428,19 +428,19 @@ export function DealForm({
             )}
           </div>
 
-          <div className="border-t border-border/50 bg-popover/80 p-4">
+          <div className="border-t border-border/70 bg-card-2 p-5">
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="flex-1 border-border bg-transparent text-muted-foreground hover:bg-muted"
+                className="h-10 flex-1 rounded-full border-border bg-card text-muted-foreground hover:bg-pale-lime hover:text-foreground"
               >
                 {t("cancel")}
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={saving || !title.trim() || !contactId || !stageId}
-                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                className="h-10 flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
               >
                 {saving ? t("saving") : deal ? t("saveChanges") : t("createDeal")}
               </Button>

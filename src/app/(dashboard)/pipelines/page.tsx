@@ -299,14 +299,14 @@ export default function PipelinesPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-          <div className="h-9 w-28 animate-pulse rounded-lg bg-muted" />
+          <div className="h-12 w-56 animate-pulse rounded-2xl bg-card-2" />
+          <div className="h-10 w-32 animate-pulse rounded-full bg-card-2" />
         </div>
         <div className="flex gap-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-96 w-72 animate-pulse rounded-xl bg-muted/50" />
+            <div key={i} className="h-96 w-72 animate-pulse rounded-[28px] bg-card-2" />
           ))}
         </div>
       </div>
@@ -314,14 +314,18 @@ export default function PipelinesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Revenue workspace</p>
+            <h1 className="text-4xl font-light tracking-tight text-foreground sm:text-5xl">{t("title")}</h1>
+          </div>
           {/* Pipeline selector dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors data-[popup-open]:bg-muted"
+              className="inline-flex h-11 w-fit items-center gap-2 rounded-full border border-border bg-card-2 px-4 text-sm text-foreground transition-colors hover:bg-pale-lime data-[popup-open]:bg-pale-lime"
             >
               <GitBranch className="h-4 w-4 text-primary" />
               <span className="font-semibold">
@@ -366,13 +370,13 @@ export default function PipelinesPage() {
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <GatedButton
             variant="outline"
             canAct={canEditSettings}
             gateReason="create pipelines"
             onClick={() => setNewPipelineOpen(true)}
-            className="border-border bg-card text-foreground hover:bg-muted"
+            className="h-10 rounded-full border-border bg-card-2 px-4 text-foreground hover:bg-pale-lime"
           >
             <Plus className="mr-1 h-4 w-4" />
             {t("addPipeline")}
@@ -382,7 +386,7 @@ export default function PipelinesPage() {
             gateReason="create deals"
             disabled={!selectedPipelineId || stages.length === 0}
             onClick={() => handleAddDeal()}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="h-10 rounded-full bg-primary px-5 text-primary-foreground hover:bg-primary-hover"
           >
             <Plus className="mr-1 h-4 w-4" />
             {t("addDeal")}
@@ -392,8 +396,10 @@ export default function PipelinesPage() {
 
       {/* Board */}
       {pipelines.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20">
-          <GitBranch className="h-12 w-12 text-muted-foreground" />
+        <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-border bg-card py-20">
+          <div className="flex size-16 items-center justify-center rounded-full bg-pale-lime">
+            <GitBranch className="h-8 w-8 text-foreground" />
+          </div>
           <h3 className="mt-4 text-lg font-medium text-foreground">
             {t("noPipelinesYet")}
           </h3>
@@ -404,7 +410,7 @@ export default function PipelinesPage() {
             canAct={canEditSettings}
             gateReason="create pipelines"
             onClick={() => setNewPipelineOpen(true)}
-            className="mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="mt-5 h-10 rounded-full bg-primary px-5 text-primary-foreground hover:bg-primary-hover"
           >
             <Plus className="mr-1 h-4 w-4" />
             {t("createPipeline")}
@@ -425,7 +431,7 @@ export default function PipelinesPage() {
 
       {/* New Pipeline Dialog */}
       <Dialog open={newPipelineOpen} onOpenChange={setNewPipelineOpen}>
-        <DialogContent className="sm:max-w-sm bg-popover border-border">
+        <DialogContent className="rounded-[28px] border-border bg-popover sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-popover-foreground">{t("newPipeline")}</DialogTitle>
           </DialogHeader>
@@ -435,7 +441,7 @@ export default function PipelinesPage() {
               value={newPipelineName}
               onChange={(e) => setNewPipelineName(e.target.value)}
               placeholder={t("pipelineNamePlaceholder")}
-              className="mt-2 bg-muted border-border text-foreground"
+              className="mt-2 h-10 rounded-full border-border bg-card-2 text-foreground"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreatePipeline();
               }}
@@ -444,18 +450,18 @@ export default function PipelinesPage() {
               {t("defaultStagesDesc")}
             </p>
           </div>
-          <DialogFooter className="bg-popover/50 border-border">
+          <DialogFooter className="border-border bg-card-2">
             <Button
               variant="outline"
               onClick={() => setNewPipelineOpen(false)}
-              className="border-border text-muted-foreground hover:bg-muted"
+              className="rounded-full border-border bg-card text-muted-foreground hover:bg-pale-lime hover:text-foreground"
             >
               {t("cancel")}
             </Button>
             <Button
               onClick={handleCreatePipeline}
               disabled={creating || !newPipelineName.trim()}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary-hover"
             >
               {creating ? t("creating") : t("createPipelineBtn")}
             </Button>

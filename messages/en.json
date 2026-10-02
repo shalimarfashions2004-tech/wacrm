@@ -531,6 +531,7 @@
   },
   "Pipelines": {
     "page": {
+      "title": "Pipelines",
       "selectPipeline": "Select Pipeline",
       "noPipelinesYet": "No pipelines yet",
       "managePipelines": "Manage Pipelines",

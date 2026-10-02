@@ -41,10 +41,10 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
         e.stopPropagation();
         onEdit(deal);
       }}
-      className={`group relative w-full cursor-pointer rounded-xl border border-border/50 bg-muted/70 pl-4 pr-3 py-3 text-left shadow-sm transition-all ${
+      className={`group relative w-full cursor-pointer rounded-[22px] border border-border/70 bg-card-2 py-4 pl-4 pr-3 text-left transition-all ${
         isOverlay
-          ? "shadow-xl"
-          : "hover:-translate-y-0.5 hover:border-border hover:bg-muted hover:shadow-lg"
+          ? "ring-2 ring-primary/30"
+          : "hover:-translate-y-0.5 hover:border-primary/30 hover:bg-pale-lime"
       }`}
     >
       {/* 4px left accent bar using stage color */}
@@ -59,7 +59,7 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
           {deal.title}
         </h4>
         {deal.status === "won" && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-pale-lime px-2 py-1 text-[10px] font-semibold text-foreground">
             <Check className="h-3 w-3" />
             {t("won")}
           </span>
@@ -74,14 +74,14 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
 
       {/* Contact row */}
       <div className="mt-2 flex items-center gap-2">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+        <span className="flex size-6 items-center justify-center rounded-full bg-pale-lime text-[10px] font-semibold text-foreground">
           {initials(deal.contact?.name, deal.contact?.phone)}
         </span>
         <span className="truncate text-xs text-muted-foreground">{contactLabel}</span>
       </div>
 
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-sm font-bold text-primary">
+        <span className="text-sm font-medium text-foreground">
           {formatCurrency(deal.value, deal.currency)}
         </span>
         {deal.expected_close_date && (
@@ -96,7 +96,7 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
         <div className="mt-2 flex items-center justify-end">
           <span
             title={assigneeLabel}
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary"
+            className="flex size-6 items-center justify-center rounded-full bg-pale-lime text-[10px] font-semibold text-foreground"
           >
             {initials(assigneeLabel)}
           </span>
