@@ -227,6 +227,17 @@ export function explainMetaError(
   }
 
   if (code === 100) {
+    if (step === 'waba_phone_numbers' && /nonexisting field\s*\(phone_numbers\)/i.test(err.message)) {
+      return build(
+        `Meta could not read the phone numbers for ${withId(target.noun, target.id)}. ` +
+          'The ID is a WhatsApp Business Account ID, but the current token cannot access its phone-number edge. ' +
+          'In Business Settings → System Users → SHALIMAR, assign this WhatsApp account with full control, ' +
+          'grant whatsapp_business_management and whatsapp_business_messaging, generate a fresh token, and replace the token in CRM. ' +
+          'If all system-user tokens were revoked, every older token must be replaced.',
+        'access_token',
+        'user',
+      )
+    }
     if (step === 'register' && /pin/i.test(err.message)) {
       return build(
         `Meta rejected the two-step verification PIN: ${err.message}. Enter the 6-digit PIN set in ` +

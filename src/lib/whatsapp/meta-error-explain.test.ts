@@ -118,6 +118,18 @@ describe("explainMetaError — wrong object ids", () => {
     );
     expect(x.field).toBe("pin");
   });
+
+  it("treats the phone_numbers edge error as a token/access assignment issue", () => {
+    const x = explainMetaError(
+      metaErr({ code: 100, message: "(#100) Tried accessing nonexisting field (phone_numbers)" }),
+      "waba_phone_numbers",
+      { wabaId: "9876" },
+    );
+    expect(x.field).toBe("access_token");
+    expect(x.side).toBe("user");
+    expect(x.summary).toMatch(/current token cannot access/i);
+    expect(x.summary).toMatch(/all system-user tokens were revoked/i);
+  });
 });
 
 describe("explainMetaError — registration and PIN", () => {

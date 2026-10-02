@@ -176,6 +176,14 @@ field without echoing its contents. Verification: 96 test files / 1,096 tests,
 typecheck and changed-file lint passed. Hosted credential validity still needs
 an actual successful Meta connection result; local tests do not establish it.
 
+Meta readback evidence on 2026-10-02 confirms the Shalimar test WABA and phone
+IDs in Business Settings (`3105529616452879` and `1228692947003388`). A
+`(#100) Tried accessing nonexisting field (phone_numbers)` response at the WABA
+lookup step therefore points to token access or revocation: assign the WABA to
+the SHALIMAR System User with full control, grant both WhatsApp permissions,
+generate a fresh token, and replace the CRM token. Meta showed that the older
+system-user tokens had been revoked. Do not paste tokens into chat.
+
 Stop and report the issue if any of these occurs:
 
 - Meta assets cannot be read back or the phone is under a different WABA.
