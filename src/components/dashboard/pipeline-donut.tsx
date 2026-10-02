@@ -18,15 +18,15 @@ import { useTranslations } from 'next-intl'
 export function PipelineDonut({ data, loading, currency }: PipelineDonutProps) {
   const t = useTranslations('Dashboard.pipelineDonut')
   return (
-    <section className="flex h-full flex-col rounded-xl border border-border bg-card">
-      <header className="border-b border-border px-5 py-4">
-        <h2 className="text-sm font-semibold text-foreground">{t('title')}</h2>
+    <section className="flex h-full flex-col rounded-[28px] border border-border bg-card">
+      <header className="border-b border-border/70 px-6 py-5">
+        <h2 className="text-xl font-light tracking-[-0.02em] text-foreground">{t('title')}</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
           {t('description')}
         </p>
       </header>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-6">
         {loading || !data ? (
           <Skeleton className="h-56 w-full" />
         ) : data.stages.length === 0 ? (
@@ -38,9 +38,9 @@ export function PipelineDonut({ data, loading, currency }: PipelineDonutProps) {
         ) : (
           <>
             <Donut data={data} currency={currency} />
-            <ul className="mt-5 space-y-2">
+            <ul className="mt-5 space-y-2.5">
               {data.stages.map((s) => (
-                <li key={s.id} className="flex items-center gap-3 text-xs">
+                <li key={s.id} className="flex items-center gap-3 rounded-2xl bg-card-2 px-3 py-2 text-xs">
                   <span
                     className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                     style={{ background: s.color }}

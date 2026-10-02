@@ -57,10 +57,10 @@ export const chartColors = {
     text: "text-pink-500",
   },
   lime: {
-    bg: "bg-lime-500",
-    stroke: "stroke-lime-500",
-    fill: "fill-lime-500",
-    text: "text-lime-500",
+    bg: "bg-primary",
+    stroke: "stroke-primary",
+    fill: "fill-primary",
+    text: "text-primary",
   },
   fuchsia: {
     bg: "bg-fuchsia-500",

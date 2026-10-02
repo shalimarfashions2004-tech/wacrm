@@ -47,8 +47,8 @@ export function ResponseTimeChart({
     })) ?? []
 
   return (
-    <section className="rounded-xl border border-border bg-card">
-      <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+    <section className="h-full rounded-[28px] border border-border bg-card">
+      <header className="flex items-center justify-between gap-3 border-b border-border/70 px-6 py-5">
         <div>
           <h2 className="text-sm font-semibold text-foreground">
             {t('title')}
@@ -59,7 +59,7 @@ export function ResponseTimeChart({
         </div>
         <div className="flex items-center gap-3 text-right text-xs">
           {thresholdMinutes > 0 && (
-            <span className="rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-0.5 font-medium text-rose-300 tabular-nums">
+            <span className="rounded-full border border-border bg-card-2 px-3 py-1 font-medium text-muted-foreground tabular-nums">
               {t('target', { minutes: thresholdMinutes })}
             </span>
           )}
@@ -80,7 +80,7 @@ export function ResponseTimeChart({
         </div>
       </header>
 
-      <div className="p-5">
+      <div className="p-6">
         {loading || !data ? (
           <Skeleton className="h-[260px] w-full" />
         ) : !hasData ? (
@@ -94,9 +94,9 @@ export function ResponseTimeChart({
             data={chartData}
             index="day"
             categories={[CATEGORY]}
-            // 'violet' maps to Tailwind's `fill-violet-500` — matches
-            // the brand accent the hand-rolled bars used (#7c3aed).
-            colors={['violet']}
+            // The vendored chart maps `lime` to the shared Shalimar primary
+            // token so bars stay aligned with the rest of the dashboard.
+            colors={['lime']}
             valueFormatter={(value) => `${value.toFixed(1)}m`}
             showLegend={false}
             yAxisWidth={48}

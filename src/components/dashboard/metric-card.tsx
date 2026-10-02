@@ -19,22 +19,41 @@ interface MetricCardProps {
   }
   /** Used instead of `delta` when the metric has a static subtitle. */
   subtitle?: string
+  /** The lead KPI uses the reference's near-black featured treatment. */
+  featured?: boolean
+  className?: string
 }
 
-export function MetricCard({ title, value, icon: Icon, delta, subtitle }: MetricCardProps) {
+export function MetricCard({ title, value, icon: Icon, delta, subtitle, featured = false, className }: MetricCardProps) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div
+      className={cn(
+        'group flex min-h-44 flex-col rounded-[28px] border p-6 transition-transform hover:-translate-y-0.5',
+        featured
+          ? 'border-foreground bg-foreground text-background'
+          : 'border-border bg-card text-foreground',
+        className,
+      )}
+    >
       <div className="flex items-start justify-between">
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <p className={cn('text-sm font-medium', featured ? 'text-background/70' : 'text-muted-foreground')}>
+          {title}
+        </p>
+        <div className={cn(
+          'flex size-10 items-center justify-center rounded-full',
+          featured ? 'bg-background text-foreground' : 'bg-card-2 text-muted-foreground',
+        )}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
-      <p className="mt-3 text-[28px] leading-none font-bold tabular-nums text-foreground">
+      <p className={cn(
+        'mt-auto pt-6 text-[36px] font-light leading-none tracking-[-0.04em] tabular-nums',
+        featured ? 'text-background' : 'text-foreground',
+      )}>
         {value}
       </p>
       {delta ? <DeltaRow sign={delta.sign} label={delta.label} /> : subtitle ? (
-        <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+        <p className={cn('mt-2 text-sm', featured ? 'text-background/70' : 'text-muted-foreground')}>{subtitle}</p>
       ) : null}
     </div>
   )
@@ -45,7 +64,7 @@ function DeltaRow({ sign, label }: { sign: number; label: string }) {
     sign > 0
       ? 'text-primary'
       : sign < 0
-      ? 'text-red-400'
+      ? 'text-destructive'
       : 'text-muted-foreground'
   const Arrow = sign > 0 ? ArrowUp : sign < 0 ? ArrowDown : Minus
   return (

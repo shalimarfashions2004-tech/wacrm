@@ -122,22 +122,23 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="max-w-2xl">
+        <p className="text-base leading-7 text-muted-foreground">
           {t('description')}
         </p>
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
         {metricsLoading || !metrics ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+          Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} className="lg:col-span-3" />)
         ) : (
           <>
             <MetricCard
+              featured
+              className="lg:col-span-3"
               title={t('activeConversations')}
               value={metrics.activeConversations.current.toLocaleString()}
               icon={MessageSquare}
@@ -151,6 +152,7 @@ export default function DashboardPage() {
               }}
             />
             <MetricCard
+              className="lg:col-span-3"
               title={t('newContactsToday')}
               value={metrics.newContactsToday.current.toLocaleString()}
               icon={UserPlus}
@@ -165,12 +167,14 @@ export default function DashboardPage() {
               }}
             />
             <MetricCard
+              className="lg:col-span-3"
               title={t('openDealsValue')}
               value={formatCurrency(metrics.openDealsValue, defaultCurrency)}
               icon={DollarSign}
               subtitle={t('openDeals', { count: metrics.openDealsCount })}
             />
             <MetricCard
+              className="lg:col-span-3"
               title={t('messagesSentToday')}
               value={metrics.messagesSentToday.current.toLocaleString()}
               icon={Send}
@@ -198,8 +202,8 @@ export default function DashboardPage() {
           stretched height so their rounded borders line up. Without
           this, the pipeline card rendered at its natural (shorter)
           height while the line chart drove the row height. */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="h-full lg:col-span-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="h-full lg:col-span-7">
           <ConversationsChart
             series={series}
             loading={seriesLoading}
@@ -207,7 +211,7 @@ export default function DashboardPage() {
             onRangeChange={handleRangeChange}
           />
         </div>
-        <div className="h-full lg:col-span-2">
+        <div className="h-full lg:col-span-5">
           <PipelineDonut
             data={pipeline}
             loading={pipelineLoading}
@@ -216,11 +220,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Response time */}
-      <ResponseTimeChart data={responseTime} loading={responseTimeLoading} />
-
-      {/* Activity feed */}
-      <ActivityFeed items={activity} loading={activityLoading} />
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-7">
+        <div className="h-full lg:col-span-4">
+          <ResponseTimeChart data={responseTime} loading={responseTimeLoading} />
+        </div>
+        <div className="h-full lg:col-span-3">
+          <ActivityFeed items={activity} loading={activityLoading} />
+        </div>
+      </div>
     </div>
   )
 }

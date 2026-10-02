@@ -49,22 +49,22 @@ export function ConversationsChart({ series, loading, range, onRangeChange }: Co
   }, [data])
 
   return (
-    <section className="flex h-full flex-col rounded-xl border border-border bg-card">
-      <header className="flex items-center justify-between border-b border-border px-5 py-4">
+    <section className="flex h-full flex-col rounded-[28px] border border-border bg-card">
+      <header className="flex items-center justify-between gap-4 border-b border-border/70 px-6 py-5">
         <div>
-          <h2 className="text-sm font-semibold text-foreground">{t('title')}</h2>
+          <h2 className="text-xl font-light tracking-[-0.02em] text-foreground">{t('title')}</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">{t('description')}</p>
         </div>
-        <div className="flex items-center gap-1 rounded-lg bg-muted/60 p-1">
+        <div className="flex items-center gap-1 rounded-full bg-card-2 p-1">
           {[7, 30, 90].map((r) => (
             <button
               key={r}
               type="button"
               onClick={() => onRangeChange(r as RangeDays)}
               className={cn(
-                'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                 range === r
-                  ? 'bg-secondary text-secondary-foreground'
+                  ? 'bg-pale-lime text-foreground'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -74,7 +74,7 @@ export function ConversationsChart({ series, loading, range, onRangeChange }: Co
         </div>
       </header>
 
-      <div className="p-5">
+      <div className="p-6">
         {loading || !data ? (
           <Skeleton className="h-[240px] w-full" />
         ) : data.every((p) => p.incoming === 0 && p.outgoing === 0) ? (
@@ -88,9 +88,9 @@ export function ConversationsChart({ series, loading, range, onRangeChange }: Co
         )}
       </div>
 
-      <footer className="flex items-center gap-4 border-t border-border px-5 py-3 text-xs text-muted-foreground">
-        <LegendDot color="#3b82f6" label={t('incoming')} />
-        <LegendDot color="#7c3aed" label={t('outgoing')} />
+      <footer className="flex items-center gap-4 border-t border-border/70 px-6 py-3 text-xs text-muted-foreground">
+        <LegendDot className="bg-muted-foreground" label={t('incoming')} />
+        <LegendDot className="bg-primary" label={t('outgoing')} />
       </footer>
     </section>
   )
@@ -207,14 +207,6 @@ function LineSvg({
           const y = yFor(t)
           return (
             <g key={t}>
-              <line
-                x1={PADDING.left}
-                x2={VB_W - PADDING.right}
-                y1={y}
-                y2={y}
-                stroke="var(--border)"
-                strokeDasharray="3 3"
-              />
               <text
                 x={PADDING.left - 8}
                 y={y}
@@ -243,24 +235,38 @@ function LineSvg({
           ) : null,
         )}
 
-        {/* Outgoing polyline (violet) */}
+        {/* Soft area under the primary series keeps the chart legible without a box grid. */}
+        <path
+          d={`${incomingPath} L${xFor(data.length - 1)},${PADDING.top + chartH} L${xFor(0)},${PADDING.top + chartH} Z`}
+          fill="var(--primary)"
+          opacity={0.08}
+        />
+
+        {/* Outgoing polyline */}
         <path
           d={outgoingPath}
           fill="none"
-          stroke="#7c3aed"
-          strokeWidth={2}
+          stroke="var(--primary)"
+          strokeWidth={1.75}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        {/* Incoming polyline (blue) */}
+        {/* Incoming polyline */}
         <path
           d={incomingPath}
           fill="none"
-          stroke="#3b82f6"
-          strokeWidth={2}
+          stroke="var(--muted-foreground)"
+          strokeWidth={1.75}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+
+        {data.map((p, i) => (
+          <g key={`point-${p.day}`}>
+            <circle cx={xFor(i)} cy={yFor(p.incoming)} r={2.2} fill="var(--muted-foreground)" />
+            <circle cx={xFor(i)} cy={yFor(p.outgoing)} r={2.2} fill="var(--primary)" />
+          </g>
+        ))}
 
         {/* Hover crosshair */}
         {hover !== null && (
@@ -273,8 +279,8 @@ function LineSvg({
               stroke="var(--muted-foreground)"
               strokeDasharray="3 3"
             />
-            <circle cx={hoverX} cy={yFor(data[hover.idx].incoming)} r={3.5} fill="#3b82f6" />
-            <circle cx={hoverX} cy={yFor(data[hover.idx].outgoing)} r={3.5} fill="#7c3aed" />
+            <circle cx={hoverX} cy={yFor(data[hover.idx].incoming)} r={3.5} fill="var(--muted-foreground)" />
+            <circle cx={hoverX} cy={yFor(data[hover.idx].outgoing)} r={3.5} fill="var(--primary)" />
           </g>
         )}
       </svg>
@@ -285,13 +291,13 @@ function LineSvg({
           letterboxed viewBox percentage. */}
       {hovered && hover !== null && (
         <div
-          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-md border border-border bg-popover px-2.5 py-1.5 text-[11px] shadow-lg"
+          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-2xl border border-border bg-popover px-3 py-2 text-[11px] shadow-lg"
           style={{ left: `${hover.tooltipLeftPx}px` }}
         >
           <div className="font-medium text-popover-foreground">{longDayLabel(hovered.day)}</div>
           <div className="mt-1 flex flex-col gap-0.5">
-            <span className="flex items-center gap-1.5 text-blue-300">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />
               {t('tooltipIncoming', { count: hovered.incoming })}
             </span>
             <span className="flex items-center gap-1.5 text-primary">
@@ -305,10 +311,10 @@ function LineSvg({
   )
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendDot({ className, label }: { className: string; label: string }) {
   return (
     <span className="flex items-center gap-1.5">
-      <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
+      <span className={cn('inline-block h-1.5 w-1.5 rounded-full', className)} />
       {label}
     </span>
   )
