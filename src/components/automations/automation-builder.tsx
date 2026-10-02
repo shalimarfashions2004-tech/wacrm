@@ -315,7 +315,7 @@ function ResourcesProvider({ children }: { children: ReactNode }) {
 }
 
 const SELECT_CLASS =
-  "w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+  "w-full rounded-md border border-border bg-card-2 px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
 
 /** Tag dropdown by name + color, storing the tag's id. Falls back to a
  *  raw id input when no tags exist yet. */
@@ -335,7 +335,7 @@ function TagSelect({
         placeholder={t("tags.placeholder")}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-muted text-foreground"
+        className="bg-card-2 text-foreground"
       />
     )
   }
@@ -428,7 +428,7 @@ function AgentSelect({
         placeholder={t("agents.placeholder")}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-muted text-foreground"
+        className="bg-card-2 text-foreground"
       />
     )
   }
@@ -476,7 +476,7 @@ function DealPipelineFields({
             onChange={(e) =>
               onChange({ pipeline_id: e.target.value, stage_id: stageId })
             }
-            className="bg-muted text-foreground"
+            className="bg-card-2 text-foreground"
           />
         </FieldBlock>
         <FieldBlock label={t("pipelines.stageIdLabel")}>
@@ -485,7 +485,7 @@ function DealPipelineFields({
             onChange={(e) =>
               onChange({ pipeline_id: pipelineId, stage_id: e.target.value })
             }
-            className="bg-muted text-foreground"
+            className="bg-card-2 text-foreground"
           />
         </FieldBlock>
       </>
@@ -575,7 +575,7 @@ function SendTemplateFields({
             onChange={(e) =>
               onChange({ template_name: e.target.value, language })
             }
-            className="bg-muted text-foreground"
+            className="bg-card-2 text-foreground"
           />
         </FieldBlock>
         <FieldBlock label={t("templates.languageLabel")}>
@@ -584,7 +584,7 @@ function SendTemplateFields({
             onChange={(e) =>
               onChange({ template_name: templateName, language: e.target.value })
             }
-            className="bg-muted text-foreground"
+            className="bg-card-2 text-foreground"
           />
         </FieldBlock>
       </>
@@ -719,15 +719,15 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background">
+    <div className="fixed inset-0 flex flex-col bg-background text-foreground">
       {/* Top bar. At sub-sm widths the "Active" label is hidden and the
           switch moves to the right of the save button, so the name input
           gets maximum width. */}
-      <header className="flex flex-shrink-0 items-center gap-2 border-b border-border bg-card/80 px-3 py-3 sm:gap-3 sm:px-4">
+      <header className="flex flex-shrink-0 items-center gap-2 border-b border-border/70 bg-card/95 px-3 py-3 shadow-[0_10px_28px_-24px_rgba(21,35,12,0.65)] sm:gap-3 sm:px-5">
         <button
           type="button"
           onClick={() => router.push("/automations")}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-border/70 bg-card-2 text-muted-foreground transition-colors hover:bg-pale-lime hover:text-foreground"
           aria-label={t("backToAutomations")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -736,9 +736,9 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
           value={state.name}
           onChange={(e) => patchTop("name", e.target.value)}
           placeholder={t("untitled")}
-          className="min-w-0 flex-1 rounded-md bg-transparent px-2 py-1 text-sm font-semibold text-foreground placeholder:text-muted-foreground focus:bg-muted focus:outline-none sm:text-base"
+          className="min-w-0 flex-1 rounded-full bg-card-2 px-4 py-2 text-sm font-semibold text-foreground placeholder:text-muted-foreground focus:bg-pale-lime focus:outline-none sm:text-base"
         />
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <span className="hidden sm:inline">{t("active")}</span>
           <Switch
             checked={state.is_active}
@@ -749,7 +749,7 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
         <Button
           onClick={save}
           disabled={saving}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          className="rounded-full bg-primary text-primary-foreground shadow-[0_12px_24px_-16px_rgba(54,77,8,0.65)] hover:bg-primary-hover"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {isEditing ? t("save") : t("saveDraft")}
@@ -758,8 +758,8 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
 
       {/* Canvas */}
       <div className="relative flex-1 overflow-y-auto">
-        <div className="absolute inset-0 bg-[radial-gradient(circle,var(--border)_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
-        <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-0 px-4 py-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,var(--border)_1px,transparent_1px)] opacity-70 [background-size:20px_20px]" />
+        <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-0 px-4 py-10 sm:py-14">
           <ResourcesProvider>
             <TriggerCard
               type={state.trigger_type}
@@ -808,17 +808,17 @@ function TriggerCard({
     // Card width: full on mobile, fixed 320px on sm+. The canvas wrapper
     // (max-w-2xl + px-4) keeps this tidy on tablet/desktop.
     <div className="z-10 w-full max-w-[320px] sm:w-80">
-      <div className="rounded-lg border border-border border-l-4 border-l-blue-500 bg-card shadow-lg">
+      <div className="overflow-hidden rounded-[24px] border border-border/70 border-l-4 border-l-blue-500 bg-card shadow-[0_18px_40px_-28px_rgba(21,35,12,0.65)]">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="flex w-full items-center gap-3 px-4 py-3 text-left"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-500/10 text-blue-400">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-pale-lime text-primary">
             <Zap className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] uppercase tracking-wide text-blue-300">{t("trigger")}</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{t("trigger")}</div>
             <div className="truncate text-sm font-medium text-foreground">
               {t(`triggers.${type}.label`)}
             </div>
@@ -828,7 +828,7 @@ function TriggerCard({
           />
         </button>
         {open && (
-          <div className="space-y-3 border-t border-border px-4 py-3">
+          <div className="space-y-3 border-t border-border/70 bg-card-2/40 px-4 py-4">
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">
                 {t("triggerType")}
@@ -836,7 +836,7 @@ function TriggerCard({
               <select
                 value={type}
                 onChange={(e) => onTypeChange(e.target.value as AutomationTriggerType)}
-                className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+                className="w-full rounded-full border border-border/70 bg-card-2 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
               >
                 {TRIGGER_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -844,7 +844,7 @@ function TriggerCard({
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 {t(`triggers.${type}.hint`)}
               </p>
             </div>
@@ -881,9 +881,9 @@ function TriggerCard({
                   onChange={(e) =>
                     onConfigChange({ ...config, schedule: e.target.value })
                   }
-                  className="bg-muted text-foreground"
+                  className="bg-card-2 text-foreground"
                 />
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {t("scheduleHint")}
                 </p>
               </div>
@@ -951,7 +951,7 @@ function KeywordMatchConfig({
             }
           }}
           placeholder={t("keywordsHint")}
-          className="bg-muted text-foreground"
+          className="bg-card-2 text-foreground"
         />
       </div>
       <div>
@@ -966,7 +966,7 @@ function KeywordMatchConfig({
               match_type: e.target.value as "exact" | "contains" | "word",
             })
           }
-          className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground focus:outline-none"
+          className="w-full rounded-md border border-border bg-card-2 px-2 py-1.5 text-sm text-foreground focus:outline-none"
         >
           <option value="contains">{t("config.matchContains")}</option>
           <option value="word">{t("config.matchWord")}</option>
@@ -1024,9 +1024,9 @@ function InteractiveReplyConfig({
           }
         }}
         placeholder={t("replyIdsHint")}
-        className="bg-muted font-mono text-foreground"
+        className="bg-card-2 font-mono text-foreground"
       />
-      <p className="mt-1 text-[11px] text-muted-foreground">{t("replyIdsHelp")}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{t("replyIdsHelp")}</p>
     </div>
   )
 }
@@ -1118,7 +1118,7 @@ function StepRenderer({
       <div className={cn("z-10 flex min-w-0 flex-col", width)}>
         <div
           className={cn(
-            "rounded-lg border border-border border-l-4 bg-card shadow-lg",
+            "overflow-hidden rounded-[24px] border border-border/70 border-l-4 bg-card shadow-[0_18px_40px_-28px_rgba(21,35,12,0.65)]",
             meta.border,
           )}
         >
@@ -1128,22 +1128,22 @@ function StepRenderer({
             className="flex w-full items-center gap-3 px-4 py-3 text-left"
           >
             <GripVertical className="h-4 w-4 flex-shrink-0 text-muted-foreground" aria-hidden />
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-card-2 text-muted-foreground">
               <Icon className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {isCondition ? t("kindCondition") : step.step_type === "wait" ? t("kindWait") : t("kindAction")}
               </div>
               <div className="truncate text-sm font-medium text-foreground">{t(`steps.${meta.label}`)}</div>
-              <div className="truncate text-[11px] text-muted-foreground">{previewFor(step)}</div>
+              <div className="truncate text-xs text-muted-foreground">{previewFor(step)}</div>
             </div>
             <ChevronDown
               className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded && "rotate-180")}
             />
           </button>
           {expanded && (
-            <div className="border-t border-border px-4 py-3">
+            <div className="border-t border-border/70 bg-card-2/40 px-4 py-4">
               <StepEditor
                 step={step}
                 onChange={(next) => props.updateStep(path, () => next)}
@@ -1248,7 +1248,7 @@ function BranchColumn({
 }) {
   return (
     <div className="flex min-w-0 flex-col items-center">
-      <div className={cn("mb-2 text-[11px] font-semibold uppercase", color)}>{label}</div>
+      <div className={cn("mb-2 text-xs font-semibold uppercase tracking-[0.14em]", color)}>{label}</div>
       {children}
     </div>
   )
@@ -1310,7 +1310,7 @@ function StepEditor({
             value={(cfg.text as string) ?? ""}
             onChange={(e) => set({ text: e.target.value })}
             placeholder={t("config.placeholderMessageText")}
-            className="min-h-24 bg-muted text-foreground"
+            className="min-h-24 bg-card-2 text-foreground"
           />
         </FieldBlock>
       )
@@ -1353,7 +1353,7 @@ function StepEditor({
             <select
               value={(cfg.mode as string) ?? "round_robin"}
               onChange={(e) => set({ mode: e.target.value })}
-              className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
+              className="w-full rounded-md border border-border bg-card-2 px-2 py-1.5 text-sm text-foreground"
             >
               <option value="round_robin">{t("config.modes.round_robin")}</option>
               <option value="specific">{t("config.modes.specific")}</option>
@@ -1385,7 +1385,7 @@ function StepEditor({
               value={(cfg.value as string) ?? ""}
               onChange={(e) => set({ value: e.target.value })}
               placeholder={t.raw("config.placeholderValue")}
-              className="bg-muted text-foreground"
+              className="bg-card-2 text-foreground"
             />
           </FieldBlock>
         </>
@@ -1403,7 +1403,7 @@ function StepEditor({
             <Input
               value={(cfg.title as string) ?? ""}
               onChange={(e) => set({ title: e.target.value })}
-              className="bg-muted text-foreground"
+              className="bg-card-2 text-foreground"
             />
           </FieldBlock>
           <FieldBlock label={t("config.valueLabel")}>
@@ -1411,7 +1411,7 @@ function StepEditor({
               type="number"
               value={(cfg.value as number) ?? 0}
               onChange={(e) => set({ value: Number(e.target.value) })}
-              className="bg-muted text-foreground"
+              className="bg-card-2 text-foreground"
             />
           </FieldBlock>
         </>
@@ -1425,14 +1425,14 @@ function StepEditor({
               min={1}
               value={(cfg.amount as number) ?? 1}
               onChange={(e) => set({ amount: Math.max(1, Number(e.target.value)) })}
-              className="bg-muted text-foreground"
+              className="bg-card-2 text-foreground"
             />
           </FieldBlock>
           <FieldBlock label={t("config.unitLabel")}>
             <select
               value={(cfg.unit as string) ?? "hours"}
               onChange={(e) => set({ unit: e.target.value })}
-              className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
+              className="w-full rounded-md border border-border bg-card-2 px-2 py-1.5 text-sm text-foreground"
             >
               <option value="minutes">{t("config.units.minutes")}</option>
               <option value="hours">{t("config.units.hours")}</option>
@@ -1448,7 +1448,7 @@ function StepEditor({
             <select
               value={(cfg.subject as string) ?? "tag_presence"}
               onChange={(e) => set({ subject: e.target.value })}
-              className="w-full rounded-md border border-border bg-muted px-2 py-1.5 text-sm text-foreground"
+              className="w-full rounded-md border border-border bg-card-2 px-2 py-1.5 text-sm text-foreground"
             >
               <option value="tag_presence">{t("config.subjects.tag_presence")}</option>
               <option value="contact_field">{t("config.subjects.contact_field")}</option>
@@ -1469,7 +1469,7 @@ function StepEditor({
               }
               value={(cfg.operand as string) ?? ""}
               onChange={(e) => set({ operand: e.target.value })}
-              className="bg-muted text-foreground"
+              className="bg-card-2 text-foreground"
             />
           </FieldBlock>
           {(cfg.subject === "contact_field" || cfg.subject === "message_content") && (
@@ -1477,7 +1477,7 @@ function StepEditor({
               <Input
                 value={(cfg.value as string) ?? ""}
                 onChange={(e) => set({ value: e.target.value })}
-                className="bg-muted text-foreground"
+                className="bg-card-2 text-foreground"
               />
             </FieldBlock>
           )}
@@ -1490,14 +1490,14 @@ function StepEditor({
             <Input
               value={(cfg.url as string) ?? ""}
               onChange={(e) => set({ url: e.target.value })}
-              className="bg-muted text-foreground"
+              className="bg-card-2 text-foreground"
             />
           </FieldBlock>
           <FieldBlock label={t("config.bodyTemplateLabel")}>
             <Textarea
               value={(cfg.body_template as string) ?? ""}
               onChange={(e) => set({ body_template: e.target.value })}
-              className="min-h-20 bg-muted font-mono text-xs text-foreground"
+              className="min-h-20 bg-card-2 font-mono text-xs text-foreground"
             />
           </FieldBlock>
         </>

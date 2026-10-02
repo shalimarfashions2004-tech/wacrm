@@ -139,8 +139,8 @@ export default function AutomationsPage() {
 
   if (error) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-2">
-        <p className="text-sm text-red-400">{error}</p>
+      <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-[28px] border border-red-500/20 bg-red-500/5 px-6 text-center">
+        <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
         <Button variant="outline" onClick={() => window.location.reload()}>
           {t("retry")}
         </Button>
@@ -150,7 +150,7 @@ export default function AutomationsPage() {
 
   if (automations === null) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="flex min-h-64 items-center justify-center rounded-[28px] border border-border/70 bg-card">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     )
@@ -159,11 +159,12 @@ export default function AutomationsPage() {
   const showTemplates = automations.length < 3
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("title")}</p>
+          <h1 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">{t("title")}</h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
             {t("subtitle")}
           </p>
         </div>
@@ -171,7 +172,7 @@ export default function AutomationsPage() {
           canAct={canCreate}
           gateReason="create automations"
           onClick={() => router.push("/automations/new")}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          className="w-full bg-primary text-primary-foreground shadow-[0_12px_24px_-16px_rgba(54,77,8,0.65)] hover:bg-primary-hover sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           {t("create")}
@@ -180,7 +181,7 @@ export default function AutomationsPage() {
 
       {showTemplates && (
         <section>
-          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("templatesTitle")}</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{t("templatesTitle")}</h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {TEMPLATE_ORDER.map((slug) => {
               const t = AUTOMATION_TEMPLATES[slug]
@@ -189,9 +190,9 @@ export default function AutomationsPage() {
                 <button
                   key={slug}
                   onClick={() => startFromTemplate(slug)}
-                  className="group flex flex-col items-start rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/50 hover:bg-card/80"
+                  className="group flex flex-col items-start rounded-[22px] border border-border/70 bg-card p-5 text-left shadow-[0_10px_30px_-24px_rgba(21,35,12,0.35)] transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-pale-lime"
                 >
-                  <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary/15">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-pale-lime text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="text-sm font-semibold text-foreground">{t.name}</div>
@@ -204,8 +205,8 @@ export default function AutomationsPage() {
       )}
 
       {automations.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+        <div className="flex h-56 flex-col items-center justify-center rounded-[28px] border border-dashed border-border/80 bg-card/70 px-6 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-pale-lime">
             <Zap className="h-6 w-6 text-primary" />
           </div>
           <p className="mt-3 text-sm font-medium text-foreground">{t("emptyTitle")}</p>
@@ -285,10 +286,10 @@ function AutomationCard({
     ? tTriggers(`${automation.trigger_type}.label`)
     : automation.trigger_type
   return (
-    <li className="rounded-xl border border-border bg-card transition-colors hover:border-border">
-      <div className="flex items-center gap-4 p-4">
+    <li className="rounded-[24px] border border-border/70 bg-card shadow-[0_14px_38px_-30px_rgba(21,35,12,0.5)] transition-all hover:-translate-y-0.5 hover:border-primary/35">
+      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
         <div
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-pale-lime"
           aria-hidden
         >
           <Zap className="h-5 w-5 text-primary" />
@@ -313,10 +314,10 @@ function AutomationCard({
           {automation.description && (
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{automation.description}</p>
           )}
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span
               className={cn(
-                "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
                 meta.pillClass,
               )}
             >
@@ -332,7 +333,7 @@ function AutomationCard({
           </div>
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-end sm:self-auto">
           <Switch
             checked={automation.is_active}
             onCheckedChange={(v) => onToggle(!!v)}
@@ -342,7 +343,7 @@ function AutomationCard({
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t("openMenu")}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[popup-open]:bg-muted"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground data-[popup-open]:bg-muted"
             >
               <MoreVertical className="h-4 w-4" />
             </DropdownMenuTrigger>

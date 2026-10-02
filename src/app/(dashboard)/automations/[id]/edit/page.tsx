@@ -52,11 +52,11 @@ export default function EditAutomationPage({
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-3">
-        <p className="text-sm text-red-400">{error}</p>
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+        <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
         <button
           onClick={() => router.push("/automations")}
-          className="text-sm text-primary hover:text-primary/80"
+          className="rounded-full border border-border/70 bg-card px-4 py-2 text-sm text-primary shadow-sm hover:bg-pale-lime"
         >
           {t("back")}
         </button>
@@ -66,7 +66,7 @@ export default function EditAutomationPage({
 
   if (!initial) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     )

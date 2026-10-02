@@ -67,8 +67,8 @@ export default function AutomationLogsPage({
 
   if (error) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-3">
-        <p className="text-sm text-red-400">{error}</p>
+      <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-[28px] border border-red-500/20 bg-red-500/5 px-6 text-center">
+        <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
         <Button variant="outline" onClick={() => router.push("/automations")}>
           {t("back")}
         </Button>
@@ -78,31 +78,31 @@ export default function AutomationLogsPage({
 
   if (!automation || logs === null) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="flex min-h-64 items-center justify-center rounded-[28px] border border-border/70 bg-card">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="space-y-8">
+      <div className="flex items-start gap-3">
         <button
           type="button"
           onClick={() => router.push("/automations")}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-border/70 bg-card text-muted-foreground shadow-sm transition-colors hover:bg-pale-lime hover:text-foreground"
           aria-label={t("backAria")}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{automation.name}</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">{t("title")}</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("title")}</p>
+          <h1 className="max-w-3xl text-3xl font-light tracking-tight text-foreground sm:text-4xl">{automation.name}</h1>
         </div>
       </div>
 
       {logs.length === 0 ? (
-        <div className="flex h-48 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/40">
+        <div className="flex h-56 flex-col items-center justify-center rounded-[28px] border border-dashed border-border/80 bg-card/70 px-6 text-center">
           <p className="text-sm text-foreground">{t("emptyTitle")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {t("emptyDesc")}
@@ -115,12 +115,12 @@ export default function AutomationLogsPage({
             return (
               <li
                 key={log.id}
-                className="rounded-xl border border-border bg-card"
+                className="overflow-hidden rounded-[24px] border border-border/70 bg-card shadow-[0_14px_38px_-30px_rgba(21,35,12,0.5)]"
               >
                 <button
                   type="button"
                   onClick={() => setOpenLogId(isOpen ? null : log.id)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                  className="flex w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-pale-lime/60 sm:items-center sm:px-5"
                 >
                   {isOpen ? (
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -129,22 +129,22 @@ export default function AutomationLogsPage({
                   )}
                   <StatusBadge status={log.status} t={t} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-foreground">
+                    <div className="break-words text-sm font-medium text-foreground">
                       {log.contact?.name ?? log.contact?.phone ?? t("unknownContact")}
                     </div>
-                    <div className="truncate text-xs text-muted-foreground">
+                    <div className="break-words text-xs text-muted-foreground">
                       {log.trigger_event} · {log.steps_executed?.length ?? 0}{" "}
                       {log.steps_executed?.length === 1 ? t("step", { count: 1 }).replace("1 ", "") : t("stepPlural", { count: log.steps_executed?.length ?? 0 }).replace(/^[0-9]+ /, "")}
                     </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="shrink-0 text-xs text-muted-foreground">
                     {formatRelative(log.created_at, tRelative)}
                   </div>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-border px-4 py-3">
+                  <div className="border-t border-border/70 bg-card-2/40 px-4 py-4 sm:px-5">
                     {log.error_message && (
-                      <p className="mb-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                      <p className="mb-3 rounded-2xl border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs text-red-800 dark:text-red-200">
                         {log.error_message}
                       </p>
                     )}
@@ -172,12 +172,12 @@ function StatusBadge({ status, t }: { status: AutomationLog["status"], t: Return
     status === "success"
       ? "border-primary/30 bg-primary/10 text-primary"
       : status === "partial"
-      ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-      : "border-red-500/30 bg-red-500/10 text-red-300"
+      ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200"
+      : "border-red-500/30 bg-red-500/10 text-red-800 dark:text-red-200"
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
         classes,
       )}
     >
@@ -193,15 +193,15 @@ function StepRow({ result }: { result: AutomationLogStepResult }) {
       <span
         className={cn(
           "mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full",
-          ok ? "bg-primary/20 text-primary" : "bg-red-500/20 text-red-400",
+          ok ? "bg-primary/20 text-primary" : "bg-red-500/20 text-red-800 dark:text-red-200",
         )}
         aria-hidden
       >
         {ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
       </span>
-      <span className="text-muted-foreground">{result.step_type}</span>
+      <span className="min-w-0 break-words text-muted-foreground">{result.step_type}</span>
       {result.detail && (
-        <span className="truncate text-muted-foreground">— {result.detail}</span>
+        <span className="min-w-0 break-words text-muted-foreground">— {result.detail}</span>
       )}
     </li>
   )
