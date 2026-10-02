@@ -14,6 +14,8 @@
  * Error codes: https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes
  */
 
+import { InvalidMetaAccessTokenError } from './access-token-input'
+
 /** Which call of the connect flow failed. */
 export type MetaConnectStep =
   | 'verify_number'
@@ -117,6 +119,19 @@ export function explainMetaError(
   step: MetaConnectStep,
   ctx: MetaErrorContext = {},
 ): MetaErrorExplanation {
+  if (err instanceof InvalidMetaAccessTokenError) {
+    return {
+      summary: err.message,
+      field: 'access_token',
+      side: 'user',
+      httpStatus: 400,
+      step,
+      code: null,
+      subcode: null,
+      fbtraceId: null,
+      metaMessage: err.message,
+    }
+  }
   if (!isMetaErrorLike(err)) {
     const message = err instanceof Error ? err.message : String(err)
     return {

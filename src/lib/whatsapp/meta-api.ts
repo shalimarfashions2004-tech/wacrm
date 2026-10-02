@@ -10,6 +10,7 @@
  */
 
 import { isBusinessScopedUserId } from './wa-identity'
+import { InvalidMetaAccessTokenError, isValidMetaAccessToken } from './access-token-input'
 import {
   DELIVERY_DISABLED_MESSAGE,
   isLiveDeliveryApproved,
@@ -140,6 +141,7 @@ export async function verifyPhoneNumber(
   args: VerifyPhoneNumberArgs
 ): Promise<MetaPhoneInfo> {
   const { phoneNumberId, accessToken } = args
+  if (!isValidMetaAccessToken(accessToken)) throw new InvalidMetaAccessTokenError()
   const url = `${META_API_BASE}/${phoneNumberId}?fields=id,display_phone_number,verified_name,quality_rating`
   const response = await metaFetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },

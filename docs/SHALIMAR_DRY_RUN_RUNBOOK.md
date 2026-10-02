@@ -160,6 +160,22 @@ messages to the repository issue or chat.
 
 ## Stop conditions
 
+### Credential paste mistakes (2026-10-02)
+
+An access token belongs in **Permanent Access Token**. The **WhatsApp Business
+Account ID** field accepts only the numeric WABA ID. If an error mentions
+`ByteString` and a character such as an arrow, the token input contains copied
+instructions or another invalid character; it is not evidence of a network
+outage. Re-copy only the token from Meta, replace the whole token field, save,
+and then test the saved connection. Keep all credentials out of chat and Git.
+
+The client and configuration API reject malformed bearer-token input. The phone
+verification helper also rejects it before making a network request, including
+when checking previously saved credentials. The error identifies the token
+field without echoing its contents. Verification: 96 test files / 1,096 tests,
+typecheck and changed-file lint passed. Hosted credential validity still needs
+an actual successful Meta connection result; local tests do not establish it.
+
 Stop and report the issue if any of these occurs:
 
 - Meta assets cannot be read back or the phone is under a different WABA.

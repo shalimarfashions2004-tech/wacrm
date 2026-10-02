@@ -22,6 +22,7 @@ import {
 } from '@/lib/whatsapp/waba-pairing'
 import { encrypt, decrypt } from '@/lib/whatsapp/encryption'
 import { resolveVerifyTokenForSave } from '@/lib/whatsapp/verify-token'
+import { INVALID_META_ACCESS_TOKEN_MESSAGE, isValidMetaAccessToken } from '@/lib/whatsapp/access-token-input'
 
 /**
  * Resolve the caller's account_id from their profile. Inlined here
@@ -273,6 +274,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'access_token and phone_number_id are required' },
         { status: 400 }
+      )
+    }
+
+    if (!isValidMetaAccessToken(access_token)) {
+      return NextResponse.json(
+        { error: INVALID_META_ACCESS_TOKEN_MESSAGE, field: 'access_token' },
+        { status: 400 },
       )
     }
 

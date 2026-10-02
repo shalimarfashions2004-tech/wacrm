@@ -31,6 +31,7 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import type { WhatsAppConfig as WhatsAppConfigType } from '@/types';
+import { INVALID_META_ACCESS_TOKEN_MESSAGE, isValidMetaAccessToken } from '@/lib/whatsapp/access-token-input';
 
 const MASKED_TOKEN = '••••••••••••••••';
 
@@ -281,6 +282,10 @@ export function WhatsAppConfig() {
     }
     if (!config && (!accessToken.trim() || !tokenEdited)) {
       toast.error(t('accessTokenRequired'));
+      return;
+    }
+    if (tokenEdited && accessToken.trim() && accessToken !== MASKED_TOKEN && !isValidMetaAccessToken(accessToken.trim())) {
+      toast.error(INVALID_META_ACCESS_TOKEN_MESSAGE);
       return;
     }
 
