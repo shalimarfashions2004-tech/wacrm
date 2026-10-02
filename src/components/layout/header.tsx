@@ -3,7 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { LogOut, Menu, Settings as SettingsIcon, User } from "lucide-react";
+import {
+  Bell,
+  GitBranch,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Radio,
+  Settings as SettingsIcon,
+  User,
+  Users,
+} from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -17,24 +28,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "@/components/layout/mode-toggle";
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 
-const pageTitles: Record<string, string> = {
-  "/dashboard": "dashboard",
-  "/inbox": "inbox",
-  "/notifications": "notifications",
-  "/contacts": "contacts",
-  "/pipelines": "pipelines",
-  "/broadcasts": "broadcasts",
-  "/automations": "automations",
-  "/settings": "settings",
+const pageTitles: Record<string, { key: string; source: "header" | "sidebar" }> = {
+  "/dashboard": { key: "dashboard", source: "header" },
+  "/inbox": { key: "inbox", source: "header" },
+  "/notifications": { key: "notifications", source: "header" },
+  "/contacts": { key: "contacts", source: "header" },
+  "/pipelines": { key: "pipelines", source: "header" },
+  "/broadcasts": { key: "broadcasts", source: "header" },
+  "/automations": { key: "automations", source: "header" },
+  "/settings": { key: "settings", source: "header" },
+  "/flows": { key: "flows", source: "sidebar" },
+  "/agents": { key: "aiAgents", source: "sidebar" },
 };
 
-function getPageTitleKey(pathname: string): string {
+const primaryNav = [
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/inbox", key: "inbox", icon: MessageSquare },
+  { href: "/contacts", key: "contacts", icon: Users },
+  { href: "/pipelines", key: "pipelines", icon: GitBranch },
+  { href: "/broadcasts", key: "broadcasts", icon: Radio },
+] as const;
+
+function getPageTitleMeta(pathname: string) {
   if (pageTitles[pathname]) return pageTitles[pathname];
   const match = Object.entries(pageTitles).find(([path]) =>
     pathname.startsWith(path),
   );
-  return match ? match[1] : "dashboard";
+  return match ? match[1] : pageTitles["/dashboard"];
 }
 
 interface HeaderProps {
@@ -47,9 +69,12 @@ import { useTranslations } from "next-intl";
 
 export function Header({ onOpenSidebar }: HeaderProps) {
   const t = useTranslations("Header");
+  const tSidebar = useTranslations("Sidebar");
   const pathname = usePathname();
   const { profile, signOut } = useAuth();
-  const titleKey = getPageTitleKey(pathname);
+  const titleMeta = getPageTitleMeta(pathname);
+  const pageTitle = titleMeta.source === "sidebar" ? tSidebar(titleMeta.key) : t(titleMeta.key);
+  const unreadNotifications = useUnreadNotifications();
 
   const initial =
     profile?.full_name?.charAt(0)?.toUpperCase() ??
@@ -57,8 +82,9 @@ export function Header({ onOpenSidebar }: HeaderProps) {
     "U";
 
   return (
-    <header className="glass-header sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border px-4 lg:px-7">
-      <div className="flex min-w-0 items-center gap-2">
+    <header className="glass-header sticky top-0 z-20 shrink-0 border-b border-border px-4 lg:px-7">
+      <div className="flex h-16 min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
         {/* Hamburger — mobile only. 44×44 hit target per Apple HIG. */}
         <button
           type="button"
@@ -68,12 +94,40 @@ export function Header({ onOpenSidebar }: HeaderProps) {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <h1 className="truncate text-base font-semibold text-foreground sm:text-lg">
-          {t(titleKey as string)}
+        <nav aria-label={tSidebar("primaryNav")} className="hidden min-w-0 items-center gap-1 overflow-x-auto md:flex">
+          {primaryNav.map((item) => {
+            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
+                  isActive ? "bg-foreground text-background" : "text-muted-foreground hover:bg-card-2 hover:text-foreground"
+                }`}
+              >
+                <item.icon className="size-4" />
+                {t(item.key)}
+              </Link>
+            );
+          })}
+        </nav>
+        <h1 className="truncate text-base font-semibold text-foreground md:hidden sm:text-lg">
+          {pageTitle}
         </h1>
-      </div>
+        </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
+        <Link
+          href="/notifications"
+          aria-label={t("notifications")}
+          title={t("notifications")}
+          className="relative flex size-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card-2 hover:text-foreground"
+        >
+          <Bell className="size-4" />
+          {unreadNotifications > 0 ? (
+            <span className="absolute right-1 top-1 size-2 rounded-full bg-primary ring-2 ring-background" aria-hidden="true" />
+          ) : null}
+        </Link>
         <ModeToggle />
 
         <DropdownMenu>
@@ -142,6 +196,19 @@ export function Header({ onOpenSidebar }: HeaderProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
         </DropdownMenu>
+      </div>
+      </div>
+      <div className="flex min-h-[76px] items-center justify-between gap-4 border-t border-border/60 py-3">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">{t("workspace")} / {pageTitle}</p>
+          <h2 className="truncate text-2xl font-light tracking-[-0.03em] text-foreground sm:text-[28px]">{pageTitle}</h2>
+        </div>
+        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+          <Link href="/settings" className="inline-flex items-center gap-2 rounded-full bg-card-2 px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-soft">
+            <SettingsIcon className="size-4" />
+            {t("settings")}
+          </Link>
+        </div>
       </div>
     </header>
   );
