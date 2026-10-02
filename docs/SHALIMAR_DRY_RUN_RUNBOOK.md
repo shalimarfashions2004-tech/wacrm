@@ -177,12 +177,12 @@ typecheck and changed-file lint passed. Hosted credential validity still needs
 an actual successful Meta connection result; local tests do not establish it.
 
 Meta readback evidence on 2026-10-02 confirms the Shalimar test WABA and phone
-IDs in Business Settings (`3105529616452879` and `1228692947003388`). A
-`(#100) Tried accessing nonexisting field (phone_numbers)` response at the WABA
-lookup step therefore points to token access or revocation: assign the WABA to
-the SHALIMAR System User with full control, grant both WhatsApp permissions,
-generate a fresh token, and replace the CRM token. Meta showed that the older
-system-user tokens had been revoked. Do not paste tokens into chat.
+IDs in Business Settings (`3105529616452879` and `1228692947003388`). The new
+permanent token now validates in CRM and the WABA is subscribed to the app.
+The Meta test number has no two-step PIN, so CRM intentionally leaves local
+`registered_at` empty and shows a separate “Not registered” banner. For a
+production number, configure its 6-digit PIN and save it before relying on
+inbound webhook delivery. Do not paste tokens into chat.
 
 Stop and report the issue if any of these occurs:
 
