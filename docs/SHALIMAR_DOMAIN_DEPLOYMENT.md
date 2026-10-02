@@ -10,7 +10,7 @@ Target: `https://crm.shalimarfashions.com`
 - The CRM is a server-rendered Next.js application. GitHub Pages is not a suitable host for the CRM because it cannot run the app’s server routes, Supabase session handling, webhooks or API.
 - WhatsApp delivery stays in dry-run mode during deployment.
 - Vercel project: `shalimar-connect` in the Shalimar account.
-- Current deployment URL: `https://shalimar-connect-6dibn3mzq-shalimarfashions2004-9466.vercel.app`.
+- Current deployment URL: `https://shalimar-connect-kndhki28h-shalimarfashions2004-9466.vercel.app`.
 - Supabase project: `shalimar` (`houjlpiyafcanxsabmsk`) in the Shalimar organization.
 - Supabase project URL: `https://houjlpiyafcanxsabmsk.supabase.co`.
 
@@ -49,7 +49,7 @@ The intended Shalimar Supabase project was restored from a paused state on 2026-
 ## Release checks
 
 1. Host creates a preview deployment from the Shalimar branch. **Done:** a fresh production redeploy picked up the Supabase environment values; the deployed bundle no longer contains the placeholder URL and `crm.shalimarfashions.com` returns HTTP 200.
-2. Typecheck and the full Vitest suite pass (1,083 tests). The hosted Vercel build is Ready; a local build requires Supabase environment variables.
+2. Typecheck and the full Vitest suite pass (95 files, 1,085 tests); the broadcast safety subset is 8 files and 65 tests. The hosted Vercel build is Ready; a local build requires Supabase environment variables.
 3. **Done:** `/login` and `/signup` render over HTTPS without the previous fetch error.
 4. **Done:** Supabase site URL and redirect allow-list include the CRM and local callback patterns.
 5. Done: the `crm` CNAME is added in GoDaddy; verify HTTPS/TLS readback after any future DNS edits.
