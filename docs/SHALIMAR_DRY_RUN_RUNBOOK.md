@@ -122,11 +122,12 @@ The automated dry-run provider and broadcast logic pass locally. The hosted
 wizard has now been exercised safely: Meta templates synced, `hello_world` was
 selected with an All Contacts audience estimated at 2, and the campaign was
 saved as `Shalimar dry-run broadcast test 2026-10-02` with status **Draft**.
-No send action was taken. The synced templates are Meta/Jasper's Market sample
-templates, so the draft is test evidence only and must not be sent to
-customers. The audited campaign remains pending until migration 043, consent
-rows and a Shalimar-approved template are verified in the intended Supabase
-project.
+The persisted detail page shows **Recipients (0)** and all delivery counters at
+zero, so no send action was taken. The synced templates are Meta/Jasper's
+Market sample templates, so the draft is test evidence only and must not be
+sent to customers. The audited campaign remains pending until migration 043,
+consent rows, audience hydration and a Shalimar-approved template are verified
+in the intended Supabase project.
 
 If migration 043 is missing, the campaign must stop with the migration error.
 That is a safe failure, not a test failure to work around.
@@ -163,7 +164,7 @@ For each gate, record only the minimum evidence needed:
 
 | Date/time | Gate | Owner | Environment | Result | Evidence | Next action |
 |---|---|---|---|---|---|---|
-| 2026-10-02T15:00:00Z | Hosted broadcast wizard dry-run setup | QA + operations | hosted Shalimar CRM | pass (draft only) | Meta templates synced; `hello_world` + All Contacts estimated 2; draft `Shalimar dry-run broadcast test 2026-10-02` saved; no external send | Verify migration 043 and consent, then replace sample template with Shalimar-approved copy |
+| 2026-10-02T15:00:00Z | Hosted broadcast wizard dry-run setup | QA + operations | hosted Shalimar CRM | pass (draft only; 0 persisted recipients) | Meta templates synced; `hello_world` + All Contacts estimated 2; draft `Shalimar dry-run broadcast test 2026-10-02` saved; detail readback shows Recipients (0), all delivery counters 0, and no external send | Verify migration 043 and consent-backed audience hydration, then replace the sample template with Shalimar-approved copy |
 
 Do not attach tokens, phonebooks, customer exports or private customer
 messages to the repository issue or chat.
