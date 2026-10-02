@@ -30,8 +30,17 @@ export function useUnreadNotifications(): number {
       setCount(unreadCount ?? 0);
     })();
 
+    // Give each mounted hook its own channel. React Strict Mode can briefly
+    // mount the layout twice while the first realtime channel is still
+    // leaving; reusing the same name in that window makes supabase-js reject
+    // the postgres_changes callback and crashes the dashboard.
+    const channelName = `notifications-unread-count:${
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2)
+    }`;
     const channel = supabase
-      .channel("notifications-unread-count")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications" },
