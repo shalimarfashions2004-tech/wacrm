@@ -155,7 +155,7 @@ export function FlowBuilder() {
   }, [flashKey]);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-7">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-8">
       <TriggerPanel
         state={state}
         setState={setState}
@@ -174,7 +174,7 @@ export function FlowBuilder() {
         </div>
 
         {state.nodes.length === 0 ? (
-          <div className="border-border bg-card/50 text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+          <div className="rounded-[24px] border border-dashed border-border/80 bg-card/70 p-10 text-center text-sm text-muted-foreground">
             {t.rich('nodesEmpty', { strong: (chunks) => <strong>{chunks}</strong> })}
           </div>
         ) : (
@@ -252,7 +252,7 @@ function KeywordsInput({
         }
       }}
       placeholder={t('keywordsPlaceholder')}
-      className="bg-muted"
+      className="bg-card-2"
     />
   );
 }
@@ -273,7 +273,7 @@ function TriggerPanel({
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
-    <section className="border-border bg-card rounded-lg border p-4">
+    <section className="rounded-[24px] border border-border/70 bg-card p-5 shadow-[0_14px_38px_-30px_rgba(21,35,12,0.5)]">
       <h2 className="text-foreground mb-3 text-sm font-semibold">{t('triggerTitle')}</h2>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div>
@@ -291,7 +291,7 @@ function TriggerPanel({
               }))
             }
           >
-            <SelectTrigger className="bg-muted">
+            <SelectTrigger className="bg-card-2">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -355,7 +355,7 @@ function EntryPicker({
 }) {
   if (state.nodes.length === 0) return null;
   return (
-    <section className="border-border bg-card flex items-center gap-3 rounded-lg border p-3">
+    <section className="flex items-center gap-3 rounded-[22px] border border-border/70 bg-card p-4 shadow-[0_14px_38px_-30px_rgba(21,35,12,0.5)]">
       <CornerDownRight className="text-primary h-4 w-4 shrink-0" />
       <span className="text-muted-foreground text-xs">{t('entryNodeTitle')}</span>
       <NodeKeySelect
@@ -434,12 +434,12 @@ function NodeCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span
-              className="truncate text-[11px] font-semibold tracking-wider uppercase"
+              className="truncate text-xs font-semibold tracking-wider uppercase"
               style={{ color: c.text }}
             >
               {t(`nodes.${node.node_type}.label`)}
             </span>
-            <code className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]">
+            <code className="rounded-full bg-card-2 px-2 py-1 text-xs text-muted-foreground">
               {node.node_key}
             </code>
             {isEntry && (
@@ -458,7 +458,7 @@ function NodeCard({
           )}
         </div>
         {hasError && (
-          <CircleAlert className="h-3.5 w-3.5 shrink-0 text-red-400" />
+          <CircleAlert className="h-3.5 w-3.5 shrink-0 text-red-800 dark:text-red-200" />
         )}
         {expanded ? (
           <ChevronUp className="text-muted-foreground h-4 w-4" />
@@ -487,7 +487,7 @@ function NodeCard({
               variant="ghost"
               size="sm"
               onClick={onRemove}
-              className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              className="text-red-800 hover:bg-red-500/10 hover:text-red-700 dark:text-red-200 dark:hover:text-red-100"
             >
               <Trash2 className="h-3.5 w-3.5" />
               {t('removeNode')}
@@ -560,7 +560,7 @@ function NodeConfigWithAdvanced({
                 onChange={(e) =>
                   onUpdate({ node_key: slugify(e.target.value, node.node_key) })
                 }
-                className="bg-muted font-mono text-xs"
+                className="bg-card-2 font-mono text-xs"
               />
             </div>
             {hasReplyIds && (
@@ -595,7 +595,7 @@ function AddNodeButton({ onAdd, t }: { onAdd: (type: NodeType) => void; t: Retur
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="border-border bg-card text-foreground hover:bg-muted inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card text-xs font-medium text-foreground transition-colors hover:bg-pale-lime"
         aria-label={t('addNode')}
       >
         <Plus className="h-3.5 w-3.5" />
@@ -610,7 +610,7 @@ function AddNodeButton({ onAdd, t }: { onAdd: (type: NodeType) => void; t: Retur
           <Fragment key={group.id}>
             {i > 0 && <DropdownMenuSeparator />}
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+              <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t(`categories.${group.id}`)}
               </DropdownMenuLabel>
               {group.types.map((t_type) => {

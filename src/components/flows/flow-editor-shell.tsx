@@ -95,7 +95,7 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
 
   return (
     <FlowEditorProvider initialFlow={initialFlow} initialNodes={initialNodes}>
-      <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-full min-h-0 flex-col bg-background">
         <EditorHeader />
 
         {/* ---- mode row: view toggle + node-type legend ----
@@ -107,7 +107,7 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
             <div
               role="group"
               aria-label={t("editorView")}
-              className="inline-flex gap-0.5 rounded-lg border border-border bg-muted p-0.5"
+              className="inline-flex gap-0.5 rounded-full border border-border/70 bg-card-2 p-1 shadow-sm"
             >
               <SegButton
                 active={effectiveView === "canvas"}
@@ -126,7 +126,7 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
               {LEGEND_TYPES.map((t_type) => (
                 <span
                   key={t_type}
-                  className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
                 >
                   <span
                     className="h-2.5 w-2.5 rounded-full"
@@ -140,7 +140,7 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
         )}
 
         {/* ---- stage: the active view, owning its own overflow ---- */}
-        <div className="relative mx-6 min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card-2">
+        <div className="relative mx-6 min-h-0 flex-1 overflow-hidden rounded-[28px] border border-border/70 bg-card-2 shadow-[0_18px_44px_-34px_rgba(21,35,12,0.65)]">
           {effectiveView === "canvas" ? (
             <FlowCanvas />
           ) : (
@@ -151,7 +151,7 @@ export function FlowEditorShell({ initialFlow, initialNodes }: Props) {
         </div>
 
         {/* ---- validation / activate-readiness bar ---- */}
-        <div className="px-6 pb-5 pt-3">
+        <div className="px-6 pb-5 pt-4">
           <ValidationPanel />
         </div>
       </div>
@@ -198,7 +198,7 @@ function SegButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors",
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
         active
           ? "bg-card text-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground",

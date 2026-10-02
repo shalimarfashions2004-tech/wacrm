@@ -64,7 +64,7 @@ const STATUS_META: Record<
   { classes: string; icon: typeof Clock }
 > = {
   active: {
-    classes: "border-emerald-600/40 bg-emerald-500/10 text-emerald-300",
+    classes: "border-primary/30 bg-primary/10 text-primary",
     icon: PlayCircle,
   },
   completed: {
@@ -72,7 +72,7 @@ const STATUS_META: Record<
     icon: CircleCheck,
   },
   handed_off: {
-    classes: "border-amber-600/40 bg-amber-500/10 text-amber-300",
+    classes: "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200",
     icon: UserPlus,
   },
   timed_out: {
@@ -84,7 +84,7 @@ const STATUS_META: Record<
     icon: PauseCircle,
   },
   failed: {
-    classes: "border-red-600/40 bg-red-500/10 text-red-300",
+    classes: "border-red-500/30 bg-red-500/10 text-red-800 dark:text-red-200",
     icon: CircleAlert,
   },
 };
@@ -148,19 +148,19 @@ export default function FlowRunsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex min-h-64 items-center justify-center rounded-[28px] border border-border/70 bg-card">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
   if (notFound || !flow) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3">
+      <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-[28px] border border-border/70 bg-card px-6 text-center">
         <p className="text-sm text-muted-foreground">{tEdit("notFound")}</p>
         <button
           type="button"
           onClick={() => router.push("/flows")}
-          className="text-sm text-primary hover:opacity-80"
+          className="rounded-full border border-border/70 bg-card-2 px-4 py-2 text-sm text-primary shadow-sm hover:bg-pale-lime"
         >
           {tEdit("backToFlows")}
         </button>
@@ -169,26 +169,27 @@ export default function FlowRunsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl space-y-8 p-6">
       <button
         type="button"
         onClick={() => router.push(`/flows/${flow.id}`)}
-        className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm hover:bg-pale-lime hover:text-foreground"
       >
         <ArrowLeft className="h-3 w-3" />
         {flow.name}
       </button>
-      <h1 className="text-xl font-semibold text-foreground">{t("title")}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("title")}</p>
+      <h1 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">{t("title")}</h1>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
         {t("description")}
       </p>
 
       {runs.length === 0 ? (
-        <div className="mt-6 rounded-lg border border-dashed border-border bg-card/50 px-6 py-12 text-center text-sm text-muted-foreground">
+        <div className="rounded-[28px] border border-dashed border-border/80 bg-card/70 px-6 py-16 text-center text-sm text-muted-foreground">
           {t("emptyState")}
         </div>
       ) : (
-        <div className="mt-6 flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {runs.map((run) => (
             <RunCard
               key={run.id}
@@ -228,11 +229,11 @@ function RunCard({
       })
     : null;
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-[24px] border border-border/70 bg-card shadow-[0_14px_38px_-30px_rgba(21,35,12,0.5)]">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left"
+        className="flex w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-pale-lime/60 sm:items-center sm:px-5"
       >
         {expanded ? (
           <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -241,7 +242,7 @@ function RunCard({
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="truncate text-sm font-medium text-foreground">
+            <span className="break-words text-sm font-medium text-foreground">
               {contactLabel}
             </span>
             <Badge variant="outline" className={cn("gap-1", meta.classes)}>
@@ -261,12 +262,12 @@ function RunCard({
               )}
             </Badge>
             {run.status === "active" && run.current_node_key && (
-              <code className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              <code className="rounded-full bg-card-2 px-2 py-1 text-xs text-muted-foreground">
                 {t("atNode", { node: run.current_node_key })}
               </code>
             )}
           </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>{t("started", { time: format(new Date(run.started_at), "PP p") })}</span>
             {run.reprompt_count > 0 && (
               <span>· {t("reprompts", { count: run.reprompt_count })}</span>
@@ -276,13 +277,13 @@ function RunCard({
         </div>
       </button>
       {expanded && (
-        <div className="border-t border-border px-4 py-3">
+        <div className="border-t border-border/70 bg-card-2/40 px-4 py-4 sm:px-5">
           {Object.keys(run.vars).length > 0 && (
             <details className="mb-3">
               <summary className="cursor-pointer text-xs text-muted-foreground">
                 {t("capturedVars", { count: Object.keys(run.vars).length })}
               </summary>
-              <pre className="mt-2 overflow-x-auto rounded-md bg-background p-2 text-[11px] text-muted-foreground">
+              <pre className="mt-2 overflow-x-auto rounded-2xl bg-background p-3 text-xs text-muted-foreground">
                 {JSON.stringify(run.vars, null, 2)}
               </pre>
             </details>
@@ -303,34 +304,34 @@ function RunCard({
 }
 
 const EVENT_COLOR: Record<string, string> = {
-  started: "text-emerald-300",
+  started: "text-primary",
   node_entered: "text-muted-foreground",
-  message_sent: "text-sky-300",
+  message_sent: "text-sky-700 dark:text-sky-200",
   reply_received: "text-primary",
-  fallback_fired: "text-amber-300",
-  handoff: "text-amber-300",
+  fallback_fired: "text-amber-800 dark:text-amber-200",
+  handoff: "text-amber-800 dark:text-amber-200",
   timeout: "text-muted-foreground",
-  error: "text-red-300",
-  completed: "text-emerald-300",
+  error: "text-red-800 dark:text-red-200",
+  completed: "text-primary",
 };
 
 function EventLine({ ev }: { ev: EventRow }) {
   const cls = EVENT_COLOR[ev.event_type] ?? "text-muted-foreground";
   return (
-    <div className="flex items-start gap-2 rounded-md px-2 py-1 text-xs">
-      <span className="w-32 shrink-0 text-[10px] text-muted-foreground">
+    <div className="flex items-start gap-2 rounded-xl px-2 py-2 text-xs">
+      <span className="w-32 shrink-0 text-xs text-muted-foreground">
         {format(new Date(ev.created_at), "HH:mm:ss")}
       </span>
-      <span className={cn("w-32 shrink-0 font-mono text-[10px]", cls)}>
+      <span className={cn("w-32 shrink-0 font-mono text-xs", cls)}>
         {ev.event_type}
       </span>
       {ev.node_key && (
-        <code className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+        <code className="shrink-0 rounded-full bg-card-2 px-2 py-1 text-xs text-muted-foreground">
           {ev.node_key}
         </code>
       )}
       {Object.keys(ev.payload).length > 0 && (
-        <span className="min-w-0 truncate text-[10px] text-muted-foreground">
+        <span className="min-w-0 truncate text-xs text-muted-foreground">
           {summarizePayload(ev.payload)}
         </span>
       )}

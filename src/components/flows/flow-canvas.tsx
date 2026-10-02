@@ -203,7 +203,7 @@ function FlowNodeCard({ data, selected }: NodeProps) {
           </span>
         )}
       </div>
-      <div className="text-muted-foreground mt-2 truncate font-mono text-[11px]">
+      <div className="mt-2 truncate font-mono text-xs text-muted-foreground">
         {node.node_key}
       </div>
       {summary && (
@@ -217,7 +217,7 @@ function FlowNodeCard({ data, selected }: NodeProps) {
           {slots.map((slot) => (
             <div
               key={slot.id}
-              className="text-muted-foreground relative flex items-center justify-between gap-2 rounded px-1 py-0.5 text-[11px]"
+              className="relative flex items-center justify-between gap-2 rounded-xl px-2 py-1 text-xs text-muted-foreground"
             >
               <span className="truncate" title={slot.label}>
                 {slot.label}
@@ -555,7 +555,7 @@ function FlowCanvasInner() {
             color="var(--border)"
           />
           <Controls
-            className="!border-border !bg-card [&_button]:!border-border [&_button]:!bg-card [&_button:hover]:!bg-muted [&_button_svg]:!fill-foreground !overflow-hidden !rounded-xl !border !shadow-[0_6px_20px_-8px_rgba(0,0,0,0.5)]"
+            className="!overflow-hidden !rounded-2xl !border !border-border/70 !bg-card !shadow-[0_10px_24px_-14px_rgba(21,35,12,0.5)] [&_button]:!border-border/70 [&_button]:!bg-card [&_button:hover]:!bg-pale-lime [&_button_svg]:!fill-foreground"
             showInteractive={false}
           />
           <MiniMap
@@ -567,7 +567,7 @@ function FlowCanvasInner() {
             nodeStrokeWidth={0}
             nodeBorderRadius={3}
             maskColor="color-mix(in oklch, var(--background) 70%, transparent)"
-            className="!border-border !bg-card !rounded-xl !border !shadow-[0_6px_20px_-8px_rgba(0,0,0,0.5)]"
+            className="!rounded-2xl !border !border-border/70 !bg-card !shadow-[0_10px_24px_-14px_rgba(21,35,12,0.5)]"
           />
           <Panel position="top-left" className="!top-4 !left-4">
             <CanvasAddNodeButton t={t} />
@@ -632,13 +632,13 @@ function NodeEditSheet({
         side="right"
         className="border-border bg-popover flex w-full flex-col gap-0 border-l p-0 sm:max-w-md"
       >
-        <SheetHeader className="border-border flex-row items-center gap-3 space-y-0 border-b px-5 py-4">
+        <SheetHeader className="flex-row items-center gap-3 space-y-0 border-b border-border/70 bg-card px-5 py-4">
           <NodeIconChip type={node.node_type} size={36} iconSize={18} />
           <div className="min-w-0 flex-1">
-            <SheetTitle className="flex items-center gap-2 text-[11px] font-semibold tracking-wider uppercase">
+            <SheetTitle className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
               <span style={{ color: c.text }}>{t(`nodes.${node.node_type}.label`)}</span>
               {isEntry && (
-                <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-emerald-300 uppercase">
+                <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
                   {t('badgeEntry')}
                 </span>
               )}
@@ -647,7 +647,7 @@ function NodeEditSheet({
               {t(`nodes.${node.node_type}.blurb`)}
             </SheetDescription>
           </div>
-          <code className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px]">
+          <code className="shrink-0 rounded-full bg-card-2 px-2 py-1 font-mono text-xs text-muted-foreground">
             {node.node_key}
           </code>
         </SheetHeader>
@@ -673,7 +673,7 @@ function NodeEditSheet({
             variant="ghost"
             size="sm"
             onClick={onDelete}
-            className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            className="text-red-800 hover:bg-red-500/10 hover:text-red-700 dark:text-red-200 dark:hover:text-red-100"
           >
             <Trash2 className="h-3.5 w-3.5" />
             {t('deleteNode')}
@@ -735,7 +735,7 @@ function CanvasAddNodeButton({ t }: { t: ReturnType<typeof useTranslations> }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="bg-primary text-primary-foreground hover:bg-primary-hover inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium shadow-[0_6px_20px_-8px_rgba(0,0,0,0.5)] transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[0_12px_24px_-16px_rgba(54,77,8,0.65)] transition-colors hover:bg-primary-hover"
         aria-label={t('addNode')}
       >
         <Plus className="h-4 w-4" />
@@ -753,7 +753,7 @@ function CanvasAddNodeButton({ t }: { t: ReturnType<typeof useTranslations> }) {
           <Fragment key={group.id}>
             {i > 0 && <DropdownMenuSeparator />}
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[11px] font-semibold tracking-wider uppercase">
+              <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t(`categories.${group.id}`)}
               </DropdownMenuLabel>
               {group.types.map((t_type) => {

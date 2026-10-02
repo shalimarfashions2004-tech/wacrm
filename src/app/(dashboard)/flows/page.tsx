@@ -62,9 +62,9 @@ const STATUS_LABELS = (t: ReturnType<typeof useTranslations>): Record<FlowRow["s
 });
 
 const STATUS_COLORS: Record<FlowRow["status"], string> = {
-  draft: "border-border bg-muted text-muted-foreground",
-  active: "border-emerald-600/40 bg-emerald-500/10 text-emerald-300",
-  archived: "border-border bg-muted/50 text-muted-foreground",
+  draft: "border-border/70 bg-card-2 text-muted-foreground",
+  active: "border-primary/30 bg-primary/10 text-primary",
+  archived: "border-border/70 bg-card-2/60 text-muted-foreground",
 };
 
 interface TemplateSummary {
@@ -200,16 +200,17 @@ export default function FlowsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-8 p-6">
+      <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold text-foreground">{t("title")}</h1>
-            <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+          <div className="mb-2 flex items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("title")}</p>
+            <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
               {t("beta")}
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">{t("title")}</h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
             {t("description")}
           </p>
         </div>
@@ -248,7 +249,7 @@ export default function FlowsPage() {
             `sm:max-w-sm` baked into its default classes. Without the
             sm: prefix our override applies at base only and the
             sm-scoped 384px wins at every real desktop breakpoint. */}
-        <DialogContent className="sm:max-w-4xl bg-popover text-popover-foreground">
+          <DialogContent className="rounded-[28px] border-border/70 bg-popover text-popover-foreground shadow-2xl sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>{t("createTitle")}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
@@ -270,7 +271,7 @@ export default function FlowsPage() {
                       type="button"
                       onClick={() => handleUseTemplate(template.slug)}
                       disabled={creating}
-                      className="flex flex-col gap-2.5 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-primary/40 hover:bg-muted disabled:opacity-50"
+                      className="flex flex-col gap-2.5 rounded-[22px] border border-border/70 bg-card-2 p-5 text-left shadow-[0_10px_30px_-24px_rgba(21,35,12,0.35)] transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-pale-lime disabled:opacity-50"
                     >
                       <Icon className="h-5 w-5 text-primary" />
                       <span className="text-sm font-semibold text-popover-foreground">
@@ -279,7 +280,7 @@ export default function FlowsPage() {
                       <span className="text-xs leading-relaxed text-muted-foreground">
                         {template.description}
                       </span>
-                      <span className="mt-auto border-t border-border pt-2 text-[11px] text-muted-foreground">
+                      <span className="mt-auto border-t border-border/70 pt-3 text-xs text-muted-foreground">
                         {t("nodeCount", { count: template.node_count })}
                       </span>
                     </button>
@@ -289,7 +290,7 @@ export default function FlowsPage() {
             </div>
           )}
 
-          <div className="space-y-2 border-t border-border pt-4">
+          <div className="space-y-2 border-t border-border/70 pt-4">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               {t("startBlank")}
             </p>
@@ -297,7 +298,7 @@ export default function FlowsPage() {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={t("placeholderName")}
-              className="bg-muted"
+              className="bg-card-2"
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
               }}
@@ -333,8 +334,8 @@ function EmptyState({
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card/50 px-6 py-16 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+    <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-border/80 bg-card/70 px-6 py-16 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-pale-lime">
         <Workflow className="h-6 w-6 text-muted-foreground" />
       </div>
       <h2 className="mt-4 text-base font-medium text-foreground">
@@ -375,7 +376,7 @@ function FlowCard({
         ? Archive
         : PauseCircle;
   return (
-    <div className="flex flex-col rounded-lg border border-border bg-card p-4 transition-colors hover:border-border">
+    <div className="flex flex-col rounded-[24px] border border-border/70 bg-card p-5 shadow-[0_14px_38px_-30px_rgba(21,35,12,0.5)] transition-all hover:-translate-y-0.5 hover:border-primary/35">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <Workflow className="h-4 w-4 shrink-0 text-primary" />
@@ -399,14 +400,14 @@ function FlowCard({
         {flow.description || triggerSummary}
       </p>
 
-      <div className="mt-4 flex items-center gap-3 text-[11px] text-muted-foreground">
+      <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <MessageSquare className="h-3 w-3" />
           {t("runCount", { count: flow.execution_count })}
         </span>
       </div>
 
-      <div className="mt-4 flex items-center justify-end gap-2 border-t border-border pt-3">
+      <div className="mt-4 flex items-center justify-end gap-2 border-t border-border/70 pt-3">
         <Button variant="ghost" size="sm" onClick={onEdit}>
           <Pencil className="h-3.5 w-3.5" />
           {t("edit")}
@@ -415,7 +416,7 @@ function FlowCard({
           variant="ghost"
           size="sm"
           onClick={onDelete}
-          className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
+          className="text-red-800 hover:bg-red-500/10 hover:text-red-700 dark:text-red-200 dark:hover:text-red-100"
         >
           <Trash2 className="h-3.5 w-3.5" />
           {t("delete")}
