@@ -395,6 +395,14 @@ export default function BroadcastDetailPage() {
                 })}
               </span>
             </div>
+            {broadcast.delivery_mode === 'dry-run' && (
+              <div
+                role="status"
+                className="mt-3 inline-flex items-center rounded-full border border-primary/30 bg-pale-lime px-3 py-1 text-xs font-medium text-foreground"
+              >
+                Dry run — no WhatsApp messages were sent
+              </div>
+            )}
           </div>
         </div>
 

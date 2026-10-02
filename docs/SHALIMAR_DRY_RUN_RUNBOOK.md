@@ -1,6 +1,6 @@
 # Shalimar Connect dry-run runbook
 
-Updated: 2026-10-02
+Updated: 2026-10-03
 Branch: `feature/shalimar-connect-platform`  
 Backend: Supabase  
 Messaging provider: Meta WhatsApp Cloud API
@@ -14,12 +14,12 @@ each person does, what evidence proves it worked, and what must remain stopped.
 |---|---|---|---|
 | Code safety gate | Ready | `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` are the safe defaults. | Developer |
 | Consent and suppression code | Ready for database verification | Campaigns fail closed when migration 043 is unavailable or consent is missing. | Developer + compliance |
-| Automated checks | Passed | Typecheck passed; lint exits cleanly; 96 Vitest files and 1,097 tests passed. Broadcast subset: 8 files and 65 tests covering audience parsing, consent/dry-run gates, idempotency, retry/resume and rate limits. | Tester |
+| Automated checks | Passed | Typecheck passed; lint exits cleanly; 97 Vitest files and 1,099 tests passed. The build compiles and then needs deployment environment variables during static generation on this local checkout. | Tester |
 | Meta business assets | Connected; test-number registration banner remains | Hosted Settings → WhatsApp validates the permanent token, confirms WABA `3105529616452879` is subscribed to the app, and reads phone `1228692947003388`. The Meta test number has no PIN, so CRM intentionally keeps local registration empty. Template sync succeeded. | Owner + developer |
 | Supabase target project | Confirmed | Shalimar project `shalimar` (`houjlpiyafcanxsabmsk`) is healthy; Vercel Production and Preview have the project URL and protected keys. Schema migration remains pending. | Owner + developer |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` appears in Supabase Auth Users; complete the invitation from the Shalimar mailbox before dashboard acceptance testing. | Owner + tester |
-| Migration 043 | Ready to replay, not applied | Must be tested on a disposable Supabase project before the intended project. | Developer + database owner |
-| Real message sending | Stopped | The approved single-recipient live attempt was rejected by Meta because the recipient was not on the allowed list. Production remains `dry-run`; the current broadcast test was saved as Draft and no broadcast was sent. | Owner |
+| Production schema | Reconciled and route-checked | Migrations 043, 046 and 047 are applied and read back. Notifications now loads cleanly; the hosted smoke check returned clean routes for dashboard, inbox, contacts, pipelines, broadcasts, automations, flows, agents, notifications and settings. | Developer + database owner |
+| Real message sending | Stopped | Production remains `dry-run`. The final route test is designed to use the local provider and return `dry_*` IDs; it must never contact Meta while the delivery mode is dry-run. | Owner |
 
 “Ready” in this table means the work can proceed to its verification step. It
 does not mean production messaging is enabled.
@@ -118,16 +118,15 @@ Run a dry-run campaign using an approved template. The expected result is:
 - a second attempt does not create a duplicate recipient row;
 - the campaign result is auditable in Supabase.
 
-The automated dry-run provider and broadcast logic pass locally. The hosted
-wizard has now been exercised safely: Meta templates synced, `hello_world` was
-selected with an All Contacts audience estimated at 2, and the campaign was
-saved as `Shalimar dry-run broadcast test 2026-10-02` with status **Draft**.
-The persisted detail page shows **Recipients (0)** and all delivery counters at
-zero, so no send action was taken. The synced templates are Meta/Jasper's
-Market sample templates, so the draft is test evidence only and must not be
-sent to customers. The audited campaign remains pending until migration 043,
-consent rows, audience hydration and a Shalimar-approved template are verified
-in the intended Supabase project.
+The automated dry-run provider and broadcast logic pass locally. Production
+schema reconciliation created the required recipient and notification fields.
+The hosted route test created two recipient rows; after the dry-run API fix, the
+same flow returns local `dry_*` provider IDs and does not load Meta credentials
+or call the Graph API. The detail view labels the result as “Dry run — no
+WhatsApp messages were sent”. The synced templates are Meta/Jasper's Market
+sample templates, so the test is evidence only and must not be sent to
+customers. Consent evidence and a Shalimar-approved template are still needed
+before any live campaign.
 
 If migration 043 is missing, the campaign must stop with the migration error.
 That is a safe failure, not a test failure to work around.
@@ -164,7 +163,7 @@ For each gate, record only the minimum evidence needed:
 
 | Date/time | Gate | Owner | Environment | Result | Evidence | Next action |
 |---|---|---|---|---|---|---|
-| 2026-10-02T15:00:00Z | Hosted broadcast wizard dry-run setup | QA + operations | hosted Shalimar CRM | pass (draft only; 0 persisted recipients) | Meta templates synced; `hello_world` + All Contacts estimated 2; draft `Shalimar dry-run broadcast test 2026-10-02` saved; detail readback shows Recipients (0), all delivery counters 0, and no external send | Verify migration 043 and consent-backed audience hydration, then replace the sample template with Shalimar-approved copy |
+| 2026-10-03T00:30:00Z | Production schema and route reconciliation | Developer + QA | Shalimar Supabase + hosted CRM | pass (safe dry-run; live disabled) | 043, 046 and 047 read back; 2 recipient rows inserted; Notifications page and ten route smoke checks clean; local dry-run provider tests pass | Deploy this commit, repeat the hosted campaign readback, then replace the sample template with Shalimar-approved copy |
 
 Do not attach tokens, phonebooks, customer exports or private customer
 messages to the repository issue or chat.

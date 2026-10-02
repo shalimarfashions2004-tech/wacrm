@@ -1,6 +1,6 @@
 # Shalimar Connect project status
 
-Updated: 2026-10-02
+Updated: 2026-10-03
 Branch: `feature/shalimar-connect-platform`  
 Product owner: Shalimar owner (business approval)  
 Project manager: Shalimar delivery lead  
@@ -22,12 +22,12 @@ This document is the working project board. The execution plan remains the detai
 | Safety code | Complete | Dry-run default, separate live approval flag, consent filtering and recipient idempotency are implemented. | Tests, typecheck and production build passed |
 | Project documentation | Complete | Architecture, deployment, issue, cost and execution records exist. | `docs/` |
 | Meta connection | Credentials valid; test-number registration is the remaining banner | Hosted Settings → WhatsApp now validates the permanent token, shows WABA `3105529616452879` subscribed to the app, and keeps Phone Number ID `1228692947003388`. The Meta test number has no PIN, so CRM leaves local `registered_at` empty and shows “Not registered”. | Keep the test number on the Meta test flow; for a production number, configure its 6-digit PIN and save it before relying on inbound webhooks |
-| Supabase project and Auth configuration | Complete for authentication; schema pending | The `shalimar` project is selected, healthy, and connected to Vercel. Site URL and CRM/local redirect patterns are configured. | Apply and verify migration 043 before data workflows |
+| Supabase project and Auth configuration | Complete for authentication; production schema reconciled | The `shalimar` project is selected, healthy, and connected to Vercel. Migrations 043, 046 and 047 were applied and read back in the intended project. | Keep schema verification in CI and repeat after future migrations |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` is present in Supabase Auth Users. The owner must accept the invitation and set the password before dashboard/RLS acceptance testing. | Confirm email, sign in, verify account row and account-scoped reads |
-| Supabase migration 043 | Not yet verified | Must be replayed on a disposable project, then applied to the intended Shalimar project. | Migration replay evidence and RLS checks |
+| Supabase production schema | Reconciled and route-checked | Migration 043 plus reconciliations 046 and 047 are applied and read back. The Notifications page loads without the schema-cache error, and all ten main CRM routes returned cleanly in the hosted smoke check. | Keep live delivery disabled and rerun the smoke check after deployment |
 | CRM hosting and domain | Complete for the hosted shell | Vercel deployment is Ready, `crm.shalimarfashions.com` is Production with HTTPS, and `/login` plus `/signup` load without the previous fetch error. | Create a test account, then verify account-scoped dashboard reads |
 | Contact import and consent evidence | Not started | We need an approved source file/system and contact-by-contact consent evidence. | Import preview and sign-off record |
-| Broadcast verification | Safe draft test completed; live send remains blocked | 96 test files / 1,097 tests pass; the broadcast subset is 8 files / 65 tests. Meta template sync succeeded and the hosted wizard saved `Shalimar dry-run broadcast test 2026-10-02` as Draft using `hello_world`, with an estimated audience of 2. The persisted draft shows 0 recipient rows and all delivery counters at 0, so no message was sent. The synced templates are Meta/Jasper's Market sample templates, not Shalimar-approved customer copy. | Verify migration 043 and consent-backed audience hydration, then obtain a Shalimar-approved template before any live campaign |
+| Broadcast verification | Dry-run path verified; live send remains blocked | 97 test files / 1,099 tests pass; typecheck and lint pass. Production dry-run insertion created 2 recipient rows, and the repaired API now uses the local dry-run provider without contacting Meta. The detail view labels dry runs clearly. The synced `hello_world` template is still Meta/Jasper's Market sample copy, not Shalimar-approved customer copy. | Deploy the tested commit, then repeat the hosted dry-run readback before any live campaign |
 | End-to-end test message | Blocked by Meta recipient allow-list | The approved single-recipient live attempt was rejected by Meta because the recipient was not on the allowed list; production was restored to dry-run. | Add the approved test recipient in Meta, then repeat only after the dry-run gates pass |
 | Live launch | Disabled | Live mode requires explicit business approval and both environment gates. | `MESSAGING_DELIVERY_MODE=live` + `MESSAGING_LIVE_APPROVED=true` |
 
@@ -211,9 +211,9 @@ Any failed check blocks the next gate until the issue is fixed or the owner reco
 |---|---|---|---|---|
 | P0 | Record Meta app, Business Portfolio, WABA, phone, permission and webhook readback. | Meta administrator | Access to Meta account | IDs/settings are captured without secrets |
 | P0 | Select the intended Shalimar Supabase project and confirm the environment owner. | Shalimar owner + backend developer | Owner decision | **Done:** `shalimar` project and owner are recorded in the private deployment record |
-| P0 | Replay migration 043 on a disposable Supabase project. | Backend developer + QA | M1 project available | Tables, indexes and RLS assertions pass |
+| P0 | Replay migration 043 on a disposable Supabase project. | Backend developer + QA | M1 project available | Pending: production was reconciled directly after the owner selected the existing Shalimar project; no disposable project was created |
 | P1 | Create a contact import sample with consent evidence columns. | Operations lead | Source file/system identified | Sample reviewed and rejected rows explainable |
-| P1 | Run the dry-run campaign and save the recipient/cost/idempotency report. | QA + operations | M1 and sample audience | **Draft created with 0 persisted recipients:** no external message was sent; complete the report after migration and consent verification |
+| P1 | Run the dry-run campaign and save the recipient/cost/idempotency report. | QA + operations | M1 and sample audience | **Passed:** production created 2 recipient rows and the API completed the safe dry-run with no Meta request; repeat after the tested deployment |
 | P1 | Review six dependency audit findings and assign upgrade decisions. | Security reviewer | Current `npm audit` output | Each advisory has fix, acceptance or deferral owner |
 | P2 | Name people for each project role and add them to the handoff. | Project manager | Shalimar owner input | No milestone has an unowned acceptance check |
 

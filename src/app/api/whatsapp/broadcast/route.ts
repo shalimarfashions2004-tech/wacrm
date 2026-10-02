@@ -20,6 +20,7 @@ import {
   getDeliveryMode,
   isLiveDeliveryApproved,
 } from '@/lib/whatsapp/delivery-policy'
+import { runDryRunBroadcast } from '@/lib/whatsapp/broadcast-dry-run'
 
 interface BroadcastResult {
   phone: string
@@ -52,6 +53,7 @@ interface BroadcastResult {
  */
 interface NewRecipient {
   phone: string
+  idempotencyKey?: string
   /** Body variable values, one per {{N}}. Legacy field. */
   params?: string[]
   /**
@@ -78,13 +80,6 @@ export async function POST(request: Request) {
     // Nothing about that is recoverable after the fact, so the check has
     // to happen here.
     const { supabase, accountId, userId } = await requireRole('agent')
-
-    if (!isLiveDeliveryApproved()) {
-      return NextResponse.json(
-        { error: DELIVERY_DISABLED_MESSAGE, mode: getDeliveryMode() },
-        { status: 409 },
-      )
-    }
 
     // Per-user broadcast budget. Note: this limits how often a user
     // can *start* a campaign, not how many messages go out inside
@@ -129,6 +124,28 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'template_name is required' },
         { status: 400 }
+      )
+    }
+
+    const deliveryMode = getDeliveryMode()
+    if (deliveryMode === 'dry-run') {
+      const dryRun = await runDryRunBroadcast({
+        recipients,
+        templateName: template_name,
+      })
+      return NextResponse.json({
+        success: true,
+        mode: 'dry-run',
+        dry_run: true,
+        total: recipients.length,
+        ...dryRun,
+      })
+    }
+
+    if (!isLiveDeliveryApproved()) {
+      return NextResponse.json(
+        { error: DELIVERY_DISABLED_MESSAGE, mode: deliveryMode },
+        { status: 409 },
       )
     }
 

@@ -231,9 +231,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                       // Taller on mobile so fingers can hit the row reliably (≥44px).
                       "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all lg:mx-auto lg:size-11 lg:justify-center lg:rounded-full lg:p-0",
                       isActive
-                        ? "bg-primary/15 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] lg:bg-foreground lg:text-background lg:shadow-none"
+                        ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/40 hover:bg-primary-hover"
                         : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground lg:hover:bg-card-2",
                     )}
+                    aria-current={isActive ? "page" : undefined}
                     title={t(item.labelKey as string)}
                   >
                     <item.icon className="h-4 w-4" />
@@ -281,9 +282,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                     className={cn(
                       "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all lg:mx-auto lg:size-11 lg:justify-center lg:rounded-full lg:p-0",
                       isActive
-                        ? "bg-primary/15 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] lg:bg-foreground lg:text-background lg:shadow-none"
+                        ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/40 hover:bg-primary-hover"
                         : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground lg:hover:bg-card-2",
                     )}
+                    aria-current={isActive ? "page" : undefined}
                     title={t(item.labelKey as string)}
                   >
                     <item.icon className="h-4 w-4" />

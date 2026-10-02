@@ -99,6 +99,20 @@ BEGIN
     RAISE EXCEPTION 'contact_consents account policy is missing';
   END IF;
 
+  -- Notifications are a core dashboard dependency. A missing table turns
+  -- the whole notifications route into a schema-cache error.
+  IF to_regclass('public.notifications') IS NULL THEN
+    RAISE EXCEPTION 'notifications is missing — migrations 027/047 did not apply';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_class
+    WHERE oid = 'public.notifications'::regclass
+      AND relrowsecurity
+  ) THEN
+    RAISE EXCEPTION 'notifications RLS is disabled';
+  END IF;
+
   IF (
     SELECT COUNT(*)
     FROM information_schema.columns
@@ -116,10 +130,10 @@ BEGIN
       AND table_name = 'broadcast_recipients'
       AND column_name IN (
         'idempotency_key', 'attempt_count', 'suppressed_reason',
-        'provider_message_id', 'cost_inr'
+        'provider_message_id', 'cost_inr', 'template_params'
       )
-  ) <> 5 THEN
-    RAISE EXCEPTION 'broadcast recipient safety columns are missing — migration 043 did not apply';
+  ) <> 6 THEN
+    RAISE EXCEPTION 'broadcast recipient safety/resume columns are missing — migrations 038/043/046 did not apply';
   END IF;
   IF NOT EXISTS (
     SELECT 1
@@ -136,10 +150,18 @@ BEGIN
       AND table_name = 'broadcasts'
       AND column_name IN (
         'delivery_mode', 'approval_status', 'estimated_cost_inr',
-        'budget_snapshot_inr', 'provider_name'
+        'budget_snapshot_inr', 'provider_name', 'delivery_locked_at'
       )
-  ) <> 5 THEN
-    RAISE EXCEPTION 'broadcast delivery and budget columns are missing — migration 043 did not apply';
+  ) <> 6 THEN
+    RAISE EXCEPTION 'broadcast delivery/budget/resume columns are missing — migrations 038/043/046 did not apply';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_class
+    WHERE relname = 'idx_broadcast_recipients_broadcast_status'
+      AND relnamespace = 'public'::regnamespace
+  ) THEN
+    RAISE EXCEPTION 'broadcast status index is missing — migration 038/046 did not apply';
   END IF;
   IF pg_get_functiondef(
        'public.create_broadcast_with_recipients(uuid,uuid,text,text,text,integer,uuid[],jsonb[])'::regprocedure
