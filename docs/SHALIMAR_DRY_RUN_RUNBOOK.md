@@ -14,7 +14,7 @@ each person does, what evidence proves it worked, and what must remain stopped.
 |---|---|---|---|
 | Code safety gate | Ready | `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` are the safe defaults. | Developer |
 | Consent and suppression code | Ready for database verification | Campaigns fail closed when migration 043 is unavailable or consent is missing. | Developer + compliance |
-| Automated checks | Passed | Typecheck passed; lint exits cleanly; 96 Vitest files and 1,096 tests passed. Broadcast subset: 8 files and 65 tests covering audience parsing, consent/dry-run gates, idempotency, retry/resume and rate limits. | Tester |
+| Automated checks | Passed | Typecheck passed; lint exits cleanly; 96 Vitest files and 1,097 tests passed. Broadcast subset: 8 files and 65 tests covering audience parsing, consent/dry-run gates, idempotency, retry/resume and rate limits. | Tester |
 | Meta business assets | Connected; test-number registration banner remains | Hosted Settings → WhatsApp validates the permanent token, confirms WABA `3105529616452879` is subscribed to the app, and reads phone `1228692947003388`. The Meta test number has no PIN, so CRM intentionally keeps local registration empty. Template sync succeeded. | Owner + developer |
 | Supabase target project | Confirmed | Shalimar project `shalimar` (`houjlpiyafcanxsabmsk`) is healthy; Vercel Production and Preview have the project URL and protected keys. Schema migration remains pending. | Owner + developer |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` appears in Supabase Auth Users; complete the invitation from the Shalimar mailbox before dashboard acceptance testing. | Owner + tester |

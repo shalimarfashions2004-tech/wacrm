@@ -75,6 +75,78 @@ BEGIN
       'messages.error_code/error_title/error_details are missing — migration 042 did not apply';
   END IF;
 
+  -- Consent and delivery safety (043/044). These are the controls that make
+  -- the campaign preflight fail closed instead of treating every imported
+  -- phone number as permission to message.
+  IF to_regclass('public.contact_consents') IS NULL THEN
+    RAISE EXCEPTION 'contact_consents is missing — migrations 043/044 did not apply';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_class
+    WHERE oid = 'public.contact_consents'::regclass
+      AND relrowsecurity
+  ) THEN
+    RAISE EXCEPTION 'contact_consents RLS is disabled';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'contact_consents'
+      AND policyname = 'Account members manage contact consent'
+  ) THEN
+    RAISE EXCEPTION 'contact_consents account policy is missing';
+  END IF;
+
+  IF (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'contacts'
+      AND column_name IN ('suppressed_at', 'suppression_reason')
+  ) <> 2 THEN
+    RAISE EXCEPTION 'contacts suppression columns are missing — migration 043/044 did not apply';
+  END IF;
+
+  IF (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'broadcast_recipients'
+      AND column_name IN (
+        'idempotency_key', 'attempt_count', 'suppressed_reason',
+        'provider_message_id', 'cost_inr'
+      )
+  ) <> 5 THEN
+    RAISE EXCEPTION 'broadcast recipient safety columns are missing — migration 043 did not apply';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_class
+    WHERE relname = 'idx_broadcast_recipient_idempotency'
+      AND relnamespace = 'public'::regnamespace
+  ) THEN
+    RAISE EXCEPTION 'broadcast recipient idempotency index is missing — migration 043 did not apply';
+  END IF;
+  IF (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'broadcasts'
+      AND column_name IN (
+        'delivery_mode', 'approval_status', 'estimated_cost_inr',
+        'budget_snapshot_inr', 'provider_name'
+      )
+  ) <> 5 THEN
+    RAISE EXCEPTION 'broadcast delivery and budget columns are missing — migration 043 did not apply';
+  END IF;
+  IF pg_get_functiondef(
+       'public.create_broadcast_with_recipients(uuid,uuid,text,text,text,integer,uuid[],jsonb[])'::regprocedure
+     ) NOT LIKE '%idempotency_key%' THEN
+    RAISE EXCEPTION 'broadcast creation function does not assign idempotency keys — migration 043 did not apply';
+  END IF;
+
   RAISE NOTICE 'schema verification passed';
 END
 $$;
