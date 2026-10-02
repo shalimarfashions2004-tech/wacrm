@@ -1,0 +1,16 @@
+{
+  "project": "Shalimar Connect",
+  "phase": "discovery",
+  "environment": "local",
+  "current_release": null,
+  "active_request_ids": [],
+  "active_session_ids": [],
+  "blocked_task_ids": [],
+  "last_verified_commit": null,
+  "last_successful_build": null,
+  "last_test_run": "2026-10-02: typecheck/lint/tests pass; build fails at /reset-password export",
+  "last_security_review": null,
+  "staging_deployment": null,
+  "production_deployment": null,
+  "updated_at": "2026-10-02T11:33:32.095345Z"
+}
