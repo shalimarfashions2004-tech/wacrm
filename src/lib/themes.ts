@@ -23,9 +23,8 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-// Shalimar's default is warm saffron on ink. Violet remains available as
-// an optional user-selected theme, but the first-run experience should feel
-// like the brand and a premium operations workspace.
+// Shalimar's default is a lime accent on a calm light workspace. The other
+// accents remain available as optional user-selected themes.
 export const DEFAULT_THEME: ThemeId = "amber";
 
 export const STORAGE_KEY = "wacrm.theme";
@@ -35,9 +34,9 @@ export const STORAGE_KEY = "wacrm.theme";
  *
  * The CSS variables live in `src/app/globals.css` under
  * `html[data-mode="..."]` blocks (neutral surfaces only). Applied
- * at runtime via `document.documentElement.dataset.mode`. Dark is
- * the historical default and stays the app's identity; light is the
- * opt-in eye-strain-friendly alternative.
+ * at runtime via `document.documentElement.dataset.mode`. Light is
+ * the reference visual foundation; dark remains available as an
+ * opt-in mode without changing any feature behavior.
  *
  * Persisted under its own localStorage key so it composes freely
  * with the accent choice (you can run Violet-light or Violet-dark).
@@ -46,7 +45,7 @@ export const MODES = ["light", "dark"] as const;
 
 export type Mode = (typeof MODES)[number];
 
-export const DEFAULT_MODE: Mode = "dark";
+export const DEFAULT_MODE: Mode = "light";
 
 export const MODE_STORAGE_KEY = "wacrm.mode";
 
@@ -90,9 +89,9 @@ export const THEMES: ReadonlyArray<ThemeMeta> = [
   },
   {
     id: "amber",
-    name: "Amber",
-    tagline: "Warm and friendly — feels good for SMB teams.",
-    swatch: "oklch(0.745 0.16 65)",
+    name: "Shalimar Lime",
+    tagline: "Bright, confident, and aligned with the Shalimar workspace.",
+    swatch: "#c7f33c",
   },
   {
     id: "rose",
