@@ -38,7 +38,7 @@ interface ConversationListProps {
 
 const STATUS_COLORS: Record<ConversationStatus, string> = {
   open: "bg-primary",
-  pending: "bg-amber-500",
+  pending: "bg-muted-foreground/60",
   closed: "bg-muted-foreground",
 };
 
@@ -223,9 +223,9 @@ export function ConversationList({
     // w-full on mobile so the list occupies the whole viewport when it's
     // the single pane showing; fixed 320px on desktop where it shares the
     // row with the thread + contact sidebar.
-    <div className="flex h-full w-full flex-col border-r border-border bg-card lg:w-80">
+    <div className="flex h-full w-full flex-col border-r border-border bg-card/90 lg:w-80">
       {/* Search + Filter */}
-      <div className="space-y-2 border-b border-border p-3">
+      <div className="space-y-3 border-b border-border/70 p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -238,7 +238,7 @@ export function ConversationList({
 
         <div className="flex flex-wrap items-center gap-1">
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex items-center justify-center h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground rounded-md hover:bg-muted">
+            <DropdownMenuTrigger className="inline-flex items-center justify-center gap-1 rounded-full bg-card-2 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">
                 {activeFilter?.label ?? t("filterAll")}
                 <ChevronDown className="h-3 w-3" />
             </DropdownMenuTrigger>
@@ -267,7 +267,7 @@ export function ConversationList({
             <DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(
-                  "inline-flex items-center justify-center h-7 gap-1 px-2 text-xs rounded-md hover:bg-muted",
+                  "inline-flex items-center justify-center gap-1 rounded-full bg-card-2 px-3 py-1.5 text-xs hover:bg-pale-lime",
                   selectedTagIds.length > 0
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
@@ -309,7 +309,7 @@ export function ConversationList({
             <DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(
-                  "inline-flex max-w-40 items-center justify-center h-7 gap-1 px-2 text-xs rounded-md hover:bg-muted",
+                  "inline-flex max-w-40 items-center justify-center gap-1 rounded-full bg-card-2 px-3 py-1.5 text-xs hover:bg-pale-lime",
                   selectedCompany
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
@@ -360,7 +360,7 @@ export function ConversationList({
                 <button
                   key={id}
                   onClick={() => toggleTag(id)}
-                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground hover:bg-muted/70"
+                  className="inline-flex items-center gap-1 rounded-full bg-pale-lime px-2.5 py-1 text-[11px] text-foreground hover:bg-primary/20"
                 >
                   <span
                     className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -374,7 +374,7 @@ export function ConversationList({
             {selectedCompany && (
               <button
                 onClick={() => setSelectedCompany(null)}
-                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground hover:bg-muted/70"
+                className="inline-flex items-center gap-1 rounded-full bg-pale-lime px-2.5 py-1 text-[11px] text-foreground hover:bg-primary/20"
               >
                 <span className="max-w-24 truncate">{selectedCompany}</span>
                 <X className="h-3 w-3" />
@@ -454,8 +454,8 @@ function ConversationItem({
     <button
       onClick={handleClick}
       className={cn(
-        "flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50",
-        isActive && "border-l-2 border-primary bg-muted/70"
+        "flex w-full items-start gap-3 border-l-2 border-transparent px-4 py-3.5 text-left transition-colors hover:bg-card-2",
+        isActive && "border-primary bg-pale-lime"
       )}
     >
       {/* Avatar */}

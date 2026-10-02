@@ -125,7 +125,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
 
   if (!contact) {
     return (
-      <div className="flex h-full w-70 items-center justify-center border-l border-border bg-card">
+      <div className="flex h-full w-72 items-center justify-center border-l border-border bg-card/90">
         <p className="text-sm text-muted-foreground">{tThread("selectConversation")}</p>
       </div>
     );
@@ -135,17 +135,17 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
   const initials = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex h-full w-70 flex-col border-l border-border bg-card">
+    <div className="flex h-full w-72 flex-col border-l border-border bg-card/90">
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="p-5">
           {/* Contact Info */}
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold text-foreground">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-pale-lime text-xl font-light text-foreground">
               {contact.avatar_url ? (
                 <img
                   src={contact.avatar_url}
                   alt={displayName}
-                  className="h-16 w-16 rounded-full object-cover"
+                  className="h-20 w-20 rounded-full object-cover"
                 />
               ) : (
                 initials
@@ -163,7 +163,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
           <div className="mt-4 space-y-2">
             <button
               onClick={handleCopyPhone}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
+              className="flex w-full items-center gap-2 rounded-2xl bg-card-2 px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-pale-lime hover:text-foreground"
             >
               <Phone className="h-4 w-4 text-muted-foreground" />
               <span className="flex-1 text-left">
@@ -177,7 +177,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
             </button>
 
             {contact.email && (
-              <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 rounded-2xl bg-card-2 px-3 py-2.5 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 <span className="truncate">{contact.email}</span>
               </div>
@@ -229,7 +229,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
                 deals.map((deal) => (
                   <div
                     key={deal.id}
-                    className="rounded-lg bg-muted px-3 py-2"
+                    className="rounded-2xl bg-card-2 px-3 py-2.5"
                   >
                     <p className="text-sm font-medium text-foreground">
                       {deal.title}
@@ -241,7 +241,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
                       </span>
                       {deal.stage && (
                         <span
-                          className="rounded-full px-1.5 py-0.5 text-[10px]"
+                          className="rounded-full px-2 py-1 text-[10px]"
                           style={{
                             backgroundColor: `${deal.stage.color}20`,
                             color: deal.stage.color,
@@ -273,7 +273,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder={tSidebar("addNotePlaceholder")}
                   rows={2}
-                  className="flex-1 resize-none rounded-lg border border-border bg-muted px-3 py-2 text-xs text-foreground placeholder-muted-foreground outline-none focus:border-primary/50"
+                  className="flex-1 resize-none rounded-2xl border border-border bg-card-2 px-3 py-2.5 text-xs text-foreground placeholder-muted-foreground outline-none focus:border-primary/50"
                 />
                 <Button
                   size="sm"
@@ -289,7 +289,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
                 {notes.map((note) => (
                   <div
                     key={note.id}
-                    className="rounded-lg bg-muted px-3 py-2"
+                    className="rounded-2xl bg-card-2 px-3 py-2"
                   >
                     <p className="whitespace-pre-wrap text-xs text-muted-foreground">
                       {note.note_text}
