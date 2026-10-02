@@ -19,7 +19,7 @@ each person does, what evidence proves it worked, and what must remain stopped.
 | Supabase target project | Confirmed | Shalimar project `shalimar` (`houjlpiyafcanxsabmsk`) is healthy; Vercel Production and Preview have the project URL and protected keys. Schema migration remains pending. | Owner + developer |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` appears in Supabase Auth Users; complete the invitation from the Shalimar mailbox before dashboard acceptance testing. | Owner + tester |
 | Production schema | Reconciled and route-checked | Migrations 043, 046 and 047 are applied and read back. Notifications now loads cleanly; the hosted smoke check returned clean routes for dashboard, inbox, contacts, pipelines, broadcasts, automations, flows, agents, notifications and settings. | Developer + database owner |
-| Real message sending | Stopped | Production remains `dry-run`. The final route test is designed to use the local provider and return `dry_*` IDs; it must never contact Meta while the delivery mode is dry-run. | Owner |
+| Real message sending | Stopped | Production remains `dry-run`. Campaign `ee39c97d-5bdd-4f7b-adcd-4bb487070779` completed 2/2 Sent through the local provider and showed “Dry run — no WhatsApp messages were sent”. | Owner |
 
 “Ready” in this table means the work can proceed to its verification step. It
 does not mean production messaging is enabled.
@@ -163,7 +163,8 @@ For each gate, record only the minimum evidence needed:
 
 | Date/time | Gate | Owner | Environment | Result | Evidence | Next action |
 |---|---|---|---|---|---|---|
-| 2026-10-03T00:30:00Z | Production schema and route reconciliation | Developer + QA | Shalimar Supabase + hosted CRM | pass (safe dry-run; live disabled) | 043, 046 and 047 read back; 2 recipient rows inserted; Notifications page and ten route smoke checks clean; local dry-run provider tests pass | Deploy this commit, repeat the hosted campaign readback, then replace the sample template with Shalimar-approved copy |
+| 2026-10-03T00:30:00Z | Production schema and route reconciliation | Developer + QA | Shalimar Supabase + hosted CRM | pass (safe dry-run; live disabled) | 043, 046 and 047 read back; 2 recipient rows inserted; Notifications page and ten route smoke checks clean; local dry-run provider tests pass | Keep dry-run mode, replace the sample template with Shalimar-approved copy, and collect consent evidence before live approval |
+| 2026-10-03T00:54:00Z | Hosted production dry-run after deployment | Developer + QA | Vercel production + hosted CRM | pass (2/2 sent locally; zero Meta sends) | Vercel deployment `dpl_AQCtMBbRr3QqgL6suz7HrGDmVikT` Ready; campaign `ee39c97d-5bdd-4f7b-adcd-4bb487070779`; detail readback shows 2 recipients Sent, 0 failed, and the dry-run notice | Keep live mode disabled; use an approved Shalimar template and consent-backed audience for a future pilot |
 
 Do not attach tokens, phonebooks, customer exports or private customer
 messages to the repository issue or chat.
