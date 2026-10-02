@@ -321,6 +321,7 @@
   "Contacts": {
     "page": {
       "title": "연락처",
+      "workspaceLabel": "CRM 워크스페이스",
       "subtitle": "연락처 목록을 관리하세요. 전체 연락처 {count}개.",
       "subtitleZero": "연락처 목록을 관리하세요.",
       "customFieldsBtn": "커스텀 필드",
@@ -532,6 +533,7 @@
   "Pipelines": {
     "page": {
       "title": "파이프라인",
+      "workspaceLabel": "매출 워크스페이스",
       "selectPipeline": "파이프라인 선택",
       "noPipelinesYet": "아직 파이프라인이 없습니다",
       "managePipelines": "파이프라인 관리",
@@ -646,6 +648,7 @@
   "Broadcasts": {
     "page": {
       "title": "브로드캐스트",
+      "workspaceLabel": "캠페인 워크스페이스",
       "subtitle": "승인된 템플릿을 사용해 연락처에 대량 메시지를 보내세요.",
       "newBroadcast": "새 브로드캐스트",
       "noBroadcastsYet": "아직 브로드캐스트가 없습니다",
@@ -725,6 +728,7 @@
     },
     "new": {
       "title": "새 브로드캐스트",
+      "workspaceLabel": "캠페인 워크스페이스",
       "subtitle": "연락처에 보낼 브로드캐스트 메시지를 만듭니다.",
       "steps": {
         "template": "템플릿",

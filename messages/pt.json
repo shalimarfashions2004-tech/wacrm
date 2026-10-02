@@ -321,6 +321,7 @@
   "Contacts": {
     "page": {
       "title": "Contatos",
+      "workspaceLabel": "Espaço de CRM",
       "subtitle": "Gerencie sua lista de contatos. {count} contatos no total.",
       "subtitleZero": "Gerencie sua lista de contatos.",
       "customFieldsBtn": "Campos personalizados",
@@ -532,6 +533,7 @@
   "Pipelines": {
     "page": {
       "title": "Pipelines",
+      "workspaceLabel": "Espaço de receita",
       "selectPipeline": "Selecionar pipeline",
       "noPipelinesYet": "Nenhum pipeline ainda",
       "managePipelines": "Gerenciar pipelines",
@@ -646,6 +648,7 @@
   "Broadcasts": {
     "page": {
       "title": "Disparos",
+      "workspaceLabel": "Espaço de campanhas",
       "subtitle": "Envie mensagens em massa para seus contatos usando modelos aprovados.",
       "newBroadcast": "Novo disparo",
       "noBroadcastsYet": "Nenhum disparo ainda",
@@ -725,6 +728,7 @@
     },
     "new": {
       "title": "Novo disparo",
+      "workspaceLabel": "Espaço de campanhas",
       "subtitle": "Crie e envie uma mensagem em massa para seus contatos.",
       "steps": {
         "template": "Modelo",
