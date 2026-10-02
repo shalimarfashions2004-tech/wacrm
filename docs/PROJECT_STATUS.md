@@ -1,6 +1,6 @@
 # Shalimar Connect project status
 
-Updated: 2026-10-01  
+Updated: 2026-10-02
 Branch: `feature/shalimar-connect-platform`  
 Product owner: Shalimar owner (business approval)  
 Project manager: Shalimar delivery lead  
@@ -27,7 +27,8 @@ This document is the working project board. The execution plan remains the detai
 | Supabase migration 043 | Not yet verified | Must be replayed on a disposable project, then applied to the intended Shalimar project. | Migration replay evidence and RLS checks |
 | CRM hosting and domain | Complete for the hosted shell | Vercel deployment is Ready, `crm.shalimarfashions.com` is Production with HTTPS, and `/login` plus `/signup` load without the previous fetch error. | Create a test account, then verify account-scoped dashboard reads |
 | Contact import and consent evidence | Not started | We need an approved source file/system and contact-by-contact consent evidence. | Import preview and sign-off record |
-| End-to-end test message | Not started | Meta shows the send-message step is still incomplete; no real message should be sent until Supabase and consent checks pass. | One approved test conversation |
+| Broadcast verification | Code verified; hosted campaign pending | 95 test files / 1,085 tests pass; the broadcast subset is 8 files / 65 tests. The hosted dry-run campaign still depends on migration 043, consent evidence and a staged audience readback. | Run one audited dry-run campaign in the intended Supabase project |
+| End-to-end test message | Blocked by Meta recipient allow-list | The approved single-recipient live attempt was rejected by Meta because the recipient was not on the allowed list; production was restored to dry-run. | Add the approved test recipient in Meta, then repeat only after the dry-run gates pass |
 | Live launch | Disabled | Live mode requires explicit business approval and both environment gates. | `MESSAGING_DELIVERY_MODE=live` + `MESSAGING_LIVE_APPROVED=true` |
 
 ## Roles and accountability

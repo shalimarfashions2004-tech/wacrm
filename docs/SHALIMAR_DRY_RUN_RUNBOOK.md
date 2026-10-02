@@ -1,6 +1,6 @@
 # Shalimar Connect dry-run runbook
 
-Updated: 2026-10-01  
+Updated: 2026-10-02
 Branch: `feature/shalimar-connect-platform`  
 Backend: Supabase  
 Messaging provider: Meta WhatsApp Cloud API
@@ -14,12 +14,12 @@ each person does, what evidence proves it worked, and what must remain stopped.
 |---|---|---|---|
 | Code safety gate | Ready | `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` are the safe defaults. | Developer |
 | Consent and suppression code | Ready for database verification | Campaigns fail closed when migration 043 is unavailable or consent is missing. | Developer + compliance |
-| Automated checks | Passed | Typecheck passed; lint exits cleanly with 41 existing warnings; 95 Vitest files and 1,083 tests passed; hosted Vercel build is Ready. | Tester |
+| Automated checks | Passed | Typecheck passed; lint exits cleanly; 95 Vitest files and 1,085 tests passed. Broadcast subset: 8 files and 65 tests covering audience parsing, consent/dry-run gates, idempotency, retry/resume and rate limits. | Tester |
 | Meta business assets | Partially verified | Shalimar Chrome readback shows S&F portfolio `1134016885720209`, Test WABA `1103682202588508`, test number `+1 555-150-8712` Connected/High, S&F app `1498212839029923`, WhatsApp use case enabled and Configure Webhooks complete. Production phone registration, payment and test-send steps remain open. | Owner |
 | Supabase target project | Confirmed | Shalimar project `shalimar` (`houjlpiyafcanxsabmsk`) is healthy; Vercel Production and Preview have the project URL and protected keys. Schema migration remains pending. | Owner + developer |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` appears in Supabase Auth Users; complete the invitation from the Shalimar mailbox before dashboard acceptance testing. | Owner + tester |
 | Migration 043 | Ready to replay, not applied | Must be tested on a disposable Supabase project before the intended project. | Developer + database owner |
-| Real message sending | Stopped | No live credentials or live approval have been entered; no real messages have been sent. | Owner |
+| Real message sending | Stopped | The approved single-recipient live attempt was rejected by Meta because the recipient was not on the allowed list. Production was returned to `dry-run`; no broadcast was sent. | Owner |
 
 “Ready” in this table means the work can proceed to its verification step. It
 does not mean production messaging is enabled.
@@ -111,6 +111,11 @@ Run a dry-run campaign using an approved template. The expected result is:
 - each recipient has a stable idempotency key;
 - a second attempt does not create a duplicate recipient row;
 - the campaign result is auditable in Supabase.
+
+The automated dry-run provider and broadcast logic pass locally. A hosted
+campaign remains **pending verification** until migration 043, consent rows,
+an approved staging audience and the dashboard readback are available in the
+intended Shalimar Supabase project.
 
 If migration 043 is missing, the campaign must stop with the migration error.
 That is a safe failure, not a test failure to work around.
