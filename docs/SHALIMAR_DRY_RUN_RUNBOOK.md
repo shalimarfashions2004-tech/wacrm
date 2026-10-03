@@ -14,8 +14,8 @@ each person does, what evidence proves it worked, and what must remain stopped.
 |---|---|---|---|
 | Code safety gate | Ready | `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` are the safe defaults. | Developer |
 | Consent and suppression code | Ready for database verification | Campaigns fail closed when migration 043 is unavailable or consent is missing. | Developer + compliance |
-| Automated checks | Passed | Typecheck passed; lint exits cleanly; 97 Vitest files and 1,099 tests passed. The build compiles and then needs deployment environment variables during static generation on this local checkout. | Tester |
-| Meta business assets | Connected; test-number registration banner remains | Hosted Settings → WhatsApp validates the permanent token, confirms WABA `3105529616452879` is subscribed to the app, and reads phone `1228692947003388`. The Meta test number has no PIN, so CRM intentionally keeps local registration empty. Template sync succeeded. | Owner + developer |
+| Automated checks | Passed | Typecheck passed; lint exits cleanly; 97 Vitest files and 1,099 tests passed. The Vercel production build is Ready in deployment `dpl_EJix83MYHK2KtPUz1in1jB2UKVxn`; this local checkout has no Supabase values in `.env.local`, so a local static build cannot complete. | Tester |
+| Meta business assets | Credentials valid; phone registration remains blocked | Hosted Settings → WhatsApp validates the permanent token, confirms WABA `3105529616452879` is subscribed to the app, and reads phone `1228692947003388`. Verify with Meta still reports that the saved number is not fully registered. The exact Meta app is now checked before the diagnostic can report a live webhook state. | Owner + developer |
 | Supabase target project | Confirmed | Shalimar project `shalimar` (`houjlpiyafcanxsabmsk`) is healthy; Vercel Production and Preview have the project URL and protected keys. Schema migration remains pending. | Owner + developer |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` appears in Supabase Auth Users; complete the invitation from the Shalimar mailbox before dashboard acceptance testing. | Owner + tester |
 | Production schema | Reconciled and route-checked | Migrations 043, 046 and 047 are applied and read back. Notifications now loads cleanly; the hosted smoke check returned clean routes for dashboard, inbox, contacts, pipelines, broadcasts, automations, flows, agents, notifications and settings. | Developer + database owner |
@@ -53,10 +53,10 @@ Connection** and records the result. A pass requires the phone metadata check,
 WABA ownership check and WABA subscription check to succeed.
 
 The current readback passes the token, WABA ownership and subscription checks.
-The test phone still shows a separate “Not registered” banner because Meta's
-test number has no two-step PIN; this is expected for the test flow and is not
-a reason to paste a fake PIN. A production number needs its real 6-digit PIN
-before relying on registration-dependent behavior.
+The saved number still shows a separate “Not registered” banner. Do not assume
+it is ready for inbound delivery until Meta confirms registration for this app.
+A production number needs its real 6-digit PIN before relying on
+registration-dependent behavior; never paste a fake PIN.
 
 ## Gate 2 — Supabase migration replay
 
@@ -166,6 +166,7 @@ For each gate, record only the minimum evidence needed:
 | 2026-10-03T00:30:00Z | Production schema and route reconciliation | Developer + QA | Shalimar Supabase + hosted CRM | pass (safe dry-run; live disabled) | 043, 046 and 047 read back; 2 recipient rows inserted; Notifications page and ten route smoke checks clean; local dry-run provider tests pass | Keep dry-run mode, replace the sample template with Shalimar-approved copy, and collect consent evidence before live approval |
 | 2026-10-03T00:54:00Z | Hosted production dry-run after deployment | Developer + QA | Vercel production + hosted CRM | pass (2/2 sent locally; zero Meta sends) | Vercel deployment `dpl_AQCtMBbRr3QqgL6suz7HrGDmVikT` Ready; campaign `ee39c97d-5bdd-4f7b-adcd-4bb487070779`; detail readback shows 2 recipients Sent, 0 failed, and the dry-run notice | Keep live mode disabled; use an approved Shalimar template and consent-backed audience for a future pilot |
 | 2026-10-03T01:05:00Z | Real-number registration verification | Developer + owner | Hosted CRM + Meta | blocked by Meta registration state | Credentials valid and WABA subscribed; Verify with Meta still shows “Number is not fully registered” and CRM keeps live delivery disabled | Owner completes the real number's two-step PIN registration in the Shalimar Meta account, then re-runs Verify with Meta |
+| 2026-10-03T06:50:32Z | Deep production verification and diagnostic fix | Developer + QA | Vercel production + hosted CRM | pass with Meta registration still blocked | Deployment `dpl_EJix83MYHK2KtPUz1in1jB2UKVxn` is Ready; public routes redirect unauthenticated users to login; protected WhatsApp APIs return 401; 97 files / 1,099 tests, typecheck, lint and dependency audit pass; registration check now requires the configured Meta app ID | Owner completes Meta PIN registration, then re-runs Verify with Meta |
 
 Do not attach tokens, phonebooks, customer exports or private customer
 messages to the repository issue or chat.
