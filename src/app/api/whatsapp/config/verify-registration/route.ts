@@ -5,6 +5,7 @@ import {
   getSubscribedApps,
   verifyPhoneNumber,
 } from '@/lib/whatsapp/meta-api'
+import { appSubscriptionState } from '@/lib/whatsapp/waba-pairing'
 
 /**
  * GET /api/whatsapp/config/verify-registration
@@ -119,14 +120,18 @@ export async function GET() {
         wabaId: config.waba_id,
         accessToken,
       })
-      // Meta returns the apps subscribed to this WABA. If the list
-      // is non-empty, OUR app is in there (the access_token we used
-      // belongs to our app — Meta wouldn't return data for an app
-      // the token can't see). Treat any entry as success.
-      checks.waba_subscribed_to_app = subs.length > 0
+      // Meta returns every app visible to this token. When META_APP_ID
+      // is configured, require that exact app instead of treating an
+      // unrelated app subscription as proof that this deployment owns
+      // the WABA's webhook route.
+      const subscription = appSubscriptionState(subs, process.env.META_APP_ID)
+      checks.waba_subscribed_to_app =
+        subscription.subscribed && subscription.appIdMatch !== false
       if (!checks.waba_subscribed_to_app) {
         errors.push(
-          'WABA has no subscribed apps. Re-save the configuration to subscribe.',
+          subscription.appIdMatch === false
+            ? 'WABA is subscribed to a different Meta app. Subscribe this app before testing inbound webhooks.'
+            : 'WABA has no subscribed apps. Re-save the configuration to subscribe.',
         )
       }
     } catch (err) {
