@@ -4,6 +4,13 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { parseBroadcastCsv } from '@/lib/broadcast-csv';
 import { CustomField, Tag } from '@/types';
+import type {
+  AudienceConfig,
+  AudienceType,
+  CustomerDataAudiencePreset,
+  CustomFieldFilter,
+  CustomFieldOperator,
+} from '@/lib/broadcasts/audience';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
@@ -16,25 +23,9 @@ import {
   ArrowRight,
   ArrowLeft,
   X,
+  BarChart3,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
-type AudienceType = 'all' | 'tags' | 'custom_field' | 'csv';
-type CustomFieldOperator = 'is' | 'is_not' | 'contains';
-
-interface CustomFieldFilter {
-  fieldId: string;
-  operator: CustomFieldOperator;
-  value: string;
-}
-
-interface AudienceConfig {
-  type: AudienceType;
-  tagIds?: string[];
-  customField?: CustomFieldFilter;
-  csvContacts?: { phone: string; name?: string }[];
-  excludeTagIds?: string[];
-}
 
 interface Step2Props {
   audience: AudienceConfig;
@@ -94,6 +85,12 @@ export function Step2SelectAudience({
         label: t('selectAudience.method.csv'),
         description: t('selectAudience.csvDesc'),
         icon: Upload,
+      },
+      {
+        type: 'customer_data',
+        label: t('selectAudience.method.customerData'),
+        description: t('selectAudience.customerDataDesc'),
+        icon: BarChart3,
       },
     ],
     [t]
@@ -191,6 +188,12 @@ export function Step2SelectAudience({
         audience.csvContacts.length > 0
       ) {
         setEstimatedCount(audience.csvContacts.length);
+        return;
+      } else if (audience.type === 'customer_data') {
+        // The sales snapshot remains separate until the Tally connector and
+        // audience table are verified. Keep this path visible in the wizard,
+        // but never invent a reach count from aggregate-only data.
+        setEstimatedCount(null);
         return;
       } else {
         // Partially-configured audience — wait for the user to finish.
@@ -304,7 +307,8 @@ export function Step2SelectAudience({
       audience.customField.value.length > 0) ||
     (audience.type === 'csv' &&
       audience.csvContacts &&
-      audience.csvContacts.length > 0);
+      audience.csvContacts.length > 0) ||
+    (audience.type === 'customer_data' && !!audience.customerData?.preset);
 
   return (
     <div className="space-y-8">
@@ -344,6 +348,16 @@ export function Step2SelectAudience({
                         : undefined,
                     csvContacts:
                       option.type === 'csv' ? audience.csvContacts : undefined,
+                    customerData:
+                      option.type === 'customer_data'
+                        ? (audience.customerData ?? {
+                            preset: 'high_value_at_risk',
+                          })
+                        : undefined,
+                    source:
+                      option.type === 'customer_data'
+                        ? 'customer-data'
+                        : undefined,
                   })
                 }
                 className={`flex items-start gap-3 rounded-[22px] border p-5 text-left transition-all ${
@@ -510,6 +524,49 @@ export function Step2SelectAudience({
         </div>
       )}
 
+      {audience.type === 'customer_data' && (
+        <div className="border-border bg-card-2 space-y-4 rounded-[22px] border p-5">
+          <div>
+            <p className="text-foreground text-sm font-medium">
+              {t('selectAudience.customerDataTitle')}
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs leading-5">
+              {t('selectAudience.customerDataDescLong')}
+            </p>
+          </div>
+          <select
+            value={audience.customerData?.preset ?? 'high_value_at_risk'}
+            onChange={(e) =>
+              onUpdate({
+                ...audience,
+                customerData: {
+                  ...audience.customerData,
+                  preset: e.target.value as CustomerDataAudiencePreset,
+                },
+                source: 'customer-data',
+              })
+            }
+            className="border-border bg-card text-foreground focus:border-primary focus:ring-primary h-10 w-full rounded-full border px-4 text-sm outline-none focus:ring-1"
+          >
+            <option value="high_value_frequent">
+              {t('selectAudience.customerDataPresets.highValueFrequent')}
+            </option>
+            <option value="high_value_at_risk">
+              {t('selectAudience.customerDataPresets.highValueAtRisk')}
+            </option>
+            <option value="product_interest">
+              {t('selectAudience.customerDataPresets.productInterest')}
+            </option>
+            <option value="low_value_one_time">
+              {t('selectAudience.customerDataPresets.lowValueOneTime')}
+            </option>
+          </select>
+          <div className="border-primary/30 bg-primary/5 text-muted-foreground rounded-2xl border p-4 text-xs leading-5">
+            {t('selectAudience.customerDataConnectionPending')}
+          </div>
+        </div>
+      )}
+
       {/* Exclude list — applies regardless of audience type */}
       <div className="border-border bg-card-2 rounded-[22px] border p-5">
         <div className="mb-3 flex items-center gap-2">
@@ -572,7 +629,9 @@ export function Step2SelectAudience({
           </div>
         ) : (
           <p className="text-muted-foreground text-xs">
-            Select an audience type to see the estimate.
+            {audience.type === 'customer_data'
+              ? t('selectAudience.customerDataEstimatePending')
+              : 'Select an audience type to see the estimate.'}
           </p>
         )}
       </div>

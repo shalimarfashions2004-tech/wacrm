@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import { Step4ScheduleSend } from '@/components/broadcasts/step4-schedule-send';
 import { useBroadcastSending } from '@/hooks/use-broadcast-sending';
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { AudienceConfig } from '@/lib/broadcasts/audience';
 
 const steps = [
   { label: 'template', key: 'template' },
@@ -22,25 +23,33 @@ const steps = [
 ] as const;
 
 export default function NewBroadcastPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewBroadcastPageInner />
+    </Suspense>
+  );
+}
+
+function NewBroadcastPageInner() {
   const router = useRouter();
   const t = useTranslations('Broadcasts.new');
+  const params = useSearchParams();
   const { accountId } = useAuth();
   const { createAndSendBroadcast, isProcessing, progress } =
     useBroadcastSending();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [template, setTemplate] = useState<MessageTemplate | null>(null);
-  const [audience, setAudience] = useState<{
-    type: 'all' | 'tags' | 'custom_field' | 'csv';
-    tagIds?: string[];
-    customField?: {
-      fieldId: string;
-      operator: 'is' | 'is_not' | 'contains';
-      value: string;
-    };
-    csvContacts?: { phone: string; name?: string }[];
-    excludeTagIds?: string[];
-  }>({ type: 'all' });
+  const fromCustomerData = params.get('source') === 'customer-data';
+  const [audience, setAudience] = useState<AudienceConfig>(() =>
+    fromCustomerData
+      ? {
+          type: 'customer_data',
+          customerData: { preset: 'high_value_at_risk' },
+          source: 'customer-data',
+        }
+      : { type: 'all' }
+  );
   const [variables, setVariables] = useState<
     Record<string, { type: 'static' | 'field' | 'custom_field'; value: string }>
   >({});
@@ -59,6 +68,8 @@ export default function NewBroadcastPage() {
           tagIds: audience.tagIds,
           customField: audience.customField,
           csvContacts: audience.csvContacts,
+          customerData: audience.customerData,
+          source: audience.source,
           excludeTagIds: audience.excludeTagIds,
         },
         variables,
@@ -75,13 +86,10 @@ export default function NewBroadcastPage() {
   }
 
   /**
-   * Writes a draft broadcast row — no recipients, no sending. The user
-   * can revisit it via the list page to finish the flow later. We
-   * don't persist the in-progress audience/variable config here
-   * because the current schema doesn't carry it past `audience_filter`
-   * and `template_variables`; those are enough for the user to
-   * recognize the draft but not to exactly round-trip into the wizard.
-   * A full resume-draft UX is a future polish.
+   * Writes a draft broadcast row — no recipients, no sending. The
+   * audience rule and source are preserved in `audience_filter` so a
+   * customer-data draft stays linked to its separate data page while the
+   * resume-draft UX is completed later.
    */
   async function handleSaveDraft() {
     if (!template || !name.trim()) {
@@ -112,6 +120,10 @@ export default function NewBroadcastPage() {
       audience_filter: {
         type: audience.type,
         tagIds: audience.tagIds,
+        customField: audience.customField,
+        customerData: audience.customerData,
+        source: audience.source,
+        excludeTagIds: audience.excludeTagIds,
       },
       status: 'draft',
       total_recipients: 0,

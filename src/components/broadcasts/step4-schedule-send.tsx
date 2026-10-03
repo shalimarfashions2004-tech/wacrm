@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { MessageTemplate } from '@/types';
+import type { AudienceConfig } from '@/lib/broadcasts/audience';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,12 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { ArrowLeft, Send, Loader2, Users, Save } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
-interface AudienceConfig {
-  type: string;
-  tagIds?: string[];
-  csvContacts?: { phone: string; name?: string }[];
-}
 
 interface Step4Props {
   name: string;
@@ -78,6 +73,8 @@ export function Step4ScheduleSend({
           setEstimatedReach(uniqueIds.size);
         } else if (audience.type === 'csv' && audience.csvContacts) {
           setEstimatedReach(audience.csvContacts.length);
+        } else if (audience.type === 'customer_data') {
+          setEstimatedReach(0);
         } else {
           setEstimatedReach(0);
         }
@@ -96,7 +93,9 @@ export function Step4ScheduleSend({
         ? t('scheduleSend.audienceTags')
         : audience.type === 'csv'
           ? t('scheduleSend.audienceCsv')
-          : t('scheduleSend.audienceField');
+          : audience.type === 'customer_data'
+            ? t('scheduleSend.audienceCustomerData')
+            : t('scheduleSend.audienceField');
 
   return (
     <div className="space-y-8">
@@ -166,6 +165,12 @@ export function Step4ScheduleSend({
         </div>
       </div>
 
+      {audience.type === 'customer_data' && (
+        <div className="text-muted-foreground rounded-[22px] border border-amber-500/30 bg-amber-500/10 p-5 text-sm leading-6">
+          {t('scheduleSend.customerDataNotConnected')}
+        </div>
+      )}
+
       {/* Processing overlay */}
       {isProcessing && (
         <div className="border-primary/30 bg-pale-lime rounded-[22px] border p-5">
@@ -217,7 +222,11 @@ export function Step4ScheduleSend({
             <DialogTrigger
               render={
                 <Button
-                  disabled={!name.trim() || isProcessing}
+                  disabled={
+                    !name.trim() ||
+                    isProcessing ||
+                    audience.type === 'customer_data'
+                  }
                   className="bg-primary text-primary-foreground hover:bg-primary-hover h-10 rounded-full px-5 disabled:opacity-50"
                 />
               }

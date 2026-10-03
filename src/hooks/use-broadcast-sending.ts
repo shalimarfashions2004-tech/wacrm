@@ -13,23 +13,15 @@ import {
   consentCategoryForTemplate,
   filterContactsForCategory,
 } from '@/lib/whatsapp/consent';
-
-export type CustomFieldOperator = 'is' | 'is_not' | 'contains';
-
-export interface CustomFieldFilter {
-  fieldId: string;
-  operator: CustomFieldOperator;
-  value: string;
-}
-
-export interface AudienceConfig {
-  type: 'all' | 'tags' | 'custom_field' | 'csv';
-  tagIds?: string[];
-  customField?: CustomFieldFilter;
-  csvContacts?: { phone: string; name?: string }[];
-  /** Contacts carrying any of these tags are subtracted from the result. */
-  excludeTagIds?: string[];
-}
+import type {
+  AudienceConfig,
+  CustomFieldFilter,
+} from '@/lib/broadcasts/audience';
+export type {
+  AudienceConfig,
+  CustomFieldFilter,
+  CustomFieldOperator,
+} from '@/lib/broadcasts/audience';
 
 /**
  * Variable mapping — each template placeholder (by key, usually "1",
@@ -203,6 +195,10 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
       contacts = await resolveCustomFieldAudience(supabase, audience.customField);
     } else if (audience.type === 'csv' && audience.csvContacts) {
       contacts = await upsertCsvContacts(supabase, audience.csvContacts);
+    } else if (audience.type === 'customer_data') {
+      throw new Error(
+        'Customer data sync is not connected yet. Save this audience as a draft until the Tally connection is verified.',
+      );
     }
 
     // Apply exclude tags (works across all contact-derived audience
@@ -434,6 +430,8 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
             type: payload.audience.type,
             tagIds: payload.audience.tagIds,
             customField: payload.audience.customField,
+            customerData: payload.audience.customerData,
+            source: payload.audience.source,
             excludeTagIds: payload.audience.excludeTagIds,
             consentCategory,
             suppressedCount: suppressed.length,

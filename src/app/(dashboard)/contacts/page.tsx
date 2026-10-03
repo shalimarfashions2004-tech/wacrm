@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ import {
   Search,
   Plus,
   Upload,
+  FileSpreadsheet,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -351,6 +353,13 @@ export default function ContactsPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/contacts/data-sheet"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-border bg-card-2 px-4 text-sm font-medium text-muted-foreground transition-all hover:bg-pale-lime hover:text-foreground"
+          >
+            <FileSpreadsheet className="size-4" />
+            Customer data
+          </Link>
           {canEditSettings && (
             <Button
               variant="outline"
