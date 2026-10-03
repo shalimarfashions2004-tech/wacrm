@@ -36,7 +36,8 @@ Exit condition: code is committed and live sending remains disabled by default.
 
 Purpose: connect the right Meta business assets and prepare the real database without sending messages.
 
-- [ ] Confirm Meta Business Portfolio, WABA, phone number and app are connected.
+- [x] Read back the Meta Business Portfolio and identify the production WABA (`1686023546421842`) and number (`+91 70256 48555`).
+- [ ] Complete Meta phone verification/coexistence onboarding; the number is currently shown as **Unverified** because it is already used by the WhatsApp Business app.
 - [ ] Confirm the Meta app has the required WhatsApp permissions and webhook settings.
 - [x] Select the intended Supabase project for Shalimar (`shalimar`, ref `houjlpiyafcanxsabmsk`).
 - [ ] Apply migration 043 first to a disposable Supabase project.
@@ -64,7 +65,8 @@ Exit condition: an approved audience can be explained contact by contact.
 
 Purpose: prove messages can travel safely in both directions.
 
-- [ ] Configure Meta credentials in a non-production environment.
+- [x] Keep the existing provider boundary and dry-run gate in place.
+- [ ] Configure the production WABA through the correct Meta flow. Standard “Add phone number” registration must not be repeated for the app-linked number; use Embedded Signup coexistence through an eligible Tech Provider/Solution Partner.
 - [ ] Verify webhook signature and inbound message readback.
 - [ ] Use the dry-run provider to verify campaign planning and idempotency.
 - [ ] Use one approved test recipient for a real Meta test only after explicit approval.

@@ -15,7 +15,7 @@ each person does, what evidence proves it worked, and what must remain stopped.
 | Code safety gate | Ready | `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false` are the safe defaults. | Developer |
 | Consent and suppression code | Ready for database verification | Campaigns fail closed when migration 043 is unavailable or consent is missing. | Developer + compliance |
 | Automated checks | Passed | Typecheck passed; lint exits cleanly; 97 Vitest files and 1,099 tests passed. The Vercel production build is Ready in deployment `dpl_EJix83MYHK2KtPUz1in1jB2UKVxn`; this local checkout has no Supabase values in `.env.local`, so a local static build cannot complete. | Tester |
-| Meta business assets | Credentials valid; phone registration remains blocked | Hosted Settings → WhatsApp validates the permanent token, confirms WABA `3105529616452879` is subscribed to the app, and reads phone `1228692947003388`. Verify with Meta still reports that the saved number is not fully registered. The exact Meta app is now checked before the diagnostic can report a live webhook state. | Owner + developer |
+| Meta business assets | Correct production WABA identified; phone registration/coexistence remains blocked | The verified Shalimar portfolio is `965749722599371`. Its production WABA is `1686023546421842` and lists `+91 70256 48555` as **Unverified**. `1523728316440438` is not present in this portfolio; it is a stale or different-business ID. `3105529616452879` is the separate test WABA. Do not use either wrong ID in CRM. | Owner + developer |
 | Supabase target project | Confirmed | Shalimar project `shalimar` (`houjlpiyafcanxsabmsk`) is healthy; Vercel Production and Preview have the project URL and protected keys. Schema migration remains pending. | Owner + developer |
 | Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` appears in Supabase Auth Users; complete the invitation from the Shalimar mailbox before dashboard acceptance testing. | Owner + tester |
 | Production schema | Reconciled and route-checked | Migrations 043, 046 and 047 are applied and read back. Notifications now loads cleanly; the hosted smoke check returned clean routes for dashboard, inbox, contacts, pipelines, broadcasts, automations, flows, agents, notifications and settings. | Developer + database owner |
@@ -189,13 +189,16 @@ field without echoing its contents. Verification: 96 test files / 1,096 tests,
 typecheck and changed-file lint passed. Hosted credential validity still needs
 an actual successful Meta connection result; local tests do not establish it.
 
-Meta readback evidence on 2026-10-02 confirms the Shalimar test WABA and phone
-IDs in Business Settings (`3105529616452879` and `1228692947003388`). The new
-permanent token now validates in CRM and the WABA is subscribed to the app.
-The Meta test number has no two-step PIN, so CRM intentionally leaves local
-`registered_at` empty and shows a separate “Not registered” banner. For a
-production number, configure its 6-digit PIN and save it before relying on
-inbound webhook delivery. Do not paste tokens into chat.
+Meta readback evidence on 2026-10-03 confirms the Shalimar production portfolio
+(`965749722599371`) and production WABA (`1686023546421842`). Business Settings
+lists `+91 70256 48555` as **Unverified**. The previously reported WABA
+`1523728316440438` is not listed under this portfolio, so the access error is an
+asset-selection problem rather than proof that the Shalimar owner lacks access.
+The separate test WABA is `3105529616452879`; it must not be used for production.
+For the same number to remain in the WhatsApp Business app and also work in the
+CRM, use Meta Embedded Signup coexistence onboarding; standard “Add phone
+number” registration conflicts with the existing app account. Do not paste
+tokens or PINs into chat.
 
 Stop and report the issue if any of these occurs:
 
