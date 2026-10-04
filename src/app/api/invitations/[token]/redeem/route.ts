@@ -20,7 +20,10 @@
 import { NextResponse } from "next/server";
 import type { PostgrestError } from "@supabase/supabase-js";
 
-import { hashInviteToken } from "@/lib/auth/invitations";
+import {
+  hashInviteToken,
+  isValidInviteToken,
+} from "@/lib/auth/invitations";
 import {
   checkRateLimit,
   rateLimitResponse,
@@ -62,7 +65,7 @@ export async function POST(
   if (!limit.success) return rateLimitResponse(limit);
 
   const { token } = await params;
-  if (!token || typeof token !== "string") {
+  if (!isValidInviteToken(token)) {
     return NextResponse.json(
       { error: "Missing invitation token" },
       { status: 400 },

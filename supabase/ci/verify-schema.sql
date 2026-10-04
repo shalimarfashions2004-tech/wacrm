@@ -42,6 +42,21 @@ BEGIN
     RAISE EXCEPTION 'public.accounts is missing — migration 017 did not apply';
   END IF;
 
+  -- Invitation links need both RPCs. The table alone is insufficient: the
+  -- public join page calls peek anonymously and redeem runs as the caller.
+  IF to_regprocedure('public.peek_invitation(text)') IS NULL THEN
+    RAISE EXCEPTION 'peek_invitation(text) is missing — migration 019/048 did not apply';
+  END IF;
+  IF to_regprocedure('public.redeem_invitation(text)') IS NULL THEN
+    RAISE EXCEPTION 'redeem_invitation(text) is missing — migration 019/048 did not apply';
+  END IF;
+  IF NOT has_function_privilege('anon', 'public.peek_invitation(text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'anon cannot execute peek_invitation(text)';
+  END IF;
+  IF NOT has_function_privilege('authenticated', 'public.redeem_invitation(text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'authenticated cannot execute redeem_invitation(text)';
+  END IF;
+
   -- The BSUID index (040) is the only thing stopping a username-only
   -- WhatsApp sender from forking a new contact per inbound message. A
   -- typo in its name would apply cleanly and guarantee nothing.

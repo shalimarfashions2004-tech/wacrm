@@ -1,6 +1,6 @@
 # Shalimar Connect project status
 
-Updated: 2026-10-03
+Updated: 2026-10-04
 Branch: `feature/shalimar-connect-platform`  
 Product owner: Shalimar owner (business approval)  
 Project manager: Shalimar delivery lead  
@@ -23,7 +23,7 @@ This document is the working project board. The execution plan remains the detai
 | Project documentation | Complete | Architecture, deployment, issue, cost and execution records exist. | `docs/` |
 | Meta asset mapping | Correct Shalimar production account identified; registration/coexistence remains blocked | In the verified `Shalimar Fashions` portfolio (`965749722599371`), the production WABA is `1686023546421842` and lists `+91 70256 48555` as **Unverified**. The error ID `1523728316440438` is not listed in this portfolio and must not be used in CRM. The portfolio also contains a separate test WABA `3105529616452879`; it is not the production account. | Use only the production WABA ID returned by Meta for this portfolio. Do not start standard Cloud API phone registration again while the same number is in the WhatsApp Business app; for app + CRM on one number, complete Meta's Embedded Signup coexistence onboarding through a Tech Provider/solution partner. |
 | Supabase project and Auth configuration | Complete for authentication; production schema reconciled | The `shalimar` project is selected, healthy, and connected to Vercel. Migrations 043, 046 and 047 were applied and read back in the intended project. | Keep schema verification in CI and repeat after future migrations |
-| Shalimar test user | Invitation sent | `shalimarfashions2004@gmail.com` is present in Supabase Auth Users. The owner must accept the invitation and set the password before dashboard/RLS acceptance testing. | Confirm email, sign in, verify account row and account-scoped reads |
+| Shalimar test user | Invitation preview repaired; acceptance pending | The existing Admin invite now reads back from the live join endpoint after the missing production invitation RPCs were reconciled. The owner must still accept the invitation and set the password before dashboard/RLS acceptance testing. | Confirm email, sign in, verify account row and account-scoped reads |
 | Supabase production schema | Reconciled and route-checked | Migration 043 plus reconciliations 046 and 047 are applied and read back. The Notifications page loads without the schema-cache error, and all ten main CRM routes returned cleanly in the hosted smoke check. | Keep live delivery disabled and rerun the smoke check after deployment |
 | CRM hosting and domain | Complete for the tested release | Vercel deployment `dpl_EJix83MYHK2KtPUz1in1jB2UKVxn` is Ready and aliased to `crm.shalimarfashions.com`. The production build completed in Vercel, and the live domain now serves the navigation, dry-run, settings contrast and exact Meta-app registration diagnostic fixes. | Keep the project Git connection documented; it is currently deployed from the signed-in CLI rather than an automatic Git integration |
 | Contact import and consent evidence | Not started | We need an approved source file/system and contact-by-contact consent evidence. | Import preview and sign-off record |

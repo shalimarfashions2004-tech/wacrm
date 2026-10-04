@@ -31,6 +31,13 @@ export const DEFAULT_INVITE_EXPIRY_DAYS = 7;
 /** Hard ceiling on user-supplied `expiresInDays` (1 year). */
 export const MAX_INVITE_EXPIRY_DAYS = 365;
 
+/** Opaque token shape emitted by generateInviteToken (32 bytes, base64url). */
+export const INVITE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+export function isValidInviteToken(token: unknown): token is string {
+  return typeof token === "string" && INVITE_TOKEN_PATTERN.test(token);
+}
+
 export interface GeneratedToken {
   /** Plaintext token — return to the creator ONCE, never persist. */
   token: string;

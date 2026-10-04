@@ -23,7 +23,10 @@
 
 import { NextResponse } from "next/server";
 
-import { hashInviteToken } from "@/lib/auth/invitations";
+import {
+  hashInviteToken,
+  isValidInviteToken,
+} from "@/lib/auth/invitations";
 import {
   checkRateLimit,
   rateLimitResponse,
@@ -61,7 +64,7 @@ export async function GET(
   if (!limit.success) return rateLimitResponse(limit);
 
   const { token } = await params;
-  if (!token || typeof token !== "string") {
+  if (!isValidInviteToken(token)) {
     return NextResponse.json(
       { ok: false, reason: "not_found" },
       { status: 404 },
@@ -81,7 +84,41 @@ export async function GET(
     );
   }
 
-  // The RPC always returns a json object — either ok:true with
-  // metadata or ok:false with a reason. Forward verbatim.
-  return NextResponse.json(data);
+  // Keep the public response contract narrow even if a future SQL change
+  // adds columns to the RPC result.
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    console.error("[peek] invalid RPC response shape");
+    return NextResponse.json(
+      { ok: false, reason: "server_error" },
+      { status: 500 },
+    );
+  }
+  const result = data as Record<string, unknown>;
+  if (result.ok === true) {
+    if (
+      typeof result.account_name !== "string" ||
+      !["admin", "agent", "viewer"].includes(String(result.role)) ||
+      typeof result.expires_at !== "string"
+    ) {
+      console.error("[peek] invalid successful RPC response");
+      return NextResponse.json(
+        { ok: false, reason: "server_error" },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      account_name: result.account_name,
+      role: result.role,
+      expires_at: result.expires_at,
+    });
+  }
+  if (["not_found", "used", "expired"].includes(String(result.reason))) {
+    return NextResponse.json({ ok: false, reason: result.reason });
+  }
+  console.error("[peek] invalid failure RPC response");
+  return NextResponse.json(
+    { ok: false, reason: "server_error" },
+    { status: 500 },
+  );
 }

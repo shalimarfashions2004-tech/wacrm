@@ -6,6 +6,7 @@ import {
   hashInviteToken,
   inviteExpiresAt,
   inviteUrl,
+  isValidInviteToken,
   MAX_INVITE_EXPIRY_DAYS,
 } from "./invitations";
 
@@ -33,6 +34,15 @@ describe("generateInviteToken", () => {
       seen.add(generateInviteToken().token);
     }
     expect(seen.size).toBe(1000);
+  });
+});
+
+describe("isValidInviteToken", () => {
+  it("accepts generated token shape and rejects malformed input", () => {
+    expect(isValidInviteToken(generateInviteToken().token)).toBe(true);
+    expect(isValidInviteToken("short")).toBe(false);
+    expect(isValidInviteToken("!".repeat(43))).toBe(false);
+    expect(isValidInviteToken(null)).toBe(false);
   });
 });
 
