@@ -184,6 +184,42 @@ BEGIN
     RAISE EXCEPTION 'broadcast creation function does not assign idempotency keys — migration 043 did not apply';
   END IF;
 
+  -- Interactive messaging and AI settings are loaded by the settings and
+  -- inbox routes. A missing object becomes a schema-cache error on every
+  -- dashboard visit, so keep the production reconciliation in CI.
+  IF to_regclass('public.quick_replies') IS NULL THEN
+    RAISE EXCEPTION 'quick_replies is missing — migration 035/049 did not apply';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_class
+    WHERE oid = 'public.quick_replies'::regclass AND relrowsecurity
+  ) THEN
+    RAISE EXCEPTION 'quick_replies RLS is disabled';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'quick_replies'
+      AND policyname = 'quick_replies_select'
+  ) THEN
+    RAISE EXCEPTION 'quick_replies account policy is missing';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'ai_configs'
+      AND column_name = 'handoff_agent_id'
+  ) THEN
+    RAISE EXCEPTION 'ai_configs.handoff_agent_id is missing — migration 033/045/049 did not apply';
+  END IF;
+  IF to_regclass('public.ai_usage_log') IS NULL THEN
+    RAISE EXCEPTION 'ai_usage_log is missing — migration 033/049 did not apply';
+  END IF;
+  IF to_regclass('public.ai_knowledge_documents') IS NULL
+     OR to_regclass('public.ai_knowledge_chunks') IS NULL THEN
+    RAISE EXCEPTION 'AI knowledge tables are missing — migration 030/049 did not apply';
+  END IF;
+
   RAISE NOTICE 'schema verification passed';
 END
 $$;

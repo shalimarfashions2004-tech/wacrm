@@ -3,8 +3,9 @@
 Updated: 2026-10-04
 
 This baseline records the engineering controls applied while repairing the
-team invitation flow. It is a release checklist and ownership aid, not a claim
-that every CRM workflow has completed production acceptance.
+team invitation flow and reconciling the production schema. It is a release
+checklist and ownership aid, not a claim that every CRM workflow has completed
+production acceptance.
 
 ## Current repair
 
@@ -19,6 +20,12 @@ that every CRM workflow has completed production acceptance.
   a shared account.
 - The API now rejects malformed token shapes before a database call and
   validates the RPC response shape before returning it to the browser.
+- The live production database also lacked the quick-reply and AI knowledge
+  objects that the settings pages query. Migration 049 restores those tables,
+  columns, indexes, RLS policies and retrieval grants additively.
+- Dashboard navigation now has a shared route-level skeleton in
+  `src/app/(dashboard)/loading.tsx`, so every dashboard route displays an
+  immediate loading layout while its bundle and data requests settle.
 
 ## Engineering rules
 
@@ -42,6 +49,8 @@ that every CRM workflow has completed production acceptance.
 
 - Live preview endpoint: malformed token → `not_found`; existing Admin invite →
   account preview with expiry.
+- Live Supabase SQL Editor: quick-replies and AI schema reconciliation returned
+  `Success. No rows returned`; Vercel production deployment is Ready.
 - Invitation unit and route contract tests: 24 passed.
 - TypeScript check: passed.
 
