@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Bot, Sparkles, Settings2, BarChart3 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -16,26 +16,19 @@ export default function AgentsPage() {
   const t = useTranslations('Agents');
   const { accountRole } = useAuth();
   const canViewUsage = accountRole ? canEditSettings(accountRole) : false;
-  const [tab, setTab] = useState<Tab>('playground');
-  const [decided, setDecided] = useState(false);
-
-  // Land first-time users on Setup, returning users on the Playground.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/ai/config');
-        const data = await res.json().catch(() => ({}));
-        if (!cancelled) setTab(data?.configured ? 'playground' : 'setup');
-      } catch {
-        if (!cancelled) setTab('setup');
-      } finally {
-        if (!cancelled) setDecided(true);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  // Render the shell immediately. The setup panel owns the authenticated
+  // config request and switches configured accounts to the playground once
+  // that request completes. Keeping the request in one place prevents the
+  // page-level fetch from racing profile hydration and avoids a blank page
+  // while the API is resolving.
+  const [tab, setTab] = useState<Tab>('setup');
+  const userSelectedTabRef = useRef(false);
+  const handleTabChange = useCallback((value: string) => {
+    userSelectedTabRef.current = true;
+    setTab(value as Tab);
+  }, []);
+  const handleConfigured = useCallback(() => {
+    if (!userSelectedTabRef.current) setTab('playground');
   }, []);
 
   return (
@@ -50,12 +43,11 @@ export default function AgentsPage() {
         {t('description')}
       </p>
 
-      {decided && (
-        <Tabs
-          value={tab}
-          onValueChange={(v) => setTab(v as Tab)}
-          className="mt-6"
-        >
+      <Tabs
+        value={tab}
+        onValueChange={handleTabChange}
+        className="mt-6"
+      >
           <TabsList>
             <TabsTrigger value="playground">
               <Sparkles className="mr-1.5 h-4 w-4" /> {t('tabPlayground')}
@@ -75,7 +67,7 @@ export default function AgentsPage() {
           </TabsContent>
 
           <TabsContent value="setup" className="mt-4">
-            <AiConfig />
+            <AiConfig onConfigured={handleConfigured} />
           </TabsContent>
 
           {canViewUsage && (
@@ -83,8 +75,7 @@ export default function AgentsPage() {
               <AiUsageCard />
             </TabsContent>
           )}
-        </Tabs>
-      )}
+      </Tabs>
     </div>
   );
 }
