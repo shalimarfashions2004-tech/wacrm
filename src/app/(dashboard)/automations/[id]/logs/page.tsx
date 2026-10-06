@@ -93,7 +93,6 @@ export default function AutomationLogsPage({
         </button>
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("title")}</p>
-          <h1 className="max-w-3xl text-3xl font-light tracking-tight text-foreground sm:text-4xl">{automation.name}</h1>
         </div>
       </div>
 

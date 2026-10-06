@@ -108,9 +108,6 @@ export default function CustomerDataSheetPage() {
           <p className="text-muted-foreground mb-2 text-xs font-medium tracking-[0.18em] uppercase">
             Shalimar customer data
           </p>
-          <h1 className="text-foreground text-4xl font-light tracking-tight sm:text-5xl">
-            Customer data sheet
-          </h1>
           <p className="text-muted-foreground mt-2 max-w-3xl text-sm">
             A review page for customer history, purchase value, and lifecycle
             segments. The Excel connection is staged for a later approved

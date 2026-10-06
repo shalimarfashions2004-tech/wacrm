@@ -309,7 +309,6 @@ export default function PipelinesPage() {
         <div className="flex flex-col gap-3">
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t("workspaceLabel")}</p>
-            <h1 className="text-4xl font-light tracking-tight text-foreground sm:text-5xl">{t("title")}</h1>
           </div>
           {/* Pipeline selector dropdown */}
           <DropdownMenu>

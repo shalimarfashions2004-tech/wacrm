@@ -347,7 +347,6 @@ export default function ContactsPage() {
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{t('workspaceLabel')}</p>
-          <h1 className="text-4xl font-light tracking-tight text-foreground sm:text-5xl">{t('title')}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {totalCount > 0 ? t('subtitle', { count: totalCount }) : t('subtitleZero')}
           </p>

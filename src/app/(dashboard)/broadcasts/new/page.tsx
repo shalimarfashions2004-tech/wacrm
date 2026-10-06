@@ -150,9 +150,6 @@ function NewBroadcastPageInner() {
         <p className="text-muted-foreground mb-2 text-xs font-medium tracking-[0.18em] uppercase">
           {t('workspaceLabel')}
         </p>
-        <h1 className="text-foreground text-4xl font-light tracking-tight sm:text-5xl">
-          {t('title')}
-        </h1>
         <p className="text-muted-foreground mt-2 text-sm">{t('subtitle')}</p>
       </div>
 

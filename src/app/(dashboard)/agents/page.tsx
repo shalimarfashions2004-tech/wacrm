@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Bot, Sparkles, Settings2, BarChart3 } from 'lucide-react';
+import { Sparkles, Settings2, BarChart3 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AiPlayground } from '@/components/agents/ai-playground';
 import { AiUsageCard } from '@/components/agents/ai-usage';
@@ -33,12 +33,6 @@ export default function AgentsPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <Bot className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          {t('title')}
-        </h1>
-      </div>
       <p className="mt-1 text-sm text-muted-foreground">
         {t('description')}
       </p>

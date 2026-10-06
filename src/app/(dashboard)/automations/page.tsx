@@ -160,7 +160,6 @@ export default function AutomationsPage() {
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("title")}</p>
-          <h1 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">{t("title")}</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
             {t("subtitle")}
           </p>

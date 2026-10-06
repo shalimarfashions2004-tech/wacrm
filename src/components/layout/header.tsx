@@ -114,9 +114,6 @@ export function Header({ onOpenSidebar }: HeaderProps) {
             );
           })}
         </nav>
-        <h1 className="truncate text-base font-semibold text-foreground md:hidden sm:text-lg">
-          {pageTitle}
-        </h1>
         </div>
 
       <div className="flex items-center gap-1 sm:gap-2">

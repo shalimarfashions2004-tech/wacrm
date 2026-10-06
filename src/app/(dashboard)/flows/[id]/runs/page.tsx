@@ -175,7 +175,6 @@ export default function FlowRunsPage() {
         {flow.name}
       </button>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("title")}</p>
-      <h1 className="text-3xl font-light tracking-tight text-foreground sm:text-4xl">{t("title")}</h1>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
         {t("description")}
       </p>
