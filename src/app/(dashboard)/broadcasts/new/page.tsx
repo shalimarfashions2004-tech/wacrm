@@ -14,6 +14,7 @@ import { useBroadcastSending } from '@/hooks/use-broadcast-sending';
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { AudienceConfig } from '@/lib/broadcasts/audience';
+import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 
 const steps = [
   { label: 'template', key: 'template' },
@@ -24,7 +25,7 @@ const steps = [
 
 export default function NewBroadcastPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<DashboardPageLoading variant="editor" />}>
       <NewBroadcastPageInner />
     </Suspense>
   );

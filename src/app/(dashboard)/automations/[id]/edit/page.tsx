@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import {
@@ -12,6 +11,7 @@ import {
   type ServerStepNode,
 } from "@/components/automations/automation-builder"
 import type { AutomationTriggerType } from "@/types"
+import { DashboardPageLoading } from "@/components/dashboard/page-loading"
 
 export default function EditAutomationPage({
   params,
@@ -65,11 +65,7 @@ export default function EditAutomationPage({
   }
 
   if (!initial) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    )
+    return <DashboardPageLoading variant="editor" />
   }
 
   return <AutomationBuilder initial={initial} />

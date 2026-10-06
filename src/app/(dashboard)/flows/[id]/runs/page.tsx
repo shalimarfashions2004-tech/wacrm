@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Loader2,
   CircleCheck,
   CircleAlert,
   Clock,
@@ -18,6 +17,7 @@ import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 
 import { useTranslations } from "next-intl";
+import { DashboardPageLoading } from "@/components/dashboard/page-loading";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -147,11 +147,7 @@ export default function FlowRunsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-64 items-center justify-center rounded-[28px] border border-border/70 bg-card">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardPageLoading variant="table" />;
   }
   if (notFound || !flow) {
     return (

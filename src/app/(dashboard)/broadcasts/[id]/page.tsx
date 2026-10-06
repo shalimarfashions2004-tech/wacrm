@@ -38,6 +38,7 @@ import {
 import { toast } from 'sonner';
 import { getBroadcastStatus, getRecipientStatus } from '@/lib/broadcast-status';
 import { useTranslations } from 'next-intl';
+import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 
 interface StatCardProps {
   label: string;
@@ -302,13 +303,7 @@ export default function BroadcastDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="border-border bg-card flex h-64 items-center justify-center rounded-[28px] border">
-        <div className="bg-pale-lime flex size-14 items-center justify-center rounded-full">
-          <Loader2 className="text-foreground size-6 animate-spin" />
-        </div>
-      </div>
-    );
+    return <DashboardPageLoading variant="table" />;
   }
 
   if (error || !broadcast) {

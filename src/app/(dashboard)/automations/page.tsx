@@ -43,6 +43,7 @@ import {
 import { AUTOMATION_TEMPLATES, type TemplateSlug } from "@/lib/automations/templates"
 import { triggerMeta, formatRelative, isKnownTrigger } from "@/lib/automations/trigger-meta"
 import { cn } from "@/lib/utils"
+import { DashboardPageLoading } from "@/components/dashboard/page-loading"
 
 const TEMPLATE_ORDER: TemplateSlug[] = [
   "welcome_message",
@@ -149,11 +150,7 @@ export default function AutomationsPage() {
   }
 
   if (automations === null) {
-    return (
-      <div className="flex min-h-64 items-center justify-center rounded-[28px] border border-border/70 bg-card">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    )
+    return <DashboardPageLoading variant="table" />
   }
 
   const showTemplates = automations.length < 3

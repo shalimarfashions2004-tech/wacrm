@@ -16,6 +16,7 @@ import { ContactSidebar } from "@/components/inbox/contact-sidebar";
 import { toast } from "sonner";
 import { WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DashboardPageLoading } from "@/components/dashboard/page-loading";
 
 // Remembers the agent's show/hide choice for the desktop contact panel
 // across reloads and sessions (device-scoped, like the theme prefs).
@@ -26,7 +27,7 @@ const CONTACT_PANEL_STORAGE_KEY = "wacrm:inbox:contact-panel-open";
 // wrapper supplies it; the inner component holds all the inbox state.
 export default function InboxPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<DashboardPageLoading variant="table" />}>
       <InboxPageInner />
     </Suspense>
   );

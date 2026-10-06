@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Check,
-  Loader2,
   X,
   ChevronDown,
   ChevronRight,
@@ -21,6 +20,7 @@ import type {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatRelative } from "@/lib/automations/trigger-meta"
+import { DashboardPageLoading } from "@/components/dashboard/page-loading"
 
 export default function AutomationLogsPage({
   params,
@@ -77,11 +77,7 @@ export default function AutomationLogsPage({
   }
 
   if (!automation || logs === null) {
-    return (
-      <div className="flex min-h-64 items-center justify-center rounded-[28px] border border-border/70 bg-card">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    )
+    return <DashboardPageLoading variant="table" />
   }
 
   return (

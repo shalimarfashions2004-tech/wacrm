@@ -22,6 +22,7 @@ import {
   resolveSection,
   type SettingsSection,
 } from '@/components/settings/settings-sections';
+import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 
 // `useSearchParams` opts this page out of static prerendering unless it
 // sits under a Suspense boundary. Without one, the production build hits
@@ -33,7 +34,7 @@ import {
 // the boundary; the inner component reads the query string.
 export default function SettingsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<DashboardPageLoading />}>
       <SettingsPageInner />
     </Suspense>
   );

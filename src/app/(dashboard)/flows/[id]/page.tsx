@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useTranslations } from "next-intl";
 
 import { FlowEditorShell } from "@/components/flows/flow-editor-shell";
 import type { FlowRow, FlowNodeRow } from "@/lib/flows/types";
+import { DashboardPageLoading } from "@/components/dashboard/page-loading";
 
 /**
  * Flow editor shell.
@@ -66,11 +66,7 @@ export default function FlowEditorPage() {
   }, [params.id]);
 
   if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardPageLoading variant="editor" />;
   }
   if (notFound || !flow) {
     return (

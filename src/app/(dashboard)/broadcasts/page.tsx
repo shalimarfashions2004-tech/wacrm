@@ -13,11 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Radio, Plus, Loader2 } from 'lucide-react';
+import { Radio, Plus } from 'lucide-react';
 import { useCan } from '@/hooks/use-can';
 import { GatedButton } from '@/components/ui/gated-button';
 import { getBroadcastStatus } from '@/lib/broadcast-status';
 import { useTranslations } from 'next-intl';
+import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 
 /**
  * Poll cadence while any broadcast is sending. Kept modest so we don't
@@ -132,13 +133,7 @@ export default function BroadcastsPage() {
   }, [anySending]);
 
   if (loading) {
-    return (
-      <div className="border-border bg-card flex h-64 items-center justify-center rounded-[28px] border">
-        <div className="bg-pale-lime flex size-14 items-center justify-center rounded-full">
-          <Loader2 className="text-foreground size-6 animate-spin" />
-        </div>
-      </div>
-    );
+    return <DashboardPageLoading variant="table" />;
   }
 
   if (error) {

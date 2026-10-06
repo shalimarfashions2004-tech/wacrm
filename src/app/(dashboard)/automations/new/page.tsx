@@ -10,13 +10,14 @@ import {
 } from "@/components/automations/automation-builder"
 import { AUTOMATION_TEMPLATES, type TemplateSlug } from "@/lib/automations/templates"
 import type { AutomationStepType, AutomationTriggerType } from "@/types"
+import { DashboardPageLoading } from "@/components/dashboard/page-loading"
 
 // `useSearchParams` requires a Suspense boundary or the production build
 // bails to CSR and errors out. Thin wrapper supplies it; the inner
 // component reads the `?template=` query string.
 export default function NewAutomationPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<DashboardPageLoading variant="editor" />}>
       <NewAutomationPageInner />
     </Suspense>
   )
