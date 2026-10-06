@@ -36,6 +36,7 @@ export function AiKnowledgeCard({
 }) {
   const [docs, setDocs] = useState<DocSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [editing, setEditing] = useState<EditTarget>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -46,16 +47,30 @@ export function AiKnowledgeCard({
 
   const fetchDocs = useCallback(async () => {
     setLoading(true);
-    try {
-      const res = await fetch('/api/ai/knowledge');
-      const data = await res.json();
-      if (res.ok) setDocs(data.documents ?? []);
-      else toast.error(data.error ?? t('loadFailed'));
-    } catch {
-      toast.error(t('loadFailed'));
-    } finally {
-      setLoading(false);
+    setLoadError(false);
+
+    // The knowledge endpoint depends on the authenticated account context
+    // and PostgREST schema cache. Retry once so a short session/schema
+    // hiccup does not produce a misleading failure toast during page load.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const res = await fetch('/api/ai/knowledge', { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setDocs(data.documents ?? []);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // Retry below; surface one stable inline error only after both tries.
+      }
+      if (attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
     }
+
+    setLoadError(true);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -173,6 +188,13 @@ export function AiKnowledgeCard({
         {loading ? (
           <div className="flex items-center py-4 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('loading')}
+          </div>
+        ) : loadError ? (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">
+            <span>{t('loadFailed')}</span>
+            <Button variant="outline" size="sm" onClick={() => void fetchDocs()}>
+              <RefreshCw className="mr-2 h-3.5 w-3.5" /> {t('retry')}
+            </Button>
           </div>
         ) : (
           <>

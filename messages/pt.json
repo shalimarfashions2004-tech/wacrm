@@ -1882,6 +1882,7 @@
     },
     "aiKnowledge": {
       "loadFailed": "Falha ao carregar a base de conhecimento",
+      "retry": "Tentar novamente",
       "openFailed": "Falha ao abrir o documento",
       "titleContentRequired": "Título e conteúdo são obrigatórios.",
       "saveSuccessNew": "Documento adicionado.",

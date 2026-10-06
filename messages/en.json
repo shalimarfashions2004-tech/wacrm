@@ -1894,6 +1894,7 @@
     },
     "aiKnowledge": {
       "loadFailed": "Failed to load knowledge base",
+      "retry": "Retry",
       "openFailed": "Failed to open document",
       "titleContentRequired": "Title and content are required.",
       "saveSuccessNew": "Document added.",

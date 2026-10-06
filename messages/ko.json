@@ -1894,6 +1894,7 @@
     },
     "aiKnowledge": {
       "loadFailed": "지식베이스를 불러오지 못했습니다",
+      "retry": "다시 시도",
       "openFailed": "문서를 열지 못했습니다",
       "titleContentRequired": "제목과 내용은 필수입니다.",
       "saveSuccessNew": "문서가 추가되었습니다.",
