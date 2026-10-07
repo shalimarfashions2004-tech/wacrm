@@ -48,3 +48,7 @@ The 24-hour reply rule was checked against the current official WhatsApp policy/
 ## Final owner readback
 
 The owner pasted the current CRM panel showing credentials valid, the WABA subscribed, **“Inbox replies are enabled for customer messages received within the last 24 hours. Each reply is checked for opt-outs before sending.”**, and **“Broadcasts and automated messages are disabled while campaign checks are completed.”** This supersedes the earlier missing-line observation. The Inbox setting and its readiness query are now confirmed through user readback; this does not certify campaigns, automation, every media type, or whole-CRM production readiness.
+
+## Campaign database preparation
+
+The owner subsequently requested the SQL Editor migration. Migration 050 now prepares protected approvals, atomic monthly reservations and permanent attempt records, with an exact installer that selects the confirmed Shalimar sender and sets a **disabled ₹1,000/month** policy. See [the campaign controls handoff](WHATSAPP_CAMPAIGN_CONTROLS_2026-10-07.md). Local database tests passed; production application, server-worker integration, rate review and activation remain pending. No production flags or sending behavior changed in this preparation.

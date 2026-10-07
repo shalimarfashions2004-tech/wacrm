@@ -24,11 +24,15 @@ on:
     # "expected", which blocks every PR that doesn't touch SQL.
     paths:
       - 'supabase/**'
+      - 'docs/sql/**'
+      - 'scripts/prepare-messaging-sql-editor.mjs'
       - '.github/workflows/migrations.yml'
   push:
     branches: [main]
     paths:
       - 'supabase/**'
+      - 'docs/sql/**'
+      - 'scripts/prepare-messaging-sql-editor.mjs'
       - '.github/workflows/migrations.yml'
 
 concurrency:
@@ -69,3 +73,13 @@ jobs:
       # just the absence of an error.
       - name: Verify the resulting schema
         run: supabase db query --local --file supabase/ci/verify-schema.sql
+
+      # Executes the RPCs, not just CREATE FUNCTION (PL/pgSQL errors can be
+      # deferred until first use). Uses isolated synthetic records, never live.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Install isolated PostgreSQL test runtime
+        run: npm install --prefix "$RUNNER_TEMP/messaging-sql-test" --ignore-scripts --no-audit --no-fund @electric-sql/pglite@0.5.8
+      - name: Test managed messaging budget, consent, approval and duplicate protection
+        run: PGLITE_MODULE_ROOT="$RUNNER_TEMP/messaging-sql-test/node_modules/@electric-sql/pglite" node --test supabase/ci/test-managed-messaging.mjs

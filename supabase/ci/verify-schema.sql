@@ -220,6 +220,33 @@ BEGIN
     RAISE EXCEPTION 'AI knowledge tables are missing — migration 030/049 did not apply';
   END IF;
 
+  -- Protected budget/approval/attempt records. Browser-side approval fields
+  -- are not an authority, and even service-role direct writes must be denied.
+  IF to_regclass('public.messaging_budget_policies') IS NULL
+    OR to_regclass('public.messaging_source_approvals') IS NULL
+    OR to_regclass('public.messaging_delivery_ledger') IS NULL THEN
+    RAISE EXCEPTION 'managed messaging tables are missing — migration 050 did not apply';
+  END IF;
+  IF (SELECT COUNT(*) FROM pg_class WHERE oid IN (
+    'public.messaging_budget_policies'::regclass,
+    'public.messaging_source_approvals'::regclass,
+    'public.messaging_delivery_ledger'::regclass) AND relrowsecurity) <> 3 THEN
+    RAISE EXCEPTION 'managed messaging RLS is disabled';
+  END IF;
+  IF has_table_privilege('authenticated', 'public.messaging_source_approvals', 'UPDATE')
+    OR has_table_privilege('service_role', 'public.messaging_delivery_ledger', 'INSERT')
+    OR has_table_privilege('authenticated', 'public.messaging_budget_policies', 'UPDATE') THEN
+    RAISE EXCEPTION 'managed messaging controls allow direct writes';
+  END IF;
+  IF NOT has_function_privilege('service_role',
+    'public.claim_messaging_delivery(uuid,text,uuid,uuid,text,text,uuid,uuid,uuid)', 'EXECUTE')
+    OR has_function_privilege('authenticated',
+    'public.claim_messaging_delivery(uuid,text,uuid,uuid,text,text,uuid,uuid,uuid)', 'EXECUTE')
+    OR has_function_privilege('anon',
+    'public.approve_messaging_source(uuid,text,uuid,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'managed messaging RPC grants are incorrect';
+  END IF;
+
   RAISE NOTICE 'schema verification passed';
 END
 $$;

@@ -1,0 +1,45 @@
+{
+  "prepared_at_utc": "2026-10-07T10:01:07Z",
+  "source_base_commit": "06d0664",
+  "stage": "SQL Editor handoff; not applied to production",
+  "artifacts": {
+    "supabase/migrations/050_managed_messaging_budget.sql": {
+      "sha256": "741cfe79537e350ac6abccb85ec02e84e5d39e9b2bd731228005ce3553bf0854"
+    },
+    "supabase/setup/shalimar-budget-policy.sql": {
+      "sha256": "29c42c01e160e522de0622e82fe391f12957c11880e980741c169b8b5dfef4e5"
+    },
+    "docs/sql/SHALIMAR_RUN_THIS_050.sql": {
+      "sha256": "603babd1a8335aed7776a68003fb90014e7cb61cc8cb32bb98c1138f065e1cac"
+    }
+  },
+  "checks": {
+    "database_scenarios": 24,
+    "node_test_results_including_parent": 25,
+    "database_runtime": "PGlite 0.5.8 PostgreSQL; synthetic auth/storage platform objects and actual prerequisite migrations",
+    "exact_bundle_apply_and_replay": "passed",
+    "wrong_sender_transaction_rollback": "passed",
+    "application_test_files": 102,
+    "application_tests": 1156,
+    "typecheck": "passed",
+    "lint_errors": 0,
+    "existing_lint_warnings": 37,
+    "local_webpack_build": "passed with placeholder credentials and live messaging disabled",
+    "diff_check": "passed"
+  },
+  "production": {
+    "migration_applied": false,
+    "worker_integration_completed": false,
+    "deployment_performed": false,
+    "sending_enabled": false,
+    "real_messages_sent": 0,
+    "owner_database_receipt": "pending"
+  },
+  "limitations": [
+    "GitHub CI not run",
+    "No hosted Supabase/PostgREST readback for migration 050 yet",
+    "Single-process SQL tests do not prove multi-connection concurrency behavior",
+    "Rates not seeded; provider pricing and conservative reservation review still required",
+    "No campaign or automation approved by this installer"
+  ]
+}
