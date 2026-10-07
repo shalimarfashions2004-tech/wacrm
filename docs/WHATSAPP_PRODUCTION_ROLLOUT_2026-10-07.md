@@ -24,7 +24,10 @@
 - Lint: **0 errors, 37 existing warnings**.
 - Local production Webpack build passed with non-production placeholder credentials; not deployed as a prebuilt artifact.
 - No real messages sent by the agent in this release.
-- See `evidence/whatsapp-inbox-production-deployment-2026-10-07.json` for deployment/readback results when available.
+- Production Turbopack build and TypeScript passed on Vercel. Deployment `dpl_ACNP62ky9X5nuytoyqx2e8MM1mur` is READY, serves `crm.shalimarfashions.com`, and records source commit `b7a38527ed8714d4ef4f31eb126fd462504d46e2`.
+- Production project settings were saved with Inbox approval enabled for the confirmed sender and general delivery still disabled. Deployment runtime/build metadata contains the three Inbox keys and no temporary test keys. No secret values were printed.
+- Live unauthenticated checks: `/login` returned 200; `/api/whatsapp/config` returned 401, preserving authentication.
+- See `evidence/whatsapp-inbox-production-deployment-2026-10-07.json` for the independently retrieved provider receipt. Authenticated post-release Settings readback remains pending from the owner.
 
 ## Remaining gates — do not mark the whole CRM production-ready
 

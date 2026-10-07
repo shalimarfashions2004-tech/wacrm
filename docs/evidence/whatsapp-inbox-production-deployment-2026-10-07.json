@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-10-07T09:37:15.065455+00:00",
+  "deploymentId": "dpl_ACNP62ky9X5nuytoyqx2e8MM1mur",
+  "state": "READY",
+  "target": "production",
+  "url": "shalimar-connect-p8r7023y9-shalimarfashions2004-9466.vercel.app",
+  "sourceCommit": "b7a38527ed8714d4ef4f31eb126fd462504d46e2",
+  "aliasDeploymentId": "dpl_ACNP62ky9X5nuytoyqx2e8MM1mur",
+  "runtimeMessagingEnvKeys": [
+    "MESSAGING_DELIVERY_MODE",
+    "MESSAGING_INBOX_PHONE_NUMBER_ID",
+    "MESSAGING_INBOX_REPLIES_APPROVED",
+    "MESSAGING_INBOX_WABA_ID",
+    "MESSAGING_LIVE_APPROVED",
+    "MESSAGING_PROVIDER"
+  ],
+  "buildMessagingEnvKeys": [
+    "MESSAGING_DELIVERY_MODE",
+    "MESSAGING_INBOX_PHONE_NUMBER_ID",
+    "MESSAGING_INBOX_REPLIES_APPROVED",
+    "MESSAGING_INBOX_WABA_ID",
+    "MESSAGING_LIVE_APPROVED",
+    "MESSAGING_PROVIDER"
+  ],
+  "httpChecks": [
+    {
+      "path": "/login",
+      "status": 200,
+      "authenticated": false
+    },
+    {
+      "path": "/api/whatsapp/config",
+      "status": 401,
+      "authenticated": false
+    }
+  ],
+  "expectedPolicy": {
+    "generalDelivery": "dry-run / false",
+    "humanInboxReplies": true,
+    "phoneNumberId": "1391671597361924",
+    "wabaId": "28787952197487898",
+    "broadcastBudgetRequestedINR": 1000,
+    "broadcastBudgetEnforced": false
+  },
+  "authenticatedCrmReadback": "pending owner refresh of Test Connection",
+  "messagesSentByAgent": 0
+}
