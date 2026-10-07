@@ -1,0 +1,37 @@
+{
+  "checked_at": "2026-10-07T09:12:59+00:00",
+  "project_id": "prj_8tVCzU4KZSBbTky0BHqmxBFZif1O",
+  "deployment_id": "dpl_7v7cqpr7psPy3b9mEy6zTSC16ndb",
+  "source_commit": "f6d26ff3e8da985f6607f405c1fb05fcb5126717",
+  "ready_state": "READY",
+  "ready_substate": "PROMOTED",
+  "production_alias": "crm.shalimarfashions.com",
+  "alias_points_to_deployment": true,
+  "messaging_env_names_read_back": [
+    "MESSAGING_PROVIDER",
+    "MESSAGING_DELIVERY_MODE",
+    "MESSAGING_LIVE_APPROVED",
+    "MESSAGING_TEST_RECIPIENT",
+    "MESSAGING_TEST_PHONE_NUMBER_ID",
+    "MESSAGING_TEST_EXPIRES_AT"
+  ],
+  "configuration_write_receipts": {
+    "MESSAGING_DELIVERY_MODE": "dry-run",
+    "MESSAGING_LIVE_APPROVED": "false",
+    "recipient": "owner-approved personal number stored as production Secret; omitted here",
+    "phone_number_id": "1391671597361924",
+    "expires_at": "2026-10-07T09:51:10Z"
+  },
+  "configuration_values_read_back": false,
+  "configuration_readback_note": "Vercel returns environment variable names, not sensitive values. Exact inputs were saved via CLI stdin with successful receipts, then rebuilt. Both runtime and build metadata include the required names.",
+  "production_build": "Turbopack build and TypeScript completed successfully on Vercel",
+  "crm_route_inspected": false,
+  "reason": "Prior authenticated CRM browser restriction preserved; no alternate access attempted.",
+  "outgoing_test_sent_by_agent": false,
+  "recipient_delivery_confirmed": false,
+  "owner_test_handoff": "Refresh Inbox, send exact approved text in personal-number conversation once, report receipt or error",
+  "earlier_deployment": {
+    "id": "dpl_6HW3iPWgCwAsDF9BnETsWf9ouoUb",
+    "finding": "Initial CLI per-deployment overrides were absent from environment-name readback; production Secrets were saved and a second deployment was built and verified."
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "date": "2026-10-07",
+  "source": "Authenticated Meta Graph API Explorer, v26.0, SF app, Shalimar Chrome profile",
+  "capture_method": "Selected fields transcribed from visible API responses; not a raw response export",
+  "business_id": "965749722599371",
+  "app_id": "1652179446258694",
+  "phone": {
+    "id": "1391671597361924",
+    "display_phone_number": "+91 70253 20333",
+    "verified_name": "Shalimar Fashions",
+    "status": "CONNECTED",
+    "code_verification_status": "VERIFIED",
+    "platform_type": "CLOUD_API",
+    "name_status": "APPROVED",
+    "is_pin_enabled": false,
+    "quality_rating": "UNKNOWN"
+  },
+  "phone_lists": {
+    "28787952197487898": [
+      "1391671597361924"
+    ],
+    "4752268255096473": [
+      "1391671597361924"
+    ]
+  },
+  "subscriptions": {
+    "4752268255096473": [
+      "1652179446258694"
+    ],
+    "28787952197487898": []
+  },
+  "messaging_health": {
+    "observation_context": "Authenticated phone GET after confirmed INR 100 top-up on 2026-10-07",
+    "overall": "AVAILABLE",
+    "phone_number": "AVAILABLE",
+    "owning_waba_id": "28787952197487898",
+    "waba": "AVAILABLE",
+    "business": "AVAILABLE",
+    "app": "AVAILABLE",
+    "blocking_error": null,
+    "unconfigured_sip_calling_errors": [
+      138024,
+      138025
+    ]
+  },
+  "billing_ui": {
+    "waba_id": "28787952197487898",
+    "country": "India",
+    "currency": "INR",
+    "timezone": "Asia/Kolkata",
+    "handoff": "User completed INR 100 top-up; live phone health now AVAILABLE and payment error 141006 absent",
+    "payment_method_observation": "No payment method before user top-up; saved payment method presence not rechecked afterward",
+    "payment_account_id": "2059890194635253",
+    "payment_activity": {
+      "source": "Live Meta Billing & payments UI, Shalimar Chrome",
+      "date_range": [
+        "2026-10-01",
+        "2026-10-07"
+      ],
+      "successful_top_up": {
+        "date": "2026-10-07",
+        "amount": "100.00",
+        "currency": "INR",
+        "method": "Manual payment",
+        "status": "Funded"
+      },
+      "displayed_current_balance": "99.99",
+      "separate_failed_attempt_amount": "3.00",
+      "reported_previous_500_payment_located": false
+    }
+  },
+  "pending_actions": [
+    "Read back SF app subscription after successful owning-WABA POST",
+    "Independent CRM configuration readback; user reports successful save and incoming TEST",
+    "Verify one approved outgoing test and delivery receipt",
+    "Resolve approved business profile photo and badge eligibility separately"
+  ],
+  "credential_values_recorded": false,
+  "messages_sent": false,
+  "live_sending_enabled_by_agent": false,
+  "messaging_health_before_top_up": {
+    "overall": "BLOCKED",
+    "phone_number": "AVAILABLE",
+    "owning_waba_id": "28787952197487898",
+    "waba": "BLOCKED",
+    "business": "AVAILABLE",
+    "app": "AVAILABLE",
+    "blocking_error": {
+      "code": 141006,
+      "description": "There is an error with the payment method. This will block business initiated conversations.",
+      "solution": "There was an error with your payment method. Please add a new payment method to the account."
+    },
+    "unconfigured_sip_calling_errors": [
+      138024,
+      138025
+    ],
+    "observation_context": "Before confirmed INR 100 top-up; fresh health readback pending"
+  },
+  "owning_waba_subscription_action": {
+    "date": "2026-10-07",
+    "approval": "User requested next connection and real testing after the explicit SF subscription approval request",
+    "method": "POST",
+    "path": "28787952197487898/subscribed_apps",
+    "response": {
+      "success": true
+    },
+    "readback_pending": true
+  },
+  "live_test": {
+    "authorized_scope": "One test to the personal WhatsApp number supplied by the user in chat",
+    "text": "Shalimar Connect test — please reply OK.",
+    "recipient_stored_in_document": false,
+    "sent": false,
+    "prerequisites_pending": [
+      "Recipient test and delivery receipt",
+      "Independent CRM configuration readback",
+      "Provider subscription GET after successful POST"
+    ],
+    "incoming_test_requested": true,
+    "incoming_test_text": "TEST",
+    "incoming_inbox_result": "User explicitly confirmed TEST appeared in CRM Inbox on 2026-10-07",
+    "incoming_verified_by": "User readback; agent did not access CRM Inbox",
+    "outgoing_test_sent": false,
+    "local_implementation": {
+      "status": "deployed; outgoing test awaiting user readback",
+      "fixed_text": true,
+      "exact_sender_and_recipient": true,
+      "recent_inbound_required": true,
+      "one_attempt_per_approval": "existing messages primary key reservation",
+      "automatic_expiry": true,
+      "global_live_flags_changed": false,
+      "tests": {
+        "files": 100,
+        "passed": 1132,
+        "typecheck": "passed",
+        "lint_errors": 0,
+        "lint_existing_warnings": 37,
+        "webpack_build": "passed with CI dummy configuration"
+      }
+    }
+  },
+  "crm_user_readback": {
+    "save_initially_requires_token_reentry": true,
+    "reported_error_waba_id": "8787952197487898",
+    "correct_waba_id": "28787952197487898",
+    "finding": "Reported error ID is missing leading 2; correct ID must be tested before attributing failure to token access",
+    "corrected_save_verified": false,
+    "user_report_after_id_correction": "DONE WOERKRED",
+    "connection_success_reported_by_user": true,
+    "independent_authenticated_crm_readback": false
+  },
+  "business_profile_issue": {
+    "reported_by_user": "Business number WhatsApp profile is missing photo, business name and verification badge",
+    "live_profile_readback_pending": false,
+    "observed_display_name": "Shalimar Fashions",
+    "display_name_review": "APPROVED",
+    "photo_present": false,
+    "category": "Clothing and Apparel",
+    "description_address_email_websites": "blank",
+    "official_business_account_request": "disabled",
+    "profile_changes_submitted": false,
+    "logo_upload_approval": "pending",
+    "source": "WhatsApp Manager phone profile in Shalimar Chrome; earlier observation in this task",
+    "generated_wordmark": "Wordmark-only circle image created and saved in project outputs/branding; not uploaded to Meta"
+  },
+  "hosting_access": {
+    "saved_credential_project_read": "Initially HTTP 403 Not authorized",
+    "new_sign_in": "User completed; authorized project read succeeded",
+    "production_settings_changed": "Restricted manual test settings saved as Secrets; global delivery dry-run / false",
+    "deployment_evidence": "whatsapp-manual-test-deployment-2026-10-07.json"
+  }
+}
