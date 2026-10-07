@@ -42,7 +42,7 @@
     "broadcastBudgetRequestedINR": 1000,
     "broadcastBudgetEnforced": false
   },
-  "authenticatedCrmReadback": "pending owner refresh of Test Connection",
+  "authenticatedCrmReadback": "Owner confirmed the deployed Inbox status: replies enabled with 24-hour and opt-out checks; broadcasts and automated messages disabled.",
   "messagesSentByAgent": 0,
   "ownerReadbackAfterDeployment": {
     "connection": "Connected to Shalimar Fashions",
@@ -50,6 +50,9 @@
     "subscription": "The WhatsApp Business Account is subscribed to this app — inbound webhooks can be delivered.",
     "registration": "Registered — Meta will deliver events to wacrm",
     "subscribedSinceDisplayed": "07/10/2026, 09:29:44",
-    "inboxDeliveryStatus": "Not present in pasted panel; fresh-tab reload requested to obtain the new status."
+    "inboxDeliveryStatus": "Inbox replies are enabled for customer messages received within the last 24 hours. Each reply is checked for opt-outs before sending.",
+    "generalDeliveryStatus": "Broadcasts and automated messages are disabled while campaign checks are completed.",
+    "recordedAt": "2026-10-07T09:41:22.606543+00:00",
+    "evidenceSource": "User pasted the current CRM panel into this chat."
   }
 }

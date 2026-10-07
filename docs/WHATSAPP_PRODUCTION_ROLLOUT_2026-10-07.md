@@ -27,14 +27,14 @@
 - Production Turbopack build and TypeScript passed on Vercel. Deployment `dpl_ACNP62ky9X5nuytoyqx2e8MM1mur` is READY, serves `crm.shalimarfashions.com`, and records source commit `b7a38527ed8714d4ef4f31eb126fd462504d46e2`.
 - Production project settings were saved with Inbox approval enabled for the confirmed sender and general delivery still disabled. Deployment runtime/build metadata contains the three Inbox keys and no temporary test keys. No secret values were printed.
 - Live unauthenticated checks: `/login` returned 200; `/api/whatsapp/config` returned 401, preserving authentication.
-- See `evidence/whatsapp-inbox-production-deployment-2026-10-07.json` for the independently retrieved provider receipt. Authenticated post-release Settings readback remains pending from the owner.
+- See `evidence/whatsapp-inbox-production-deployment-2026-10-07.json` for the independently retrieved provider receipt. Authenticated post-release Settings status was subsequently confirmed through owner readback, as recorded below.
 - Subsequent owner readback confirmed “Connected to Shalimar Fashions”, credentials valid, WABA subscribed to this app, and registered (displayed subscription time 07/10/2026, 09:29:44). The pasted panel omitted the newly added Inbox line; a fresh-tab reload was requested. A cached page is a likely explanation, not a confirmed diagnosis.
 - GitHub repository visibility was checked and is **public**. Commits remain local; operations/billing evidence in earlier unpublished commits must be reviewed before publishing that history. The live release was deployed directly through Vercel.
 
 ## Remaining gates — do not mark the whole CRM production-ready
 
-- Obtain the fresh production Settings Inbox status and confirm a normal user-initiated reply after this release. The previous test proves the connection, not every newly added branch.
-- Live safety-schema availability and authenticated behaviour must be confirmed. No migration was applied in this release. Missing migration 043 makes replies fail closed.
+- The owner confirmed the fresh production Settings Inbox status is enabled, with broadcasts and automated messages disabled. A normal user-initiated reply after this release remains unverified; the previous two-way test proves the connection, not every newly added branch.
+- The new Settings status is returned only after the saved sender matches and schema-only contact/consent queries succeed; the owner readback therefore confirms that readiness check passed. Per-contact behaviour remains checked at send time. No migration was applied in this release.
 - Campaigns still require durable server-side approval and budget reservations, an approved price basis/rate source, recipient claims and uncertain-outcome reconciliation, fresh consent checks during dispatch, approved/synced templates, and a named campaign/audience approval. INR 1,000 is **not yet an enforced budget**.
 - API and resume broadcast paths remain behind the disabled global gate. Do not activate those flags until the managed campaign delivery path is complete and database/provider checks pass.
 - WhatsApp wordmark upload and any official badge approval are separate, incomplete tasks. No badge is promised.
@@ -44,3 +44,7 @@
 Set `MESSAGING_INBOX_REPLIES_APPROVED=false` in production and redeploy. Keep `MESSAGING_DELIVERY_MODE=dry-run` and `MESSAGING_LIVE_APPROVED=false`. Retain message rows and Meta receipts for reconciliation; do not delete attempts after a timeout. Previous stable deployment: `dpl_HX79FNX6CbPV8ujMMycRfL4pLpnJ` (temporary test already closed).
 
 The 24-hour reply rule was checked against the current official WhatsApp policy/pricing pages on 7 October 2026: https://whatsappbusiness.com/policy/ and https://whatsappbusiness.com/products/platform-pricing/. This release does not calculate provider charges or guarantee a free rate.
+
+## Final owner readback
+
+The owner pasted the current CRM panel showing credentials valid, the WABA subscribed, **“Inbox replies are enabled for customer messages received within the last 24 hours. Each reply is checked for opt-outs before sending.”**, and **“Broadcasts and automated messages are disabled while campaign checks are completed.”** This supersedes the earlier missing-line observation. The Inbox setting and its readiness query are now confirmed through user readback; this does not certify campaigns, automation, every media type, or whole-CRM production readiness.
