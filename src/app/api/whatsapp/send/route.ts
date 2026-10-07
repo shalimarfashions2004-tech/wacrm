@@ -153,19 +153,24 @@ export async function POST(request: Request) {
     // `SendMessageError` carries a machine code + HTTP status; the
     // dashboard maps it to the internal `{ error }` shape.
     try {
-      const result = await sendMessageToConversation(supabase, accountId, {
-        conversationId,
-        messageType: message_type,
-        contentText: content_text,
-        mediaUrl: media_url,
-        filename,
-        templateName: template_name,
-        templateLanguage: template_language,
-        templateParams: template_params,
-        templateMessageParams: template_message_params,
-        interactivePayload: interactive_payload,
-        replyToMessageId: reply_to_message_id,
-      })
+      const result = await sendMessageToConversation(
+        supabase,
+        accountId,
+        {
+          conversationId,
+          messageType: message_type,
+          contentText: content_text,
+          mediaUrl: media_url,
+          filename,
+          templateName: template_name,
+          templateLanguage: template_language,
+          templateParams: template_params,
+          templateMessageParams: template_message_params,
+          interactivePayload: interactive_payload,
+          replyToMessageId: reply_to_message_id,
+        },
+        { source: 'manual-inbox' }
+      )
 
       return NextResponse.json({
         success: true,

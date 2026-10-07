@@ -1,0 +1,10 @@
+# Deployment needs application sources, not local credentials or evidence.
+.env*
+.git
+.next
+.vercel
+node_modules
+docs
+.company-os
+*.tsbuildinfo
+**/.DS_Store

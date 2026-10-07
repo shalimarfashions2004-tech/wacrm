@@ -14,6 +14,7 @@ import { InvalidMetaAccessTokenError, isValidMetaAccessToken } from './access-to
 import {
   DELIVERY_DISABLED_MESSAGE,
   isLiveDeliveryApproved,
+  isManualTestDeliveryApproved,
 } from './delivery-policy'
 
 const META_API_VERSION = 'v21.0'
@@ -367,6 +368,8 @@ export interface SendTextMessageArgs {
   /** Meta's message_id of the message being replied to. Adds a `context` field
    *  so WhatsApp renders the new message as a reply with a quote preview. */
   contextMessageId?: string
+  /** Set only by the authenticated manual inbox path after its checks. */
+  manualTest?: boolean
 }
 
 /**
@@ -376,7 +379,9 @@ export interface SendTextMessageArgs {
 export async function sendTextMessage(
   args: SendTextMessageArgs
 ): Promise<MetaSendResult> {
-  assertOutboundDeliveryAllowed()
+  if (!(args.manualTest === true && isManualTestDeliveryApproved(args))) {
+    assertOutboundDeliveryAllowed()
+  }
   const { phoneNumberId, accessToken, to, text, contextMessageId } = args
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
   const body: Record<string, unknown> = {

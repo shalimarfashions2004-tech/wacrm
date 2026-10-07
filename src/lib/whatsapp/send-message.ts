@@ -41,6 +41,7 @@ import {
   isRecipientNotAllowedError,
 } from '@/lib/whatsapp/phone-utils';
 import { resolveContactSendTarget } from '@/lib/whatsapp/wa-identity';
+import { manualTestMessageId } from '@/lib/whatsapp/manual-test-claim';
 import type { MessageTemplate } from '@/types';
 import {
   resolveTemplateRow,
@@ -50,6 +51,9 @@ import {
 import {
   DELIVERY_DISABLED_MESSAGE,
   isLiveDeliveryApproved,
+  getManualTestApproval,
+  isManualTestDeliveryApproved,
+  MANUAL_TEST_MESSAGE,
 } from '@/lib/whatsapp/delivery-policy';
 
 export const MEDIA_KINDS = ['image', 'video', 'document', 'audio'] as const;
@@ -122,8 +126,13 @@ export function validateSendMessageParams(params: {
   templateName?: string | null;
   interactivePayload?: InteractiveMessagePayload | null;
 }): void {
-  const { messageType, contentText, mediaUrl, templateName, interactivePayload } =
-    params;
+  const {
+    messageType,
+    contentText,
+    mediaUrl,
+    templateName,
+    interactivePayload,
+  } = params;
 
   if (!messageType) {
     throw new SendMessageError('bad_request', 'message_type is required', 400);
@@ -190,7 +199,8 @@ export function validateSendMessageParams(params: {
 export async function sendMessageToConversation(
   db: SupabaseClient,
   accountId: string,
-  params: SendMessageParams
+  params: SendMessageParams,
+  options: { source?: 'manual-inbox' } = {}
 ): Promise<SendMessageResult> {
   const {
     conversationId,
@@ -222,11 +232,19 @@ export async function sendMessageToConversation(
     interactivePayload,
   });
 
-  if (!isLiveDeliveryApproved()) {
+  const liveApproved = isLiveDeliveryApproved();
+  const testApproval = getManualTestApproval();
+  const manualTest =
+    !liveApproved &&
+    options.source === 'manual-inbox' &&
+    messageType === 'text' &&
+    contentText === MANUAL_TEST_MESSAGE &&
+    testApproval !== null;
+  if (!liveApproved && !manualTest) {
     throw new SendMessageError(
       'delivery_disabled',
       DELIVERY_DISABLED_MESSAGE,
-      409,
+      409
     );
   }
 
@@ -279,6 +297,52 @@ export async function sendMessageToConversation(
       'WhatsApp not configured. Please set up your WhatsApp integration first.',
       400
     );
+  }
+
+  if (manualTest) {
+    if (
+      contact?.suppressed_at ||
+      !isManualTestDeliveryApproved({
+        phoneNumberId: config.phone_number_id,
+        to: sendTarget,
+        text: contentText!,
+      })
+    ) {
+      throw new SendMessageError(
+        'delivery_disabled',
+        DELIVERY_DISABLED_MESSAGE,
+        409
+      );
+    }
+    // Require a provider-backed inbound message in the owned conversation.
+    // This allowance must not initiate a conversation or bypass the 24h window.
+    const { data: inbound, error: inboundError } = await db
+      .from('messages')
+      .select('created_at')
+      .eq('conversation_id', conversationId)
+      .eq('sender_type', 'customer')
+      .not('message_id', 'is', null)
+      .gte(
+        'created_at',
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      )
+      .lte('created_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const inboundAt = Date.parse(inbound?.created_at ?? '');
+    if (
+      inboundError ||
+      !Number.isFinite(inboundAt) ||
+      inboundAt > Date.now() ||
+      inboundAt < Date.now() - 24 * 60 * 60 * 1000
+    ) {
+      throw new SendMessageError(
+        'delivery_disabled',
+        'Send TEST from the approved personal number first, then retry this reply within 24 hours.',
+        409
+      );
+    }
   }
 
   const accessToken = decrypt(config.access_token);
@@ -413,6 +477,7 @@ export async function sendMessageToConversation(
       to: phone,
       text: contentText!,
       contextMessageId,
+      ...(manualTest ? { manualTest: true } : {}),
     });
     return result.messageId;
   };
@@ -422,10 +487,38 @@ export async function sendMessageToConversation(
   // back to the contact so the next send goes straight through.
   let waMessageId = '';
   let workingPhone = sendTarget;
+  // Claim before contacting Meta. The primary key makes concurrent clicks
+  // and retries converge on one attempt, including after an uncertain timeout.
+  // Keep the claim on failure; a new approval requires a separate review.
+  const testMessageId =
+    manualTest && testApproval ? manualTestMessageId(testApproval) : null;
+  if (testMessageId) {
+    const { error: claimError } = await db.from('messages').insert({
+      id: testMessageId,
+      conversation_id: conversationId,
+      sender_type: 'agent',
+      content_type: 'text',
+      content_text: contentText,
+      status: 'sending',
+      reply_to_message_id: replyToMessageId || null,
+    });
+    if (claimError) {
+      throw new SendMessageError(
+        claimError.code === '23505' ? 'test_already_attempted' : 'db_error',
+        claimError.code === '23505'
+          ? 'This approved test has already been attempted. Check the recipient and delivery status before approving another test.'
+          : 'Could not reserve the approved test. No message was sent.',
+        claimError.code === '23505' ? 409 : 500
+      );
+    }
+  }
   try {
     // Variants only make sense for a phone number — a BSUID is opaque
     // and has exactly one correct form, so it gets a single attempt.
-    const variants = hasValidPhone ? phoneVariants(sanitizedPhone) : [sendTarget];
+    const variants =
+      hasValidPhone && !manualTest
+        ? phoneVariants(sanitizedPhone)
+        : [sendTarget];
     let lastError: unknown = null;
 
     for (const variant of variants) {
@@ -451,6 +544,13 @@ export async function sendMessageToConversation(
     const message =
       err instanceof Error ? err.message : 'Unknown Meta API error';
     console.error('[send-message] Meta send failed for all variants:', message);
+    if (testMessageId) {
+      throw new SendMessageError(
+        'test_delivery_unconfirmed',
+        'The test was attempted, but delivery is unconfirmed. Check the recipient and Meta delivery status before approving another attempt.',
+        502
+      );
+    }
     throw new SendMessageError('meta_error', `Meta API error: ${message}`, 502);
   }
 
@@ -485,21 +585,27 @@ export async function sendMessageToConversation(
           )
         : (contentText ?? null);
 
-  const { data: messageRecord, error: msgError } = await db
-    .from('messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_type: 'agent',
-      content_type: messageType,
-      content_text: persistedText,
-      media_url: mediaUrl || null,
-      template_name: templateName || null,
-      interactive_payload:
-        messageType === 'interactive' ? interactivePayload : null,
-      message_id: waMessageId,
-      status: 'sent',
-      reply_to_message_id: replyToMessageId || null,
-    })
+  const messageData = {
+    conversation_id: conversationId,
+    sender_type: 'agent',
+    content_type: messageType,
+    content_text: persistedText,
+    media_url: mediaUrl || null,
+    template_name: templateName || null,
+    interactive_payload:
+      messageType === 'interactive' ? interactivePayload : null,
+    message_id: waMessageId,
+    status: 'sent',
+    reply_to_message_id: replyToMessageId || null,
+  };
+  const messageWrite = testMessageId
+    ? db
+        .from('messages')
+        .update(messageData)
+        .eq('id', testMessageId)
+        .eq('conversation_id', conversationId)
+    : db.from('messages').insert(messageData);
+  const { data: messageRecord, error: msgError } = await messageWrite
     .select()
     .single();
 
