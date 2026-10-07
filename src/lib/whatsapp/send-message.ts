@@ -20,6 +20,7 @@
 
 import { randomUUID } from 'node:crypto';
 import { isOptOutMessage } from './consent';
+import { explainSendRejection } from './send-rejection';
 import {
   issueInboxReplyPermit,
   type InboxReplyPermit,
@@ -654,8 +655,31 @@ export async function sendMessageToConversation(
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Unknown Meta API error';
-    console.error('[send-message] Meta send failed for all variants:', message);
+    const rejection = explainSendRejection(err);
+    // Log structured diagnostics only; provider error text may contain private data.
+    console.error('[send-message] Delivery attempt failed:', {
+      outcome: rejection ? 'rejected' : 'unconfirmed',
+      meta_code: rejection?.code ?? null,
+    });
     if (reservedMessageId) {
+      if (rejection) {
+        const { error: saveError } = await db
+          .from('messages')
+          .update({
+            status: 'failed',
+            error_code: rejection.code,
+            error_title: 'Meta rejected this message',
+            error_details: rejection.message,
+          })
+          .eq('id', reservedMessageId)
+          .eq('conversation_id', conversationId);
+        if (saveError) {
+          console.error('[send-message] Could not save provider rejection:', {
+            code: saveError.code,
+          });
+        }
+        throw new SendMessageError('delivery_rejected', rejection.message, 502);
+      }
       throw new SendMessageError(
         inboxReply ? 'delivery_unconfirmed' : 'test_delivery_unconfirmed',
         inboxReply

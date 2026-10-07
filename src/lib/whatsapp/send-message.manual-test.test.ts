@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendMessageToConversation } from './send-message';
 import { MANUAL_TEST_MESSAGE } from './delivery-policy';
-import { sendTextMessage } from './meta-api';
+import { MetaApiError, sendTextMessage } from './meta-api';
 
 vi.mock('./meta-api', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -46,6 +46,7 @@ function testDb(
     consentError?: boolean;
     serviceOptOut?: boolean;
     inboundText?: string;
+    rejectionSaveError?: boolean;
   } = {}
 ) {
   const claims = new Map<string, Record<string, unknown>>();
@@ -134,6 +135,12 @@ function testDb(
           throw new Error(`Unexpected single query: ${table}/${operation}`);
         },
         then: (resolve: (value: unknown) => unknown) => {
+          if (table === 'messages' && operation === 'update' && row) {
+            writes.push(row);
+            return resolve({
+              error: options.rejectionSaveError ? { code: '42703' } : null,
+            });
+          }
           if (table === 'messages' && operation === 'insert' && row) {
             if (options.claimError)
               return resolve({ error: { code: '42501' } });
@@ -400,5 +407,49 @@ describe('production human Inbox replies', () => {
     ).rejects.toMatchObject({ code: 'delivery_unconfirmed' });
     expect(sendTextMessage).toHaveBeenCalledTimes(1);
     expect(claims.size).toBe(1);
+  });
+
+  it.each([0, 190, 10, 131042, 131047])(
+    'records a definite provider rejection without retrying (code %s)',
+    async (code) => {
+      const { db, claims, writes } = testDb();
+      vi.mocked(sendTextMessage).mockRejectedValueOnce(
+        new MetaApiError('Authentication Error', { code, httpStatus: 400 })
+      );
+      await expect(
+        sendMessageToConversation(db, 'acct-1', reply, manual)
+      ).rejects.toMatchObject({
+        code: 'delivery_rejected',
+        message: expect.stringContaining(`Meta code ${code}`),
+      });
+      expect(sendTextMessage).toHaveBeenCalledTimes(1);
+      expect(claims.size).toBe(1);
+      expect(writes).toContainEqual(
+        expect.objectContaining({ status: 'failed', error_code: code })
+      );
+    }
+  );
+
+  it('keeps unknown server failures uncertain without marking them rejected', async () => {
+    const { db, writes } = testDb();
+    vi.mocked(sendTextMessage).mockRejectedValueOnce(
+      new MetaApiError('Service failure', { code: 1, httpStatus: 503 })
+    );
+    await expect(
+      sendMessageToConversation(db, 'acct-1', reply, manual)
+    ).rejects.toMatchObject({ code: 'delivery_unconfirmed' });
+    expect(sendTextMessage).toHaveBeenCalledTimes(1);
+    expect(writes).toHaveLength(0);
+  });
+
+  it('does not retry when saving a rejected result fails', async () => {
+    const { db } = testDb({ rejectionSaveError: true });
+    vi.mocked(sendTextMessage).mockRejectedValueOnce(
+      new MetaApiError('Authentication Error', { code: 0, httpStatus: 401 })
+    );
+    await expect(
+      sendMessageToConversation(db, 'acct-1', reply, manual)
+    ).rejects.toMatchObject({ code: 'delivery_rejected' });
+    expect(sendTextMessage).toHaveBeenCalledTimes(1);
   });
 });
