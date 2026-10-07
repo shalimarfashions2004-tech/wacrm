@@ -234,18 +234,21 @@ export async function sendMessageToConversation(
 
   const liveApproved = isLiveDeliveryApproved();
   const testApproval = getManualTestApproval();
-  const manualTest =
-    !liveApproved &&
-    options.source === 'manual-inbox' &&
-    messageType === 'text' &&
-    contentText === MANUAL_TEST_MESSAGE &&
-    testApproval !== null;
-  if (!liveApproved && !manualTest) {
-    throw new SendMessageError(
-      'delivery_disabled',
-      DELIVERY_DISABLED_MESSAGE,
-      409
-    );
+  let manualTest = false;
+  if (!liveApproved) {
+    let disabledReason: string | null = null;
+    if (options.source !== 'manual-inbox') {
+      disabledReason = DELIVERY_DISABLED_MESSAGE;
+    } else if (!testApproval) {
+      disabledReason =
+        'Live delivery is disabled. The temporary test approval is missing, invalid or expired. Ask the owner to check the test setup.';
+    } else if (messageType !== 'text' || contentText !== MANUAL_TEST_MESSAGE) {
+      disabledReason = `Only the approved text test is enabled. Send this exact text without quotation marks: ${MANUAL_TEST_MESSAGE}`;
+    }
+    if (disabledReason) {
+      throw new SendMessageError('delivery_disabled', disabledReason, 409);
+    }
+    manualTest = true;
   }
 
   const isMediaKind = (MEDIA_KINDS as readonly string[]).includes(messageType);
@@ -299,20 +302,29 @@ export async function sendMessageToConversation(
     );
   }
 
-  if (manualTest) {
-    if (
-      contact?.suppressed_at ||
+  if (manualTest && testApproval) {
+    let disabledReason: string | null = null;
+    if (contact?.suppressed_at) {
+      disabledReason =
+        'This contact is suppressed. The approved test cannot be sent to an opted-out contact.';
+    } else if (config.phone_number_id !== testApproval.phoneNumberId) {
+      disabledReason =
+        'The saved WhatsApp Phone Number ID does not match the approved test sender. Check Settings → WhatsApp connection before retrying.';
+    } else if (sendTarget !== testApproval.recipient) {
+      disabledReason =
+        'This conversation is not the personal number approved for the test. Open the approved personal-number conversation in Inbox.';
+    } else if (
       !isManualTestDeliveryApproved({
         phoneNumberId: config.phone_number_id,
         to: sendTarget,
         text: contentText!,
       })
     ) {
-      throw new SendMessageError(
-        'delivery_disabled',
-        DELIVERY_DISABLED_MESSAGE,
-        409
-      );
+      disabledReason =
+        'The temporary test approval expired during this request. No message was sent.';
+    }
+    if (disabledReason) {
+      throw new SendMessageError('delivery_disabled', disabledReason, 409);
     }
     // Require a provider-backed inbound message in the owned conversation.
     // This allowance must not initiate a conversation or bypass the 24h window.

@@ -164,10 +164,13 @@ describe('restricted manual inbox test', () => {
       sendMessageToConversation(
         db,
         'acct-1',
-        { ...params, contentText: 'Sale today' },
+        { ...params, contentText: 'crm test' },
         manual
       )
-    ).rejects.toMatchObject({ code: 'delivery_disabled' });
+    ).rejects.toMatchObject({
+      code: 'delivery_disabled',
+      message: `Only the approved text test is enabled. Send this exact text without quotation marks: ${MANUAL_TEST_MESSAGE}`,
+    });
     vi.stubEnv('MESSAGING_TEST_EXPIRES_AT', '');
     await expect(
       sendMessageToConversation(db, 'acct-1', params, manual)

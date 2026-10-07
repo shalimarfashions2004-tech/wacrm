@@ -45,3 +45,11 @@ An approval permits **at most one provider attempt**, not guaranteed delivery. A
 ## Remaining limitation
 
 Production registration and messaging health were observed in Meta earlier today, and the user reported successful incoming CRM delivery. Deployment and domain routing are verified through Vercel. The outbound test, independent CRM configuration readback, subscription GET after the successful POST, and recipient delivery evidence remain incomplete. No production-readiness claim is made.
+
+## Follow-up: generic error during the owner's test
+
+The user reported the original delivery-disabled message again, then confirmed the attempted text was **`crm test`**. That does not match the explicitly approved sentence. The restriction therefore rejects it before the provider call or attempt reservation; this is not evidence of a failed Meta delivery.
+
+The shared send core now gives a specific explanation for mismatched text, unavailable/expired test approval, a saved sender mismatch, the wrong conversation, or suppression. The public API retains the general disabled message and none of the restrictions were relaxed. The user was given the exact approved sentence to copy, without quotation marks.
+
+Regression validation after this change: full suite **100 files / 1,132 tests passed**, TypeScript passed, and lint for both changed files passed with no warnings or errors. Deployment of this clearer error copy is tracked in the deployment evidence JSON.
