@@ -43,5 +43,13 @@
     "broadcastBudgetEnforced": false
   },
   "authenticatedCrmReadback": "pending owner refresh of Test Connection",
-  "messagesSentByAgent": 0
+  "messagesSentByAgent": 0,
+  "ownerReadbackAfterDeployment": {
+    "connection": "Connected to Shalimar Fashions",
+    "credentials": "Credentials valid",
+    "subscription": "The WhatsApp Business Account is subscribed to this app — inbound webhooks can be delivered.",
+    "registration": "Registered — Meta will deliver events to wacrm",
+    "subscribedSinceDisplayed": "07/10/2026, 09:29:44",
+    "inboxDeliveryStatus": "Not present in pasted panel; fresh-tab reload requested to obtain the new status."
+  }
 }
