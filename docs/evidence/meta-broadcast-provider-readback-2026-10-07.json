@@ -72,11 +72,10 @@
   "pending_actions": [
     "Read back SF app subscription after successful owning-WABA POST",
     "Independent CRM configuration readback; user reports successful save and incoming TEST",
-    "Verify one approved outgoing test and delivery receipt",
     "Resolve approved business profile photo and badge eligibility separately"
   ],
   "credential_values_recorded": false,
-  "messages_sent": false,
+  "messages_sent": true,
   "live_sending_enabled_by_agent": false,
   "messaging_health_before_top_up": {
     "overall": "BLOCKED",
@@ -110,19 +109,18 @@
     "authorized_scope": "One test to the personal WhatsApp number supplied by the user in chat",
     "text": "Shalimar Connect test — please reply OK.",
     "recipient_stored_in_document": false,
-    "sent": false,
+    "sent": true,
     "prerequisites_pending": [
-      "Recipient test and delivery receipt",
-      "Independent CRM configuration readback",
+      "Independent CRM configuration/message-status readback",
       "Provider subscription GET after successful POST"
     ],
     "incoming_test_requested": true,
     "incoming_test_text": "TEST",
     "incoming_inbox_result": "User explicitly confirmed TEST appeared in CRM Inbox on 2026-10-07",
     "incoming_verified_by": "User readback; agent did not access CRM Inbox",
-    "outgoing_test_sent": false,
+    "outgoing_test_sent": true,
     "local_implementation": {
-      "status": "deployed; outgoing test awaiting user readback",
+      "status": "Single test completed successfully by user; test settings removed and production retirement deployment verified",
       "fixed_text": true,
       "exact_sender_and_recipient": true,
       "recent_inbound_required": true,
@@ -137,7 +135,11 @@
         "lint_existing_warnings": 37,
         "webpack_build": "passed with CI dummy configuration"
       }
-    }
+    },
+    "outgoing_test_sender": "User manually sent the approved text from CRM Inbox",
+    "recipient_result": "User confirmed receipt on personal WhatsApp",
+    "reply_result": "User replied OK and confirmed it appeared in CRM Inbox",
+    "verified_by": "User readback; independent message ID/delivery-status readback not performed"
   },
   "crm_user_readback": {
     "save_initially_requires_token_reentry": true,
@@ -166,7 +168,10 @@
   "hosting_access": {
     "saved_credential_project_read": "Initially HTTP 403 Not authorized",
     "new_sign_in": "User completed; authorized project read succeeded",
-    "production_settings_changed": "Restricted manual test settings saved as Secrets; global delivery dry-run / false",
+    "production_settings_changed": "Temporary test Secrets added for the approved test, then removed and rebuilt after success; general live delivery remains dry-run / false",
     "deployment_evidence": "whatsapp-manual-test-deployment-2026-10-07.json"
-  }
+  },
+  "messages_sent_by": "User, from CRM Inbox; no agent-triggered messages",
+  "restricted_manual_test_was_enabled_by_agent": true,
+  "restricted_manual_test_currently_enabled": false
 }

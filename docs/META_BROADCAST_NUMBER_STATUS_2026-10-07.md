@@ -1,6 +1,14 @@
 # Broadcast number verification — 7 October 2026
 
-## Latest checkpoint — outbound lock and business profile
+## Final test result — 7 October 2026
+
+The user confirmed that the approved CRM test reached their personal WhatsApp and their **OK** reply appeared in CRM Inbox. This is user readback for a successful two-way test, not an independent provider-message inspection. The initial `crm test` text was rejected because the temporary allowance required the exact approved sentence.
+
+The test settings were then removed and production was rebuilt. Vercel confirms the CRM domain points to retirement deployment `dpl_HX79FNX6CbPV8ujMMycRfL4pLpnJ`, READY / PROMOTED, with no test environment keys in the runtime or build metadata. General delivery remains **dry-run / false**. No customer broadcast or automatic send was enabled. The following earlier checkpoints are historical; the current runbook is [here](WHATSAPP_MANUAL_TEST_2026-10-07.md).
+
+A centered wordmark-only circle image was created from the original brand artwork and saved in the project `outputs/branding` folder. The original artwork was preserved. The generated image has not been uploaded to Meta.
+
+## Earlier checkpoint — outbound lock and business profile
 
 This checkpoint supersedes earlier pending-action wording below; older observations are retained as history.
 

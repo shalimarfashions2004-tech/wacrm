@@ -28,10 +28,38 @@
   "crm_route_inspected": false,
   "reason": "Prior authenticated CRM browser restriction preserved; no alternate access attempted.",
   "outgoing_test_sent_by_agent": false,
-  "recipient_delivery_confirmed": false,
-  "owner_test_handoff": "Refresh Inbox, send exact approved text in personal-number conversation once, report receipt or error",
+  "recipient_delivery_confirmed": true,
+  "owner_test_handoff": "Completed successfully by user",
   "earlier_deployment": {
     "id": "dpl_6HW3iPWgCwAsDF9BnETsWf9ouoUb",
     "finding": "Initial CLI per-deployment overrides were absent from environment-name readback; production Secrets were saved and a second deployment was built and verified."
+  },
+  "delivery_verified_by": "User readback: received the exact approved test on personal WhatsApp and replied OK; the OK appeared in CRM Inbox.",
+  "independent_provider_message_id_readback": false,
+  "outgoing_test_sent_by": "User, from CRM Inbox",
+  "followup_text_mismatch": {
+    "user_attempted": "crm test",
+    "expected": "Shalimar Connect test — please reply OK.",
+    "finding": "Nonmatching text was blocked before any provider attempt; exact approved text subsequently worked."
+  },
+  "diagnostic_deployment": {
+    "id": "dpl_HeantWAwtjJKVHgEjoT9u81Z5uyH",
+    "source_commit": "1aebcbf",
+    "build": "passed",
+    "purpose": "Explain individual reasons for a restricted test being blocked without broadening permission"
+  },
+  "retirement": {
+    "test_project_secrets_removed": true,
+    "production_project_keys_verified": [
+      "MESSAGING_PROVIDER",
+      "MESSAGING_DELIVERY_MODE",
+      "MESSAGING_LIVE_APPROVED"
+    ],
+    "deployment_id": "dpl_HX79FNX6CbPV8ujMMycRfL4pLpnJ",
+    "deployment_status": "READY / PROMOTED",
+    "general_live_flags": "dry-run / false",
+    "production_alias_readback": "crm.shalimarfashions.com points to dpl_HX79FNX6CbPV8ujMMycRfL4pLpnJ",
+    "runtime_and_build_test_keys_absent": true,
+    "checked_at": "2026-10-07T09:20:14+00:00"
   }
 }
