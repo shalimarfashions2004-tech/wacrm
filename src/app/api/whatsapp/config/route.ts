@@ -23,6 +23,7 @@ import {
 import { encrypt, decrypt } from '@/lib/whatsapp/encryption'
 import { resolveVerifyTokenForSave } from '@/lib/whatsapp/verify-token'
 import { INVALID_META_ACCESS_TOKEN_MESSAGE, isValidMetaAccessToken } from '@/lib/whatsapp/access-token-input'
+import { readInboxReadiness } from '@/lib/whatsapp/inbox-readiness'
 
 /**
  * Resolve the caller's account_id from their profile. Inlined here
@@ -225,6 +226,7 @@ export async function GET() {
       connected: true,
       phone_info: phoneInfo,
       waba_subscription: wabaSubscription,
+      inbox_delivery: await readInboxReadiness(supabase, accountId, config),
     })
   } catch (error) {
     console.error('Error in WhatsApp config GET:', error)

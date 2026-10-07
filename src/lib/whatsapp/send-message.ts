@@ -14,11 +14,16 @@
 // `accountId` and throws `SendMessageError` on failure. The callers
 // own auth, rate-limiting, body parsing, and mapping the error to
 // their respective response shapes (internal `{ error }` vs the v1
-// envelope). Behaviour is identical to the original inline route —
-// this is a straight extraction so the public endpoint can reuse it
-// without duplicating ~250 lines of Meta plumbing.
+// envelope). The authenticated Inbox may use a separate, sender-bound
+// reply approval; public API callers still require general live approval.
 // ============================================================
 
+import { randomUUID } from 'node:crypto';
+import { isOptOutMessage } from './consent';
+import {
+  issueInboxReplyPermit,
+  type InboxReplyPermit,
+} from './inbox-reply-permit';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
@@ -52,6 +57,7 @@ import {
   DELIVERY_DISABLED_MESSAGE,
   isLiveDeliveryApproved,
   getManualTestApproval,
+  getInboxReplyApproval,
   isManualTestDeliveryApproved,
   MANUAL_TEST_MESSAGE,
 } from '@/lib/whatsapp/delivery-policy';
@@ -234,11 +240,18 @@ export async function sendMessageToConversation(
 
   const liveApproved = isLiveDeliveryApproved();
   const testApproval = getManualTestApproval();
+  const inboxApproval =
+    options.source === 'manual-inbox' ? getInboxReplyApproval() : null;
+  const inboxReply = Boolean(inboxApproval && messageType !== 'template');
+  let inboxReplyPermit: InboxReplyPermit | undefined;
   let manualTest = false;
-  if (!liveApproved) {
+  if (!liveApproved && !inboxReply) {
     let disabledReason: string | null = null;
     if (options.source !== 'manual-inbox') {
       disabledReason = DELIVERY_DISABLED_MESSAGE;
+    } else if (inboxApproval && messageType === 'template') {
+      disabledReason =
+        'Inbox replies are enabled. Template and campaign sending remain disabled until campaign checks are complete.';
     } else if (!testApproval) {
       disabledReason =
         'Live delivery is disabled. The temporary test approval is missing, invalid or expired. Ask the owner to check the test setup.';
@@ -299,6 +312,82 @@ export async function sendMessageToConversation(
       'whatsapp_not_configured',
       'WhatsApp not configured. Please set up your WhatsApp integration first.',
       400
+    );
+  }
+
+  if (inboxReply && inboxApproval) {
+    if (
+      config.phone_number_id !== inboxApproval.phoneNumberId ||
+      config.waba_id !== inboxApproval.wabaId
+    ) {
+      throw new SendMessageError(
+        'delivery_disabled',
+        'The saved WhatsApp connection differs from the approved Inbox sender. Check Settings → WhatsApp.',
+        409
+      );
+    }
+    if (
+      !contact ||
+      contact.account_id !== accountId ||
+      !Object.hasOwn(contact, 'suppressed_at')
+    ) {
+      throw new SendMessageError(
+        'consent_unavailable',
+        'Contact safety records are unavailable. No message was sent.',
+        503
+      );
+    }
+    if (contact.suppressed_at) {
+      throw new SendMessageError(
+        'contact_suppressed',
+        'This contact has opted out. No message was sent.',
+        409
+      );
+    }
+    const { data: optOut, error: consentError } = await db
+      .from('contact_consents')
+      .select('id')
+      .eq('account_id', accountId)
+      .eq('contact_id', contact.id)
+      .eq('channel', 'whatsapp')
+      .eq('category', 'service')
+      .eq('status', 'opted_out')
+      .limit(1)
+      .maybeSingle();
+    if (consentError || optOut) {
+      throw new SendMessageError(
+        'consent_unavailable',
+        'Reply consent could not be confirmed, or this contact has opted out. No message was sent.',
+        409
+      );
+    }
+    const { data: inbound, error: inboundError } = await db
+      .from('messages')
+      .select('created_at, content_text')
+      .eq('conversation_id', conversationId)
+      .eq('sender_type', 'customer')
+      .not('message_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const inboundAt = Date.parse(inbound?.created_at ?? '');
+    if (
+      inboundError ||
+      !Number.isFinite(inboundAt) ||
+      inboundAt > Date.now() ||
+      inboundAt <= Date.now() - 24 * 60 * 60 * 1000 ||
+      isOptOutMessage(inbound?.content_text)
+    ) {
+      throw new SendMessageError(
+        'service_window_closed',
+        'A customer message from the last 24 hours is required to reply. No message was sent.',
+        409
+      );
+    }
+    inboxReplyPermit = issueInboxReplyPermit(
+      config.phone_number_id,
+      sendTarget,
+      inboundAt
     );
   }
 
@@ -444,6 +533,7 @@ export async function sendMessageToConversation(
     }
     if (isMediaKind) {
       const result = await sendMediaMessage({
+        ...(inboxReplyPermit ? { inboxReplyPermit } : {}),
         phoneNumberId: config.phone_number_id,
         accessToken,
         to: phone,
@@ -459,6 +549,7 @@ export async function sendMessageToConversation(
       const p = interactivePayload!;
       if (p.kind === 'buttons') {
         const result = await sendInteractiveButtons({
+          ...(inboxReplyPermit ? { inboxReplyPermit } : {}),
           phoneNumberId: config.phone_number_id,
           accessToken,
           to: phone,
@@ -471,6 +562,7 @@ export async function sendMessageToConversation(
         return result.messageId;
       }
       const result = await sendInteractiveList({
+        ...(inboxReplyPermit ? { inboxReplyPermit } : {}),
         phoneNumberId: config.phone_number_id,
         accessToken,
         to: phone,
@@ -484,6 +576,7 @@ export async function sendMessageToConversation(
       return result.messageId;
     }
     const result = await sendTextMessage({
+      ...(inboxReplyPermit ? { inboxReplyPermit } : {}),
       phoneNumberId: config.phone_number_id,
       accessToken,
       to: phone,
@@ -499,18 +592,24 @@ export async function sendMessageToConversation(
   // back to the contact so the next send goes straight through.
   let waMessageId = '';
   let workingPhone = sendTarget;
-  // Claim before contacting Meta. The primary key makes concurrent clicks
-  // and retries converge on one attempt, including after an uncertain timeout.
-  // Keep the claim on failure; a new approval requires a separate review.
-  const testMessageId =
-    manualTest && testApproval ? manualTestMessageId(testApproval) : null;
-  if (testMessageId) {
+  // Persist before contacting Meta, and retain the row on an uncertain outcome.
+  // Restricted tests use a deterministic ID for their single allowed attempt;
+  // ordinary replies reserve their own row for delivery reconciliation.
+  const reservedMessageId =
+    manualTest && testApproval
+      ? manualTestMessageId(testApproval)
+      : inboxReply
+        ? randomUUID()
+        : null;
+  if (reservedMessageId) {
     const { error: claimError } = await db.from('messages').insert({
-      id: testMessageId,
+      id: reservedMessageId,
       conversation_id: conversationId,
       sender_type: 'agent',
-      content_type: 'text',
-      content_text: contentText,
+      content_type: messageType,
+      content_text: contentText ?? null,
+      media_url: mediaUrl || null,
+      interactive_payload: interactivePayload || null,
       status: 'sending',
       reply_to_message_id: replyToMessageId || null,
     });
@@ -519,7 +618,7 @@ export async function sendMessageToConversation(
         claimError.code === '23505' ? 'test_already_attempted' : 'db_error',
         claimError.code === '23505'
           ? 'This approved test has already been attempted. Check the recipient and delivery status before approving another test.'
-          : 'Could not reserve the approved test. No message was sent.',
+          : 'Could not save the message before delivery. No message was sent.',
         claimError.code === '23505' ? 409 : 500
       );
     }
@@ -528,7 +627,7 @@ export async function sendMessageToConversation(
     // Variants only make sense for a phone number — a BSUID is opaque
     // and has exactly one correct form, so it gets a single attempt.
     const variants =
-      hasValidPhone && !manualTest
+      hasValidPhone && !manualTest && !inboxReply
         ? phoneVariants(sanitizedPhone)
         : [sendTarget];
     let lastError: unknown = null;
@@ -556,10 +655,12 @@ export async function sendMessageToConversation(
     const message =
       err instanceof Error ? err.message : 'Unknown Meta API error';
     console.error('[send-message] Meta send failed for all variants:', message);
-    if (testMessageId) {
+    if (reservedMessageId) {
       throw new SendMessageError(
-        'test_delivery_unconfirmed',
-        'The test was attempted, but delivery is unconfirmed. Check the recipient and Meta delivery status before approving another attempt.',
+        inboxReply ? 'delivery_unconfirmed' : 'test_delivery_unconfirmed',
+        inboxReply
+          ? 'Delivery is unconfirmed. Check this conversation and the recipient before retrying to avoid a duplicate.'
+          : 'The test was attempted, but delivery is unconfirmed. Check the recipient and Meta delivery status before approving another attempt.',
         502
       );
     }
@@ -610,11 +711,11 @@ export async function sendMessageToConversation(
     status: 'sent',
     reply_to_message_id: replyToMessageId || null,
   };
-  const messageWrite = testMessageId
+  const messageWrite = reservedMessageId
     ? db
         .from('messages')
         .update(messageData)
-        .eq('id', testMessageId)
+        .eq('id', reservedMessageId)
         .eq('conversation_id', conversationId)
     : db.from('messages').insert(messageData);
   const { data: messageRecord, error: msgError } = await messageWrite

@@ -40,6 +40,12 @@ function testDb(
     inboundAt?: string | null;
     inboundError?: boolean;
     claimError?: boolean;
+    wabaId?: string;
+    accountId?: string;
+    missingSafety?: boolean;
+    consentError?: boolean;
+    serviceOptOut?: boolean;
+    inboundText?: string;
   } = {}
 ) {
   const claims = new Map<string, Record<string, unknown>>();
@@ -79,13 +85,22 @@ function testDb(
           row = value;
           return builder;
         },
-        maybeSingle: async () => ({
-          data:
-            options.inboundAt === null
-              ? null
-              : { created_at: options.inboundAt ?? '2026-10-07T09:55:00Z' },
-          error: options.inboundError ? { message: 'read failed' } : null,
-        }),
+        maybeSingle: async () =>
+          table === 'contact_consents'
+            ? {
+                data: options.serviceOptOut ? { id: 'consent-1' } : null,
+                error: options.consentError ? { message: 'unavailable' } : null,
+              }
+            : {
+                data:
+                  options.inboundAt === null
+                    ? null
+                    : {
+                        created_at: options.inboundAt ?? '2026-10-07T09:55:00Z',
+                        content_text: options.inboundText ?? 'Hello',
+                      },
+                error: options.inboundError ? { message: 'read failed' } : null,
+              },
         single: async () => {
           if (table === 'conversations')
             return {
@@ -94,7 +109,10 @@ function testDb(
                 contact: {
                   id: 'ct-1',
                   phone: options.phone ?? recipient,
-                  suppressed_at: options.suppressedAt,
+                  account_id: options.accountId ?? 'acct-1',
+                  ...(options.missingSafety
+                    ? {}
+                    : { suppressed_at: options.suppressedAt ?? null }),
                 },
               },
               error: null,
@@ -104,6 +122,7 @@ function testDb(
               data: {
                 id: 'cfg-1',
                 phone_number_id: options.sender ?? sender,
+                waba_id: options.wabaId ?? '9876543210987654',
                 access_token: 'test-token',
               },
               error: null,
@@ -275,5 +294,111 @@ describe('restricted manual inbox test', () => {
       sendMessageToConversation(db, 'acct-1', params, manual)
     ).rejects.toMatchObject({ code: 'db_error' });
     expect(sendTextMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe('production human Inbox replies', () => {
+  const reply = { ...params, contentText: 'How can we help?' };
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    vi.stubEnv('MESSAGING_DELIVERY_MODE', 'dry-run');
+    vi.stubEnv('MESSAGING_LIVE_APPROVED', 'false');
+    vi.stubEnv('MESSAGING_TEST_RECIPIENT', '');
+    vi.stubEnv('MESSAGING_INBOX_REPLIES_APPROVED', 'true');
+    vi.stubEnv('MESSAGING_INBOX_PHONE_NUMBER_ID', sender);
+    vi.stubEnv('MESSAGING_INBOX_WABA_ID', '9876543210987654');
+    vi.mocked(sendTextMessage)
+      .mockReset()
+      .mockResolvedValue({ messageId: 'wamid.reply' });
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.useRealTimers();
+  });
+
+  it('permits a human reply after account, consent and inbound checks, and persists before delivery', async () => {
+    const { db, claims, filters, writes } = testDb({ phone: '15557654321' });
+    vi.mocked(sendTextMessage).mockImplementationOnce(async () => {
+      expect(claims.size).toBe(1);
+      expect([...claims.values()][0].status).toBe('sending');
+      return { messageId: 'wamid.reply' };
+    });
+    const result = await sendMessageToConversation(db, 'acct-1', reply, manual);
+    expect(result.whatsappMessageId).toBe('wamid.reply');
+    expect(writes[0]).toMatchObject({
+      message_id: 'wamid.reply',
+      content_text: reply.contentText,
+    });
+    expect(sendTextMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: '15557654321',
+        inboxReplyPermit: expect.any(Object),
+      })
+    );
+    expect(filters).toEqual(
+      expect.arrayContaining([
+        ['contact_consents', 'eq', 'account_id', 'acct-1'],
+        ['contact_consents', 'eq', 'contact_id', 'ct-1'],
+        ['contact_consents', 'eq', 'category', 'service'],
+        ['messages', 'not', 'message_id', 'is', null],
+      ])
+    );
+  });
+
+  it.each([
+    { sender: '1' },
+    { wabaId: '1' },
+    { accountId: 'other' },
+    { missingSafety: true },
+    { suppressedAt: now.toISOString() },
+    { consentError: true },
+    { serviceOptOut: true },
+    { inboundAt: null },
+    { inboundAt: '2026-10-06T10:00:00Z' },
+    { inboundAt: '2026-10-07T10:01:00Z' },
+    { inboundError: true },
+    { inboundText: 'STOP' },
+    { claimError: true },
+  ])(
+    'never calls Meta with unsafe or unavailable records: %j',
+    async (options) => {
+      const { db } = testDb(options);
+      await expect(
+        sendMessageToConversation(db, 'acct-1', reply, manual)
+      ).rejects.toBeInstanceOf(Error);
+      expect(sendTextMessage).not.toHaveBeenCalled();
+    }
+  );
+
+  it('does not open public API or templates with the Inbox flag', async () => {
+    const db = { from: vi.fn() } as unknown as SupabaseClient;
+    await expect(
+      sendMessageToConversation(db, 'acct-1', reply)
+    ).rejects.toMatchObject({ code: 'delivery_disabled' });
+    await expect(
+      sendMessageToConversation(
+        db,
+        'acct-1',
+        {
+          ...reply,
+          messageType: 'template',
+          templateName: 'promo',
+        },
+        manual
+      )
+    ).rejects.toMatchObject({ code: 'delivery_disabled' });
+    expect(db.from).not.toHaveBeenCalled();
+    expect(sendTextMessage).not.toHaveBeenCalled();
+  });
+
+  it('keeps an attempted message for reconciliation after a provider timeout', async () => {
+    const { db, claims } = testDb();
+    vi.mocked(sendTextMessage).mockRejectedValueOnce(new Error('timeout'));
+    await expect(
+      sendMessageToConversation(db, 'acct-1', reply, manual)
+    ).rejects.toMatchObject({ code: 'delivery_unconfirmed' });
+    expect(sendTextMessage).toHaveBeenCalledTimes(1);
+    expect(claims.size).toBe(1);
   });
 });

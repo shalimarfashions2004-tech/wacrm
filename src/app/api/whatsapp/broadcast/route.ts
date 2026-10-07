@@ -1,33 +1,15 @@
 import { NextResponse } from 'next/server'
 import { requireRole, toErrorResponse } from '@/lib/auth/account'
-import { sendTemplateMessage } from '@/lib/whatsapp/meta-api'
-import { decrypt } from '@/lib/whatsapp/encryption'
 import type { SendTimeParams } from '@/lib/whatsapp/template-send-builder'
-import { resolveTemplateRow } from '@/lib/whatsapp/template-body'
-import {
-  sanitizePhoneForMeta,
-  isValidE164,
-  phoneVariants,
-  isRecipientNotAllowedError,
-} from '@/lib/whatsapp/phone-utils'
 import {
   checkRateLimit,
   rateLimitResponse,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
 import {
-  DELIVERY_DISABLED_MESSAGE,
   getDeliveryMode,
-  isLiveDeliveryApproved,
 } from '@/lib/whatsapp/delivery-policy'
 import { runDryRunBroadcast } from '@/lib/whatsapp/broadcast-dry-run'
-
-interface BroadcastResult {
-  phone: string
-  status: 'sent' | 'failed'
-  whatsapp_message_id?: string
-  error?: string
-}
 
 /**
  * Two input shapes are accepted:
@@ -67,34 +49,15 @@ interface NewRecipient {
 
 export async function POST(request: Request) {
   try {
-    // Requires the 'agent' role — `canSendMessages` in lib/auth/roles is
-    // explicit that running broadcasts is a write operation and that
-    // viewers are read-only.
-    //
-    // This endpoint writes NOTHING to the database: it reads the config
-    // and template, then calls Meta directly. So unlike the rest of the
-    // app there was no RLS policy backstopping a missing role check —
-    // resolving `account_id` straight off the profile (which only needs
-    // 'viewer') was the ONLY gate, and it let a viewer blast a template
-    // to arbitrary phone numbers from the account's WhatsApp number.
-    // Nothing about that is recoverable after the fact, so the check has
-    // to happen here.
-    const { supabase, accountId, userId } = await requireRole('agent')
-
-    // Per-user broadcast budget. Note: this limits how often a user
-    // can *start* a campaign, not how many messages go out inside
-    // one — the fan-out loop below runs without additional gating.
+    const { userId } = await requireRole('agent')
     const limit = checkRateLimit(`broadcast:${userId}`, RATE_LIMITS.broadcast)
-    if (!limit.success) {
-      return rateLimitResponse(limit)
-    }
+    if (!limit.success) return rateLimitResponse(limit)
 
     const body = await request.json()
     const {
       recipients: newRecipients,
       phone_numbers,
       template_name,
-      template_language,
       template_params,
     } = body
 
@@ -142,131 +105,17 @@ export async function POST(request: Request) {
       })
     }
 
-    if (!isLiveDeliveryApproved()) {
-      return NextResponse.json(
-        { error: DELIVERY_DISABLED_MESSAGE, mode: deliveryMode },
-        { status: 409 },
-      )
-    }
-
-    const { data: config, error: configError } = await supabase
-      .from('whatsapp_config')
-      .select('*')
-      .eq('account_id', accountId)
-      .single()
-
-    if (configError || !config) {
-      return NextResponse.json(
-        {
-          error:
-            'WhatsApp not configured. Please set up your WhatsApp integration first.',
-        },
-        { status: 400 }
-      )
-    }
-
-    const accessToken = decrypt(config.access_token)
-
-    // Load the template row once so sendTemplateMessage can build
-    // header + button components on each iteration. Loading inside
-    // the loop would N+1 against Supabase for every recipient.
-    // Guard against a malformed local row crashing every send in
-    // the loop with the same opaque TypeError — fail loudly once.
-    const resolvedTemplate = await resolveTemplateRow(
-      supabase,
-      accountId,
-      template_name,
-      template_language,
+    // A caller-supplied phone list has no durable campaign approval, budget
+    // reservation or recipient claim. Never let the global live flags turn
+    // this legacy dashboard adapter into an untracked fan-out endpoint.
+    return NextResponse.json(
+      {
+        error: 'Campaign delivery is disabled until server-side campaign approval, budget reservations and recipient claims are configured. Inbox replies are controlled separately.',
+        code: 'campaign_controls_required',
+        mode: deliveryMode,
+      },
+      { status: 409 },
     )
-    if (resolvedTemplate.malformed) {
-      return NextResponse.json(
-        {
-          error:
-            'Template row is malformed locally — run "Sync from Meta" in Settings to repair it before broadcasting.',
-        },
-        { status: 500 },
-      )
-    }
-    const templateRow = resolvedTemplate.row
-
-    const results: BroadcastResult[] = []
-    let sentCount = 0
-    let failedCount = 0
-
-    for (const recipient of recipients) {
-      const sanitized = sanitizePhoneForMeta(recipient.phone)
-
-      if (!isValidE164(sanitized)) {
-        results.push({
-          phone: recipient.phone,
-          status: 'failed',
-          error: 'Invalid phone number format',
-        })
-        failedCount++
-        continue
-      }
-
-      // Retry with phone variants on "not in allowed list" so numbers
-      // that differ only in a trunk-prefix 0 still reach recipients.
-      const variants = phoneVariants(sanitized)
-      let sentMessageId: string | null = null
-      let lastError: string | null = null
-
-      for (const variant of variants) {
-        try {
-          const result = await sendTemplateMessage({
-            phoneNumberId: config.phone_number_id,
-            accessToken,
-            to: variant,
-            templateName: template_name,
-            language: resolvedTemplate.language,
-            template: templateRow ?? undefined,
-            messageParams: recipient.messageParams,
-            params: recipient.params ?? [],
-          })
-          sentMessageId = result.messageId
-          lastError = null
-          break
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error'
-          if (!isRecipientNotAllowedError(errorMessage)) {
-            lastError = errorMessage
-            break
-          }
-          lastError = errorMessage
-          // retry with next variant
-        }
-      }
-
-      if (sentMessageId) {
-        results.push({
-          phone: recipient.phone,
-          status: 'sent',
-          whatsapp_message_id: sentMessageId,
-        })
-        sentCount++
-      } else {
-        console.error(
-          `Failed to send broadcast to ${recipient.phone}:`,
-          lastError
-        )
-        results.push({
-          phone: recipient.phone,
-          status: 'failed',
-          error: lastError || 'Unknown error',
-        })
-        failedCount++
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      total: recipients.length,
-      sent: sentCount,
-      failed: failedCount,
-      results,
-    })
   } catch (error) {
     // requireRole throws Unauthorized/Forbidden; toErrorResponse maps
     // those to 401/403 and collapses anything else to a generic 500.

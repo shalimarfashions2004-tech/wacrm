@@ -24,6 +24,19 @@ export const DELIVERY_DISABLED_MESSAGE =
 
 export const MANUAL_TEST_MESSAGE = 'Shalimar Connect test — please reply OK.';
 
+/** Independent approval for human replies; never enables campaigns or workers. */
+export function getInboxReplyApproval() {
+  const phoneNumberId = process.env.MESSAGING_INBOX_PHONE_NUMBER_ID ?? '';
+  const wabaId = process.env.MESSAGING_INBOX_WABA_ID ?? '';
+  if (
+    process.env.MESSAGING_INBOX_REPLIES_APPROVED !== 'true' ||
+    !/^\d+$/.test(phoneNumberId) ||
+    !/^\d+$/.test(wabaId)
+  )
+    return null;
+  return { phoneNumberId, wabaId };
+}
+
 /** Server-only, expiring approval for a fixed-text manual inbox test. */
 export function getManualTestApproval(now = Date.now()) {
   const recipient = process.env.MESSAGING_TEST_RECIPIENT ?? '';

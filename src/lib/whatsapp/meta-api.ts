@@ -9,6 +9,7 @@
  * instead of a runtime rejection from Meta.
  */
 
+import { isInboxReplyPermitted, type InboxReplyPermit } from './inbox-reply-permit'
 import { isBusinessScopedUserId } from './wa-identity'
 import { InvalidMetaAccessTokenError, isValidMetaAccessToken } from './access-token-input'
 import {
@@ -361,6 +362,7 @@ function recipientFields(to: string): Record<string, unknown> {
 }
 
 export interface SendTextMessageArgs {
+  inboxReplyPermit?: InboxReplyPermit
   phoneNumberId: string
   accessToken: string
   to: string
@@ -379,7 +381,7 @@ export interface SendTextMessageArgs {
 export async function sendTextMessage(
   args: SendTextMessageArgs
 ): Promise<MetaSendResult> {
-  if (!(args.manualTest === true && isManualTestDeliveryApproved(args))) {
+  if (!isInboxReplyPermitted(args) && !(args.manualTest === true && isManualTestDeliveryApproved(args))) {
     assertOutboundDeliveryAllowed()
   }
   const { phoneNumberId, accessToken, to, text, contextMessageId } = args
@@ -393,7 +395,7 @@ export async function sendTextMessage(
   if (contextMessageId) {
     body.context = { message_id: contextMessageId }
   }
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -411,6 +413,7 @@ export async function sendTextMessage(
 export type MediaKind = 'image' | 'video' | 'document' | 'audio'
 
 export interface SendMediaMessageArgs {
+  inboxReplyPermit?: InboxReplyPermit
   phoneNumberId: string
   accessToken: string
   to: string
@@ -439,7 +442,7 @@ export interface SendMediaMessageArgs {
 export async function sendMediaMessage(
   args: SendMediaMessageArgs,
 ): Promise<MetaSendResult> {
-  assertOutboundDeliveryAllowed()
+  if (!isInboxReplyPermitted(args)) assertOutboundDeliveryAllowed()
   const { phoneNumberId, accessToken, to, kind, link, caption, filename, contextMessageId } = args
   if (!link) throw new Error('sendMediaMessage requires a link.')
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
@@ -459,7 +462,7 @@ export async function sendMediaMessage(
   }
   if (contextMessageId) body.context = { message_id: contextMessageId }
 
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -939,6 +942,7 @@ export interface InteractiveButton {
 }
 
 export interface SendInteractiveButtonsArgs {
+  inboxReplyPermit?: InboxReplyPermit
   phoneNumberId: string
   accessToken: string
   to: string
@@ -965,7 +969,7 @@ export interface SendInteractiveButtonsArgs {
 export async function sendInteractiveButtons(
   args: SendInteractiveButtonsArgs
 ): Promise<MetaSendResult> {
-  assertOutboundDeliveryAllowed()
+  if (!isInboxReplyPermitted(args)) assertOutboundDeliveryAllowed()
   const {
     phoneNumberId, accessToken, to,
     bodyText, headerText, footerText, buttons, contextMessageId,
@@ -1017,7 +1021,7 @@ export async function sendInteractiveButtons(
   if (contextMessageId) body.context = { message_id: contextMessageId }
 
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1048,6 +1052,7 @@ export interface InteractiveListSection {
 }
 
 export interface SendInteractiveListArgs {
+  inboxReplyPermit?: InboxReplyPermit
   phoneNumberId: string
   accessToken: string
   to: string
@@ -1073,7 +1078,7 @@ export interface SendInteractiveListArgs {
 export async function sendInteractiveList(
   args: SendInteractiveListArgs
 ): Promise<MetaSendResult> {
-  assertOutboundDeliveryAllowed()
+  if (!isInboxReplyPermitted(args)) assertOutboundDeliveryAllowed()
   const {
     phoneNumberId, accessToken, to,
     bodyText, buttonLabel, headerText, footerText, sections, contextMessageId,
@@ -1149,7 +1154,7 @@ export async function sendInteractiveList(
   if (contextMessageId) body.context = { message_id: contextMessageId }
 
   const url = `${META_API_BASE}/${phoneNumberId}/messages`
-  const response = await fetch(url, {
+  const response = await metaFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

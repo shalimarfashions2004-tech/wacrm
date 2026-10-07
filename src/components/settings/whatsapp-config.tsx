@@ -1,5 +1,7 @@
 'use client';
 
+import type { InboxReadiness } from '@/lib/whatsapp/inbox-readiness';
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
@@ -90,6 +92,7 @@ export function WhatsAppConfig() {
   // save) — rendered as small muted text under the actionable message.
   const [statusMeta, setStatusMeta] = useState<MetaErrorMeta | null>(null);
   const [saveFailure, setSaveFailure] = useState<MetaFailure | null>(null);
+  const [inboxDelivery, setInboxDelivery] = useState<InboxReadiness | null>(null);
   const [wabaSubscription, setWabaSubscription] = useState<WabaSubscription | null>(null);
   // Guards against re-hydrating the form when the load effect below
   // re-runs for reasons unrelated to actually switching accounts —
@@ -201,12 +204,14 @@ export function WhatsAppConfig() {
             setStatusMessage('');
             setStatusMeta(null);
             setWabaSubscription(payload.waba_subscription ?? null);
+            setInboxDelivery(payload.inbox_delivery ?? null);
           } else {
             setConnectionStatus('disconnected');
             setResetReason(payload.needs_reset ? 'token_corrupted' : payload.reason === 'meta_api_error' ? 'meta_api_error' : null);
             setStatusMessage(payload.message || '');
             setStatusMeta(payload.meta ?? null);
             setWabaSubscription(null);
+            setInboxDelivery(null);
           }
         } catch (err) {
           console.error('Health check failed:', err);
@@ -218,6 +223,7 @@ export function WhatsAppConfig() {
         setStatusMessage('');
         setStatusMeta(null);
         setWabaSubscription(null);
+        setInboxDelivery(null);
       }
     } catch (err) {
       console.error('fetchConfig error:', err);
@@ -405,6 +411,7 @@ export function WhatsAppConfig() {
         setStatusMessage('');
         setStatusMeta(null);
         setWabaSubscription(payload.waba_subscription ?? null);
+        setInboxDelivery(payload.inbox_delivery ?? null);
         toast.success(
           payload.phone_info?.verified_name
             ? t('connectedTo', { name: payload.phone_info.verified_name })
@@ -416,6 +423,7 @@ export function WhatsAppConfig() {
         setStatusMessage(payload.message || '');
         setStatusMeta(payload.meta ?? null);
         setWabaSubscription(null);
+        setInboxDelivery(null);
         toast.error(payload.message || t('apiConnectionFailed'), { duration: 10000 });
       }
     } catch (err) {
@@ -482,6 +490,7 @@ export function WhatsAppConfig() {
       setStatusMeta(null);
       setSaveFailure(null);
       setWabaSubscription(null);
+      setInboxDelivery(null);
     } catch (err) {
       console.error('Reset error:', err);
       toast.error(t('resetFailed'));
@@ -637,6 +646,14 @@ export function WhatsAppConfig() {
                   ? t('wabaSubscribed')
                   : wabaSubscription.error}
             </p>
+          )}
+          {connectionStatus === 'connected' && inboxDelivery && (
+            <div className="mt-3 space-y-1 text-sm text-muted-foreground" aria-live="polite">
+              <p>{inboxDelivery.message}</p>
+              {!inboxDelivery.generalDeliveryEnabled && (
+                <p>Broadcasts and automated messages are disabled while campaign checks are completed.</p>
+              )}
+            </div>
           )}
           {connectionStatus !== 'connected' && statusMeta && renderMetaDetails(statusMeta)}
         </Alert>
