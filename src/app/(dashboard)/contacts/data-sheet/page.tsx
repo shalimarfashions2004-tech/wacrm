@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TallyAccessSetup } from '@/components/customer-data/tally-access-setup';
+import { CustomerDataWorkspace } from '@/components/customer-data/customer-data-workspace';
 import {
   Table,
   TableBody,
@@ -115,8 +116,9 @@ export default function CustomerDataSheetPage() {
           </p>
           <p className="text-muted-foreground mt-2 max-w-3xl text-sm">
             A review page for customer history, purchase value, and lifecycle
-            segments. Start the shop’s Tally connection below. The figures on
-            this page remain historical reference data until a verified import.
+            segments. Import the prepared history below; live Tally sync starts
+            after the shop computer check. The reference figures further down
+            remain separate from saved CRM records.
           </p>
         </div>
         <Badge
@@ -124,9 +126,11 @@ export default function CustomerDataSheetPage() {
           className="h-8 gap-2 rounded-full border-amber-500/40 bg-amber-500/10 px-3 text-amber-700 dark:text-amber-300"
         >
           <LockKeyhole className="size-3.5" />
-          Read-only staging view
+          Reviewed imports · permission required
         </Badge>
       </div>
+
+      <CustomerDataWorkspace />
 
       <TallyAccessSetup />
 
@@ -138,13 +142,14 @@ export default function CustomerDataSheetPage() {
             </span>
             <div>
               <p className="text-foreground font-medium">
-                Excel connection is ready for the next stage
+                Historical source reference
               </p>
               <p className="text-muted-foreground mt-1 max-w-3xl text-sm leading-6">
                 The Shalimar folder contains {snapshot.excelWorkbookCount}{' '}
-                monthly Sales Register workbooks. They will be parsed into a
-                private staging table, checked for duplicates and Grand Total
-                rows, and reviewed before any CRM record is created.
+                monthly Sales Register workbooks. The prepared import reconciles
+                customer purchase amounts to the current invoice CSV. Import
+                counts and linked Contacts appear above; these figures describe
+                the earlier source review.
               </p>
             </div>
           </div>
@@ -155,7 +160,7 @@ export default function CustomerDataSheetPage() {
               className="border-border bg-card-2 rounded-full"
             >
               <Upload className="size-4" />
-              Connect Excel later
+              Source files preserved
             </Button>
             <Link
               href="/broadcasts/new?source=customer-data"

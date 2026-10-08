@@ -5,6 +5,10 @@ import { readPages, readBatches } from '@/lib/supabase/read-pages';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { normalizeKey } from '@/lib/contacts/dedupe';
+import {
+  previewCustomerAudience,
+  type CustomerAudienceReceipt,
+} from '@/lib/customer-data/audience';
 import { Contact, ContactConsent, MessageTemplate } from '@/types';
 import {
   consentCategoryForTemplate,
@@ -131,8 +135,22 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  async function resolveAudience(audience: AudienceConfig): Promise<Contact[]> {
+  async function resolveAudience(
+    audience: AudienceConfig,
+    templateLanguage: string
+  ): Promise<{
+    contacts: Contact[];
+    receipt?: Omit<CustomerAudienceReceipt, 'contacts'>;
+  }> {
     const supabase = createClient();
+
+    if (audience.type === 'customer_data') {
+      const { contacts, ...receipt } = await previewCustomerAudience(
+        audience,
+        templateLanguage
+      );
+      return { contacts, receipt };
+    }
 
     let contacts: Contact[] = [];
 
@@ -181,10 +199,6 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
       );
     } else if (audience.type === 'csv' && audience.csvContacts) {
       contacts = await upsertCsvContacts(supabase, audience.csvContacts);
-    } else if (audience.type === 'customer_data') {
-      throw new Error(
-        'Customer data sync is not connected yet. Save this audience as a draft until the Tally connection is verified.'
-      );
     }
 
     // Apply exclude tags (works across all contact-derived audience
@@ -205,7 +219,7 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
       contacts = contacts.filter((c) => !excludedIds.has(c.id));
     }
 
-    return contacts;
+    return { contacts };
   }
 
   async function hydrateConsent(
@@ -396,7 +410,11 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
 
       // ── Step 1: Resolve audience contacts ─────────────────────────
       setProgress(5);
-      const audienceContacts = await resolveAudience(payload.audience);
+      const { contacts: audienceContacts, receipt: customerDataReceipt } =
+        await resolveAudience(
+          payload.audience,
+          payload.template.language ?? 'en_US'
+        );
       const contactsWithConsent = await hydrateConsent(
         supabase,
         audienceContacts
@@ -432,7 +450,13 @@ export function useBroadcastSending(): UseBroadcastSendingReturn {
             type: payload.audience.type,
             tagIds: payload.audience.tagIds,
             customField: payload.audience.customField,
-            customerData: payload.audience.customerData,
+            customerData: customerDataReceipt
+              ? {
+                  ...payload.audience.customerData,
+                  importId: customerDataReceipt.import_id,
+                }
+              : payload.audience.customerData,
+            customerDataReceipt,
             source: payload.audience.source,
             excludeTagIds: payload.audience.excludeTagIds,
             consentCategory,

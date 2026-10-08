@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  previewCustomerAudience,
+  type CustomerAudienceReceipt,
+} from '@/lib/customer-data/audience';
+import { CustomerAudienceSummary } from '@/components/customer-data/audience-summary';
 import { MessageTemplate } from '@/types';
 import type { AudienceConfig } from '@/lib/broadcasts/audience';
 import { Button } from '@/components/ui/button';
@@ -45,8 +50,37 @@ export function Step4ScheduleSend({
   const [showConfirm, setShowConfirm] = useState(false);
   const [estimatedReach, setEstimatedReach] = useState<number>(0);
   const [loadingReach, setLoadingReach] = useState(true);
+  const [customerReceipt, setCustomerReceipt] =
+    useState<CustomerAudienceReceipt | null>(null);
+  const [customerError, setCustomerError] = useState('');
 
   useEffect(() => {
+    if (audience.type === 'customer_data') {
+      const controller = new AbortController();
+      setLoadingReach(true);
+      setEstimatedReach(0);
+      setCustomerReceipt(null);
+      setCustomerError('');
+      previewCustomerAudience(
+        audience,
+        template.language ?? 'en_US',
+        controller.signal
+      )
+        .then((receipt) => {
+          if (!controller.signal.aborted) {
+            setCustomerReceipt(receipt);
+            setEstimatedReach(receipt.eligible);
+          }
+        })
+        .catch((e) => {
+          if (!controller.signal.aborted)
+            setCustomerError((e as Error).message);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadingReach(false);
+        });
+      return () => controller.abort();
+    }
     async function calculateReach() {
       setLoadingReach(true);
       try {
@@ -73,8 +107,6 @@ export function Step4ScheduleSend({
           setEstimatedReach(uniqueIds.size);
         } else if (audience.type === 'csv' && audience.csvContacts) {
           setEstimatedReach(audience.csvContacts.length);
-        } else if (audience.type === 'customer_data') {
-          setEstimatedReach(0);
         } else {
           setEstimatedReach(0);
         }
@@ -84,7 +116,7 @@ export function Step4ScheduleSend({
     }
 
     calculateReach();
-  }, [audience]);
+  }, [audience, template.language]);
 
   const audienceLabel =
     audience.type === 'all'
@@ -166,9 +198,11 @@ export function Step4ScheduleSend({
       </div>
 
       {audience.type === 'customer_data' && (
-        <div className="text-muted-foreground rounded-[22px] border border-amber-500/30 bg-amber-500/10 p-5 text-sm leading-6">
-          {t('scheduleSend.customerDataNotConnected')}
-        </div>
+        <CustomerAudienceSummary
+          receipt={customerReceipt}
+          error={customerError}
+          loading={loadingReach}
+        />
       )}
 
       {/* Processing overlay */}
@@ -225,7 +259,8 @@ export function Step4ScheduleSend({
                   disabled={
                     !name.trim() ||
                     isProcessing ||
-                    audience.type === 'customer_data'
+                    (audience.type === 'customer_data' &&
+                      (loadingReach || !!customerError || estimatedReach === 0))
                   }
                   className="bg-primary text-primary-foreground hover:bg-primary-hover h-10 rounded-full px-5 disabled:opacity-50"
                 />

@@ -2,6 +2,11 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  previewCustomerAudience,
+  type CustomerAudienceReceipt,
+} from '@/lib/customer-data/audience';
+import { CustomerAudienceSummary } from '@/components/customer-data/audience-summary';
 import { parseBroadcastCsv } from '@/lib/broadcast-csv';
 import { CustomField, Tag } from '@/types';
 import type {
@@ -29,6 +34,7 @@ import { useTranslations } from 'next-intl';
 
 interface Step2Props {
   audience: AudienceConfig;
+  templateLanguage?: string;
   onUpdate: (audience: AudienceConfig) => void;
   onNext: () => void;
   onBack: () => void;
@@ -36,6 +42,7 @@ interface Step2Props {
 
 export function Step2SelectAudience({
   audience,
+  templateLanguage = 'en_US',
   onUpdate,
   onNext,
   onBack,
@@ -101,6 +108,9 @@ export function Step2SelectAudience({
   const [loadingFields, setLoadingFields] = useState(false);
   const [estimatedCount, setEstimatedCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
+  const [customerReceipt, setCustomerReceipt] =
+    useState<CustomerAudienceReceipt | null>(null);
+  const [customerError, setCustomerError] = useState('');
   // The picked file's name, shown back to the user. The parsed rows
   // themselves live on `audience.csvContacts` (owned by the wizard) so
   // they survive stepping forward and back.
@@ -148,6 +158,7 @@ export function Step2SelectAudience({
   }, [audience.type]);
 
   const fetchEstimatedCount = useCallback(async () => {
+    if (audience.type === 'customer_data') return;
     setLoadingCount(true);
     try {
       const supabase = createClient();
@@ -188,12 +199,6 @@ export function Step2SelectAudience({
         audience.csvContacts.length > 0
       ) {
         setEstimatedCount(audience.csvContacts.length);
-        return;
-      } else if (audience.type === 'customer_data') {
-        // The sales snapshot remains separate until the Tally connector and
-        // audience table are verified. Keep this path visible in the wizard,
-        // but never invent a reach count from aggregate-only data.
-        setEstimatedCount(null);
         return;
       } else {
         // Partially-configured audience — wait for the user to finish.
@@ -238,6 +243,29 @@ export function Step2SelectAudience({
   useEffect(() => {
     fetchEstimatedCount();
   }, [fetchEstimatedCount]);
+
+  useEffect(() => {
+    if (audience.type !== 'customer_data') return;
+    const controller = new AbortController();
+    setLoadingCount(true);
+    setCustomerReceipt(null);
+    setCustomerError('');
+    setEstimatedCount(null);
+    previewCustomerAudience(audience, templateLanguage, controller.signal)
+      .then((receipt) => {
+        if (!controller.signal.aborted) {
+          setCustomerReceipt(receipt);
+          setEstimatedCount(receipt.eligible);
+        }
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setCustomerError((e as Error).message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingCount(false);
+      });
+    return () => controller.abort();
+  }, [audience, templateLanguage]);
 
   async function handleCsvChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -351,7 +379,7 @@ export function Step2SelectAudience({
                     customerData:
                       option.type === 'customer_data'
                         ? (audience.customerData ?? {
-                            preset: 'high_value_at_risk',
+                            preset: 'all_reviewed',
                           })
                         : undefined,
                     source:
@@ -535,7 +563,8 @@ export function Step2SelectAudience({
             </p>
           </div>
           <select
-            value={audience.customerData?.preset ?? 'high_value_at_risk'}
+            aria-label="Customer purchase segment"
+            value={audience.customerData?.preset ?? 'all_reviewed'}
             onChange={(e) =>
               onUpdate({
                 ...audience,
@@ -548,22 +577,27 @@ export function Step2SelectAudience({
             }
             className="border-border bg-card text-foreground focus:border-primary focus:ring-primary h-10 w-full rounded-full border px-4 text-sm outline-none focus:ring-1"
           >
+            <option value="all_reviewed">
+              All reviewed customers with permission
+            </option>
             <option value="high_value_frequent">
               {t('selectAudience.customerDataPresets.highValueFrequent')}
             </option>
             <option value="high_value_at_risk">
               {t('selectAudience.customerDataPresets.highValueAtRisk')}
             </option>
-            <option value="product_interest">
+            <option value="product_interest" disabled>
               {t('selectAudience.customerDataPresets.productInterest')}
             </option>
             <option value="low_value_one_time">
               {t('selectAudience.customerDataPresets.lowValueOneTime')}
             </option>
           </select>
-          <div className="border-primary/30 bg-primary/5 text-muted-foreground rounded-2xl border p-4 text-xs leading-5">
-            {t('selectAudience.customerDataConnectionPending')}
-          </div>
+          <CustomerAudienceSummary
+            receipt={customerReceipt}
+            error={customerError}
+            loading={loadingCount}
+          />
         </div>
       )}
 

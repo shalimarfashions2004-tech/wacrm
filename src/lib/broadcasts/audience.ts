@@ -4,6 +4,7 @@ export type AudienceType =
 export type CustomFieldOperator = 'is' | 'is_not' | 'contains';
 
 export type CustomerDataAudiencePreset =
+  | 'all_reviewed'
   | 'high_value_frequent'
   | 'high_value_at_risk'
   | 'product_interest'
@@ -18,6 +19,7 @@ export interface CustomFieldFilter {
 export interface CustomerDataAudienceFilter {
   preset: CustomerDataAudiencePreset;
   product?: string;
+  importId?: string;
 }
 
 export interface AudienceConfig {

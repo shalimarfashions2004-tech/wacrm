@@ -45,7 +45,10 @@ function NewBroadcastPageInner() {
     fromCustomerData
       ? {
           type: 'customer_data',
-          customerData: { preset: 'high_value_at_risk' },
+          customerData: {
+            preset: 'all_reviewed',
+            importId: params.get('import') || undefined,
+          },
           source: 'customer-data',
         }
       : { type: 'all' }
@@ -217,6 +220,7 @@ function NewBroadcastPageInner() {
           )}
           {currentStep === 1 && (
             <Step2SelectAudience
+              templateLanguage={template?.language ?? 'en_US'}
               audience={audience}
               onUpdate={setAudience}
               onNext={() => setCurrentStep(2)}

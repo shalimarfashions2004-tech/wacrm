@@ -8,3 +8,5 @@ docs
 .company-os
 *.tsbuildinfo
 **/.DS_Store
+**/__pycache__
+**/*.pyc

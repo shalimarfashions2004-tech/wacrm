@@ -257,6 +257,13 @@ BEGIN
     OR has_function_privilege('anon', 'public.read_messaging_budget(uuid)', 'EXECUTE') THEN
     RAISE EXCEPTION 'managed runtime grants are incorrect';
   END IF;
+  IF to_regclass('public.customer_data_imports') IS NULL OR to_regclass('public.customer_data_rows') IS NULL
+    OR to_regprocedure('public.preview_customer_data_audience(uuid,text,text,uuid[])') IS NULL
+    OR NOT has_function_privilege('authenticated','public.save_customer_data_import(text,text,date,date,jsonb)','EXECUTE')
+    OR has_function_privilege('anon','public.save_customer_data_import(text,text,date,date,jsonb)','EXECUTE')
+    OR has_table_privilege('authenticated','public.customer_data_rows','UPDATE') THEN
+    RAISE EXCEPTION 'private customer-data schema / grants are incorrect — migration 052 did not apply';
+  END IF;
   RAISE NOTICE 'schema verification passed';
 END
 $$;
