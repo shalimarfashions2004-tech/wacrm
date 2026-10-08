@@ -148,6 +148,19 @@ await test('Customer imports, privacy, identity and language/permission audience
         () => sql('SELECT publish_customer_data_contacts($1)', [outsider]),
         /customer_data_admin_required/
       );
+      // A caller-created temporary profile must never supply an elevated role.
+      await sql(
+        'CREATE TEMP TABLE profiles(user_id uuid,account_id uuid,account_role text)'
+      );
+      await sql(`INSERT INTO pg_temp.profiles VALUES($1,$2,'owner')`, [
+        member,
+        account,
+      ]);
+      await assert.rejects(
+        () => save([row(1)]),
+        /customer_data_admin_required/
+      );
+      await sql('DROP TABLE pg_temp.profiles');
       await as(user);
     }
   );
@@ -473,6 +486,17 @@ await test('Customer imports, privacy, identity and language/permission audience
       ]);
       assert.equal(result.created, 1505);
       assert.equal((await preview(bulk)).reasons.permission_missing, 1505);
+      await db.exec('RESET ROLE');
+      await sql(
+        `INSERT INTO contact_consents(account_id,contact_id,channel,category,status,source,wording_version,consented_at)
+        SELECT account_id,contact_id,'whatsapp','marketing','opted_in','Synthetic explicit form','synthetic-v1','2026-05-20T12:00:00Z'
+        FROM customer_data_rows WHERE import_id=$1`,
+        [bulk]
+      );
+      await as(user);
+      const eligible = await preview(bulk);
+      assert.equal(eligible.eligible, 1505);
+      assert.equal(eligible.contacts.length, 1505);
     }
   );
 });
