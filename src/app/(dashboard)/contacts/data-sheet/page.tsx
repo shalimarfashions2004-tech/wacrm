@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { TallyAccessSetup } from '@/components/customer-data/tally-access-setup';
 import {
   Table,
   TableBody,
@@ -34,7 +35,11 @@ import {
 } from '@/lib/customer-data/snapshot';
 
 const dataContract = [
-  ['Customer key', 'Cleaned buyer name + normalized phone', 'Staging only'],
+  [
+    'Customer key',
+    'Company identifier + reviewed Tally ledger identifier',
+    'Identity review required',
+  ],
   [
     'Observed tenure',
     'First order to the source as-of date',
@@ -110,8 +115,8 @@ export default function CustomerDataSheetPage() {
           </p>
           <p className="text-muted-foreground mt-2 max-w-3xl text-sm">
             A review page for customer history, purchase value, and lifecycle
-            segments. The Excel connection is staged for a later approved
-            import.
+            segments. Start the shop’s Tally connection below. The figures on
+            this page remain historical reference data until a verified import.
           </p>
         </div>
         <Badge
@@ -122,6 +127,8 @@ export default function CustomerDataSheetPage() {
           Read-only staging view
         </Badge>
       </div>
+
+      <TallyAccessSetup />
 
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between">

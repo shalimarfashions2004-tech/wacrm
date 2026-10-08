@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shalimar — first TallyPrime check</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f5f0e8; color: #35241c; font: 17px/1.65 system-ui, sans-serif; }
+  main { max-width: 850px; margin: 32px auto; padding: 28px; }
+  .brand { color: #5c382a; font-weight: 700; letter-spacing: .08em; }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.2; margin: 12px 0 20px; }
+  h2 { font-size: 22px; margin: 0 0 8px; }
+  section { background: #fffdfa; border: 1px solid #cebd9c; border-radius: 18px; padding: 22px; margin: 18px 0; }
+  li { padding: 4px 0; }
+  code { overflow-wrap: anywhere; background: #eee8dc; padding: 3px 6px; border-radius: 5px; font-size: 14px; }
+  .note { font-size: 15px; color: #655448; }
+  a { color: #5c382a; }
+  @media print { body { background: white; } main { margin: 0; padding: 0; } section { break-inside: avoid; } }
+</style>
+<main>
+  <div class="brand">SHALIMAR FASHIONS · SHOP SETUP</div>
+  <h1>First, check Tally on the shop computer.</h1>
+  <p>This is a local company-identity check. It is not a customer import or a live CRM sync. No data is uploaded.</p>
+  <section>
+    <h2>1. Open the right company</h2>
+    <ol>
+      <li>On the Windows computer running TallyPrime, open the intended Shalimar company. Keep Tally open.</li>
+      <li>Press <strong>F1 (Help)</strong>. Note the TallyPrime release/version and exact company name.</li>
+      <li>Note the HTTP port, usually <strong>9000</strong>. The menu depends on the release: Settings → Connectivity → Client/Server configuration, or Settings → Advanced Configuration.</li>
+    </ol>
+    <p class="note">If the local HTTP service is off, let the shop technician review the setting. Keep the port private. Do not add router forwarding, open it to the internet, or turn off the firewall.</p>
+  </section>
+  <section>
+    <h2>2. Run one local check</h2>
+    <ol>
+      <li>Extract the access-kit ZIP. Keep this guide and <code>SHALIMAR_TALLY_CHECK.ps1</code> together.</li>
+      <li>Open the Windows Start menu, type <strong>Windows PowerShell</strong>, and open it normally. Administrator access is not required.</li>
+      <li>Type <code>powershell.exe -NoProfile -File </code> followed by a space, drag <code>SHALIMAR_TALLY_CHECK.ps1</code> into that window to insert its path, then press Enter.</li>
+      <li>Enter only the exact company name and Tally release when asked. Do not enter a password, licence number, API token or PIN.</li>
+      <li>If your port differs, the technician can append <code>-Port 9001</code>, substituting the port actually shown in Tally.</li>
+    </ol>
+    <p class="note">If Windows says running scripts is blocked, stop and ask the shop technician to use the company’s approved method. This kit does not change execution policy, install software, or bypass a warning.</p>
+  </section>
+  <section>
+    <h2>3. Return the result</h2>
+    <p>The result is a short block of text beginning with <code>{</code>. Review it, then give only that block to the owner. It contains the company name, a fingerprint, the release you entered and the check status.</p>
+    <ul>
+      <li><strong>company_read_verified:</strong> the selected company’s identity could be read locally. Customer sales are not yet synced.</li>
+      <li><strong>blocked:</strong> use the printed instructions. Do not keep changing settings or share private credentials.</li>
+    </ul>
+    <p class="note">No raw XML, customer names, phones, invoices, licence details or computer paths are saved by the check. The fingerprint is a hash of the returned company identifier. The release is staff-reported, not automatically verified.</p>
+  </section>
+  <section>
+    <h2>What happens next?</h2>
+    <ol>
+      <li>Confirm the version, company and read-only access.</li>
+      <li>Read a closed month’s sales and compare invoice count and totals with a separate Tally report.</li>
+      <li>Set up the authenticated bridge from this PC to Shalimar CRM. It needs its own narrow access key entered privately.</li>
+      <li>Review customer identities, duplicate phones, language and WhatsApp permission before making broadcast lists.</li>
+      <li>Verify Meta template approval and one approved image test before approving a customer campaign.</li>
+    </ol>
+    <p><strong>Buying from the shop does not automatically give WhatsApp marketing permission.</strong></p>
+  </section>
+  <p class="note">Prepared 8 October 2026. Kit v1. Local preparation only; no live Tally or CRM connection has been verified by this kit.</p>
+  <p class="note">Official references: <a href="https://help.tallysolutions.com/pre-requisites-for-integrations/">Tally integration prerequisites</a> · <a href="https://help.tallysolutions.com/xml-integration/">Tally XML integration</a></p>
+</main>
+</html>
