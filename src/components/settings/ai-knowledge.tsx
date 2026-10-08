@@ -1,5 +1,6 @@
 'use client';
 
+import { crmFetch } from '@/lib/supabase/read-cache';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2, Pencil, RefreshCw, BookOpen } from 'lucide-react';
@@ -45,7 +46,7 @@ export function AiKnowledgeCard({
   const loadedAccountIdRef = useRef<string | null>(null);
   const t = useTranslations('Settings.aiKnowledge');
 
-  const fetchDocs = useCallback(async () => {
+  const fetchDocs = useCallback(async (fresh = false) => {
     setLoading(true);
     setLoadError(false);
 
@@ -54,7 +55,7 @@ export function AiKnowledgeCard({
     // hiccup does not produce a misleading failure toast during page load.
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        const res = await fetch('/api/ai/knowledge', { cache: 'no-store' });
+        const res = await crmFetch('/api/ai/knowledge', { cache: fresh || attempt > 0 ? 'no-store' : 'default' });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
           setDocs(data.documents ?? []);
@@ -87,7 +88,7 @@ export function AiKnowledgeCard({
 
   const openEdit = async (id: string) => {
     try {
-      const res = await fetch(`/api/ai/knowledge/${id}`);
+      const res = await crmFetch(`/api/ai/knowledge/${id}`);
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? t('openFailed'));
@@ -115,7 +116,7 @@ export function AiKnowledgeCard({
     setSaving(true);
     try {
       const isNew = editing === 'new';
-      const res = await fetch(
+      const res = await crmFetch(
         isNew ? '/api/ai/knowledge' : `/api/ai/knowledge/${editing}`,
         {
           method: isNew ? 'POST' : 'PATCH',
@@ -142,7 +143,7 @@ export function AiKnowledgeCard({
 
   const remove = async (id: string) => {
     try {
-      const res = await fetch(`/api/ai/knowledge/${id}`, { method: 'DELETE' });
+      const res = await crmFetch(`/api/ai/knowledge/${id}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success(t('removeSuccess'));
         setDocs((d) => d.filter((x) => x.id !== id));
@@ -158,7 +159,7 @@ export function AiKnowledgeCard({
   const reindex = async () => {
     setReindexing(true);
     try {
-      const res = await fetch('/api/ai/knowledge/reindex', { method: 'POST' });
+      const res = await crmFetch('/api/ai/knowledge/reindex', { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success(t('reindexSuccess', { count: data.reindexed }));
@@ -192,7 +193,7 @@ export function AiKnowledgeCard({
         ) : loadError ? (
           <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">
             <span>{t('loadFailed')}</span>
-            <Button variant="outline" size="sm" onClick={() => void fetchDocs()}>
+            <Button variant="outline" size="sm" onClick={() => void fetchDocs(true)}>
               <RefreshCw className="mr-2 h-3.5 w-3.5" /> {t('retry')}
             </Button>
           </div>

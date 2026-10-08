@@ -32,6 +32,7 @@
  * implicit-delete affordance that's easier to trip accidentally.
  */
 
+import { crmFetch } from '@/lib/supabase/read-cache';
 import {
   createContext,
   useCallback,
@@ -332,7 +333,7 @@ export function FlowEditorProvider({
   const save = useCallback(async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/flows/${initialFlow.id}`, {
+      const res = await crmFetch(`/api/flows/${initialFlow.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -373,7 +374,7 @@ export function FlowEditorProvider({
         if (next === "active") {
           await save();
         }
-        const res = await fetch(`/api/flows/${initialFlow.id}/activate`, {
+        const res = await crmFetch(`/api/flows/${initialFlow.id}/activate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: next }),
@@ -405,7 +406,7 @@ export function FlowEditorProvider({
     const yes = window.confirm(t("deleteConfirm", { name: state.name }));
     if (!yes) return;
     try {
-      const res = await fetch(`/api/flows/${initialFlow.id}`, {
+      const res = await crmFetch(`/api/flows/${initialFlow.id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);

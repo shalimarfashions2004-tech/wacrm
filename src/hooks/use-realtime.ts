@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { crmReadCache } from "@/lib/supabase/read-cache";
 import type { Message, Conversation } from "@/types";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -50,6 +51,7 @@ export function useRealtime({
         "postgres_changes",
         { event: "*", schema: "public", table: "messages" },
         (payload) => {
+          crmReadCache.invalidate();
           onMessageRef.current?.({
             eventType: payload.eventType as RealtimeEvent<Message>["eventType"],
             new: payload.new as Message,
@@ -61,6 +63,7 @@ export function useRealtime({
         "postgres_changes",
         { event: "*", schema: "public", table: "conversations" },
         (payload) => {
+          crmReadCache.invalidate();
           onConversationRef.current?.({
             eventType: payload.eventType as RealtimeEvent<Conversation>["eventType"],
             new: payload.new as Conversation,

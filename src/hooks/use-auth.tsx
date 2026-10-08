@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { DEFAULT_CURRENCY } from "@/lib/currency";
+import { crmReadCache } from "@/lib/supabase/read-cache";
 import {
   canEditSettings as canEditSettingsFor,
   canManageMembers as canManageMembersFor,
@@ -177,11 +178,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // a profile for. This prevents redundant re-fetches and toggling
   // profileLoading back to true on window focus events/token refresh.
   const lastFetchedUserIdRef = useRef<string | null>(null);
+  const profileFetchSequence = useRef(0);
 
   // Shared across init, auth-state-change listener, and the exposed
   // refreshProfile() callback. Reads the current session's user id and
   // pulls the matching profile row along with its account summary.
   const fetchProfile = useCallback(async (userId: string) => {
+    const sequence = ++profileFetchSequence.current;
+    crmReadCache.setScope(null);
     const supabase = createClient();
     setProfileLoading(true);
     setStatusDetail(null);
@@ -192,11 +196,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const result = await supabase
           .from("profiles")
           .select(
-            "id, full_name, email, avatar_url, role, beta_features, account_id, account_role",
+            "id, full_name, email, avatar_url, role, beta_features, account_id, account_role"
           )
           .eq("user_id", userId)
           .maybeSingle();
 
+        if (sequence !== profileFetchSequence.current) return;
         if (!result.error) {
           data = result.data;
           break;
@@ -218,6 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           continue;
         }
         lastFetchedUserIdRef.current = null;
+        crmReadCache.setScope(null);
         setStatusDetail(error.message);
         return;
       }
@@ -267,6 +273,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? data.account_role
           : null;
 
+        if (sequence !== profileFetchSequence.current) return;
+        crmReadCache.setScope(
+          data.account_id && accountRole
+            ? { userId, accountId: data.account_id, role: accountRole }
+            : null
+        );
+
         setProfile({
           id: data.id,
           full_name: data.full_name,
@@ -289,25 +302,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // failure as a WARNING) or one predating that migration.
           // Every insert and update they attempt will be denied by RLS.
           setStatusDetail(
-            `profile ${data.id} has no ${!data.account_id ? "account_id" : "account_role"}`,
+            `profile ${data.id} has no ${!data.account_id ? "account_id" : "account_role"}`
           );
         }
       } else {
+        if (sequence !== profileFetchSequence.current) return;
+        crmReadCache.setScope(null);
         lastFetchedUserIdRef.current = null;
         setStatusDetail("no profiles row for the signed-in user");
       }
     } catch (err) {
+      if (sequence !== profileFetchSequence.current) return;
+      crmReadCache.setScope(null);
       console.error("[AuthProvider] fetchProfile threw:", err);
       lastFetchedUserIdRef.current = null;
-      setStatusDetail(err instanceof Error ? err.message : "profile fetch failed");
+      setStatusDetail(
+        err instanceof Error ? err.message : "profile fetch failed"
+      );
     } finally {
-      setProfileLoading(false);
+      if (sequence === profileFetchSequence.current) setProfileLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const supabase = createClient();
     let mounted = true;
+    let authRevision = 0;
 
     const safetyTimer = setTimeout(() => {
       if (mounted) {
@@ -318,15 +338,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 3000);
 
     const init = async () => {
+      const revision = authRevision;
       try {
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession();
 
-        if (error) console.error("[AuthProvider] getSession error:", error.message);
+        if (error)
+          console.error("[AuthProvider] getSession error:", error.message);
 
-        if (!mounted) return;
+        if (!mounted || revision !== authRevision) return;
         const currentUser = session?.user ?? null;
         setUser(currentUser);
 
@@ -335,7 +357,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // (header, sidebar) can render from the user object alone,
           // profile enriches async. Callers that need to branch on
           // profile data gate on `profileLoading` instead.
-          fetchProfile(currentUser.id);
+          if (currentUser.id !== lastFetchedUserIdRef.current)
+            fetchProfile(currentUser.id);
         } else {
           // No user → no profile to load. Flip profileLoading off so
           // pages that gate on it don't wait forever on the logged-out
@@ -356,7 +379,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
+      authRevision++;
       const currentUser = session?.user ?? null;
+      if (currentUser?.id !== lastFetchedUserIdRef.current) {
+        crmReadCache.setScope(null);
+        setProfile(null);
+        setAccount(null);
+      }
       setUser(currentUser);
 
       if (currentUser) {
@@ -364,6 +393,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           fetchProfile(currentUser.id);
         }
       } else {
+        profileFetchSequence.current++;
+        crmReadCache.setScope(null);
         lastFetchedUserIdRef.current = null;
         setProfile(null);
         setAccount(null);
@@ -375,18 +406,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      // A request counter, not a DOM ref: cancel the latest pending lookup.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      profileFetchSequence.current++;
+      lastFetchedUserIdRef.current = null;
+      crmReadCache.setScope(null);
       clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
 
   const signOut = useCallback(async () => {
+    profileFetchSequence.current++;
+    crmReadCache.setScope(null);
     const supabase = createClient();
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
     setAccount(null);
     window.location.href = "/login";
+  }, []);
+
+  useEffect(() => {
+    const invalidate = () => crmReadCache.invalidate();
+    const visible = () => {
+      if (document.visibilityState === "visible") invalidate();
+    };
+    window.addEventListener("focus", invalidate);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      window.removeEventListener("focus", invalidate);
+      document.removeEventListener("visibilitychange", visible);
+    };
   }, []);
 
   const refreshProfile = useCallback(async () => {

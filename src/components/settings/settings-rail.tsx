@@ -25,10 +25,12 @@ const RAIL_DESKTOP_MIN_PX = 1024;
 export function SettingsRail({
   active,
   onSelect,
+  onIntent,
   hints,
 }: {
   active: SettingsSection;
   onSelect: (section: SettingsSection) => void;
+  onIntent?: (section: SettingsSection) => void;
   hints?: Partial<Record<SettingsSection, ReactNode>>;
 }) {
   const t = useTranslations('Settings');
@@ -79,6 +81,8 @@ export function SettingsRail({
                   ref={isActive ? activeRef : undefined}
                   type="button"
                   onClick={() => onSelect(s)}
+                  onMouseEnter={() => onIntent?.(s)}
+                  onFocus={() => onIntent?.(s)}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium whitespace-nowrap transition-colors',

@@ -29,7 +29,12 @@
     "sender": "+917025320333",
     "status": "Connected; display name approved",
     "badge": "Submit request disabled; no request submitted",
-    "owner_reported_inbox_recovery": "Connection check arrived after token rotation"
+    "owner_reported_inbox_recovery": "Connection check arrived after token rotation",
+    "owner_authenticated_crm_meta_check": {
+      "date": "2026-10-08",
+      "result": "Meta checks passed for Shalimar Fashions (+91 70253 20333).",
+      "evidence_type": "Owner reported current authenticated CRM result; no independent authenticated browser access"
+    }
   },
   "release_controls": {
     "general_delivery": "dry-run",
@@ -40,7 +45,6 @@
     "actual_campaign_messages_sent_by_agent": 0
   },
   "remaining_verification": [
-    "Owner authenticated CRM readback",
     "Hosted concurrent delivery claims",
     "Meta-approved templates and recipient image-delivery receipt",
     "Controlled immutable media",
@@ -115,7 +119,7 @@
         "status": 401
       }
     ],
-    "authenticated_crm_ui": "Owner check requested; no browser-session bypass",
+    "authenticated_crm_ui": "Owner reported successful Check with Meta for the intended sender; full screen/browser validation remains unperformed by the agent",
     "live_image_delivery": "Not attempted; explicit controlled-test approval and Meta-approved template still needed"
   }
 }

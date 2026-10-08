@@ -30,7 +30,7 @@ Existing human Inbox approvals remain separate. Managed deployment permission st
 
 ## Provider and badge evidence
 
-Latest owner readback after token rotation: valid, subscribed, registered; fresh Inbox test arrived. Native Shalimar Chrome Meta read on 7 October showed the existing WABA 28787952197487898 and phone 1391671597361924 / +91 70253 20333 Connected, Shalimar Fashions display name Approved. “Official business account” described a blue checkmark but **Submit request was disabled**. No badge request, payment or new account was submitted. Display-name approval does not establish badge approval. Do not bypass Meta eligibility/confirmation.
+Owner authenticated CRM readback on 8 October: **“Meta checks passed for Shalimar Fashions (+91 70253 20333).”** This is the current hosted Check with Meta result reported by the owner, not an independent authenticated browser check by the agent. Earlier readback after token rotation was valid, subscribed, registered; a fresh Inbox test arrived. Native Shalimar Chrome Meta read on 7 October showed the existing WABA 28787952197487898 and phone 1391671597361924 / +91 70253 20333 Connected, Shalimar Fashions display name Approved. “Official business account” described a blue checkmark but **Submit request was disabled**. No badge request, payment or new account was submitted. Display-name approval does not establish badge approval. Do not bypass Meta eligibility/confirmation.
 
 ## Pricing basis
 
@@ -56,4 +56,4 @@ Committed source **3eec14eaee22410703f94b8362605273ce61f540** was deployed from 
 
 Public readback: `/login` 200; brand PNG 200 / image/png / 250,892 bytes, SHA-256 matching the committed source; vCard 200 / text/x-vcard / 331 bytes, matching the committed CRLF source. Unauthenticated managed settings, WhatsApp config and AI usage API calls each returned 401. These checks verify deployment, public asset retrieval and authentication boundaries; they do not prove authenticated screen rendering or Meta image delivery.
 
-The owner has been asked to refresh WhatsApp settings and click **Check with Meta** for an authenticated, read-only provider receipt. Managed sending remains OFF, AI auto-replies remain unactivated, introduction templates still need Meta approval, and customer campaigns need separate owner review. Machine-readable sanitized evidence is in `docs/evidence/shalimar-managed-runtime-20261008.json`.
+The owner refreshed WhatsApp settings and reported **“Meta checks passed for Shalimar Fashions (+91 70253 20333).”** The authenticated read-only provider receipt is now recorded; it does not establish template approval, hosted concurrency or image delivery. Managed sending remains OFF, AI auto-replies remain unactivated, introduction templates still need Meta approval, and customer campaigns need separate owner review. Machine-readable sanitized evidence is in `docs/evidence/shalimar-managed-runtime-20261008.json`.

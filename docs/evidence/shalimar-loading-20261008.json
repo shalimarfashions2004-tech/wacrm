@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-08",
+  "repository": "https://github.com/shalimarfashions2004-tech/wacrm.git",
+  "branch": "feature/shalimar-connect-platform",
+  "baseline_source_commit": "3eec14eaee22410703f94b8362605273ce61f540",
+  "validation": {
+    "test_files": 110,
+    "tests_passed": 1243,
+    "new_cache_test_results": 37,
+    "typecheck": "passed",
+    "lint_errors": 0,
+    "preexisting_lint_warnings": 37,
+    "local_production_build": "Webpack passed with placeholders; not promoted",
+    "authenticated_browser_timing": "Not measured by the agent"
+  },
+  "local_client_entry_bundle_gzip": {
+    "settings": {
+      "beforeGzipBytes": 225305,
+      "afterGzipBytes": 129234,
+      "reductionPercent": 43
+    },
+    "agents": {
+      "beforeGzipBytes": 296136,
+      "afterGzipBytes": 169052,
+      "reductionPercent": 43
+    },
+    "dashboard": {
+      "beforeGzipBytes": 221128,
+      "afterGzipBytes": 101567,
+      "reductionPercent": 54
+    },
+    "contacts": {
+      "beforeGzipBytes": 198209,
+      "afterGzipBytes": 199295,
+      "reductionPercent": -1
+    },
+    "inbox": {
+      "beforeGzipBytes": 212401,
+      "afterGzipBytes": 213557,
+      "reductionPercent": -1
+    }
+  },
+  "measurement_limit": "Client page entry dependency chunks only; runtime/layout and deferred chunks excluded; production Turbopack transfer sizes and elapsed loading times not measured",
+  "cache_policy": {
+    "ttl_ms": 10000,
+    "max_entries": 64,
+    "max_response_bytes": 256000,
+    "storage": "browser memory only",
+    "partition": "user/account/role; matching unexpired JWT required for direct PostgREST",
+    "delivery_and_authorization_reads": "uncached"
+  },
+  "release_controls": {
+    "general_delivery": "dry-run",
+    "general_live_approved": false,
+    "managed_delivery_approved": false,
+    "messages_sent_by_agent": 0
+  }
+}

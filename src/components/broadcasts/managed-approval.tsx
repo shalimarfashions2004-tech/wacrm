@@ -1,4 +1,5 @@
 'use client';
+import { crmFetch } from '@/lib/supabase/read-cache';
 import Image from 'next/image';
 import type { TemplateButton } from '@/types';
 import { useCallback, useEffect, useState } from 'react';
@@ -69,7 +70,7 @@ export function ManagedApproval({
   const load = useCallback(async () => {
     if (!canEditSettings) return;
     try {
-      const res = await fetch(url, { cache: 'no-store' });
+      const res = await crmFetch(url, { cache: 'no-store' });
       const body = await res.json();
       if (!res.ok)
         throw new Error(body.error ?? 'Could not load the saved review.');
@@ -88,7 +89,7 @@ export function ManagedApproval({
     if (!review || dirty) return;
     setBusy(true);
     try {
-      const res = await fetch(url, {
+      const res = await crmFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, fingerprint: review.fingerprint }),

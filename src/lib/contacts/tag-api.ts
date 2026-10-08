@@ -1,3 +1,5 @@
+import { crmFetch } from '@/lib/supabase/read-cache';
+
 interface ContactTagMutationResult {
   added?: boolean;
   dispatched?: boolean;
@@ -9,7 +11,7 @@ async function mutateContactTag(
   tagId: string,
   method: 'POST' | 'DELETE'
 ): Promise<ContactTagMutationResult> {
-  const response = await fetch(`/api/contacts/${contactId}/tags`, {
+  const response = await crmFetch(`/api/contacts/${contactId}/tags`, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ tag_id: tagId }),

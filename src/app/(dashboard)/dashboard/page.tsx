@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { formatCurrency } from '@/lib/currency'
@@ -29,12 +30,14 @@ import type {
 import { MetricCard } from '@/components/dashboard/metric-card'
 import { SkeletonCard } from '@/components/dashboard/skeleton'
 import { QuickActions } from '@/components/dashboard/quick-actions'
-import { ConversationsChart } from '@/components/dashboard/conversations-chart'
-import { PipelineDonut } from '@/components/dashboard/pipeline-donut'
-import { ResponseTimeChart } from '@/components/dashboard/response-time-chart'
+import { PanelLoading } from '@/components/dashboard/panel-loading'
 import { ActivityFeed } from '@/components/dashboard/activity-feed'
 
 import { useTranslations } from 'next-intl'
+
+const ConversationsChart = dynamic(() => import('@/components/dashboard/conversations-chart').then(m => m.ConversationsChart), { loading: PanelLoading })
+const PipelineDonut = dynamic(() => import('@/components/dashboard/pipeline-donut').then(m => m.PipelineDonut), { loading: PanelLoading })
+const ResponseTimeChart = dynamic(() => import('@/components/dashboard/response-time-chart').then(m => m.ResponseTimeChart), { loading: PanelLoading })
 
 type RangeDays = 7 | 30 | 90
 
@@ -100,6 +103,13 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
+    // Fetch chart code alongside data, so rendering does not add a second
+    // network wait after the database reads finish.
+    void Promise.all([
+      import('@/components/dashboard/conversations-chart'),
+      import('@/components/dashboard/pipeline-donut'),
+      import('@/components/dashboard/response-time-chart'),
+    ]).catch(() => {})
     loadAll()
   }, [loadAll])
 

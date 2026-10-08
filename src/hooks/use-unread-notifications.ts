@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { crmReadCache } from "@/lib/supabase/read-cache";
 import type { Notification } from "@/types";
 
 /**
@@ -45,6 +46,7 @@ export function useUnreadNotifications(): number {
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications" },
         (payload) => {
+          crmReadCache.invalidate();
           if (payload.eventType === "INSERT") {
             const row = payload.new as Notification;
             if (!row.read_at) setCount((n) => n + 1);

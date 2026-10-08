@@ -24,6 +24,7 @@
  * renders the advanced rows.
  */
 
+import { crmFetch } from '@/lib/supabase/read-cache';
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Loader2,
@@ -848,7 +849,7 @@ function useUserTags(): UserTag[] {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/tags").catch(() => null);
+        const res = await crmFetch("/api/tags").catch(() => null);
         if (!res || !res.ok) return;
         const json = (await res.json()) as { tags?: UserTag[] };
         if (!cancelled) setTags(json.tags ?? []);

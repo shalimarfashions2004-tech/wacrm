@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { crmReadCache } from "@/lib/supabase/read-cache";
 import type { Conversation } from "@/types";
 
 /**
@@ -48,6 +49,7 @@ export function useTotalUnread(): number {
         "postgres_changes",
         { event: "*", schema: "public", table: "conversations" },
         (payload) => {
+          crmReadCache.invalidate();
           const map = countsRef.current;
           if (payload.eventType === "DELETE") {
             const oldRow = payload.old as Partial<Conversation>;

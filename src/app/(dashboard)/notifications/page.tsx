@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { crmReadCache } from "@/lib/supabase/read-cache";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { Notification } from "@/types";
@@ -60,6 +61,7 @@ export default function NotificationsPage() {
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications" },
         (payload) => {
+          crmReadCache.invalidate();
           if (payload.eventType === "INSERT") {
             const row = payload.new as Notification;
             setNotifications((prev) => {

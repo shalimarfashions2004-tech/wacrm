@@ -1,7 +1,8 @@
 'use client';
 
 import { Suspense, useMemo, type ReactNode } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -9,20 +10,96 @@ import { useTheme } from '@/hooks/use-theme';
 import { SettingsRail } from '@/components/settings/settings-rail';
 import { SettingsOverview } from '@/components/settings/settings-overview';
 import { ProfileForm } from '@/components/settings/profile-form';
-import { SecurityPanel } from '@/components/settings/security-panel';
 import { AppearancePanel } from '@/components/settings/appearance-panel';
-import { WhatsAppConfig } from '@/components/settings/whatsapp-config';
-import { TemplateManager } from '@/components/settings/template-manager';
-import { QuickRepliesManager } from '@/components/settings/quick-replies-manager';
-import { FieldsAndTagsPanel } from '@/components/settings/fields-and-tags-panel';
-import { DealsSettings } from '@/components/settings/deals-settings';
-import { MembersTab } from '@/components/settings/members-tab';
-import { ApiKeysSettings } from '@/components/settings/api-keys-settings';
 import {
   resolveSection,
   type SettingsSection,
 } from '@/components/settings/settings-sections';
 import { DashboardPageLoading } from '@/components/dashboard/page-loading';
+import { PanelLoading } from '@/components/dashboard/panel-loading';
+
+// Load the selected panel rather than shipping every integration/editor first.
+const SecurityPanel = dynamic(
+  () =>
+    import('@/components/settings/security-panel').then((m) => m.SecurityPanel),
+  { loading: PanelLoading }
+);
+const WhatsAppConfig = dynamic(
+  () =>
+    import('@/components/settings/whatsapp-config').then(
+      (m) => m.WhatsAppConfig
+    ),
+  { loading: PanelLoading }
+);
+const TemplateManager = dynamic(
+  () =>
+    import('@/components/settings/template-manager').then(
+      (m) => m.TemplateManager
+    ),
+  { loading: PanelLoading }
+);
+const QuickRepliesManager = dynamic(
+  () =>
+    import('@/components/settings/quick-replies-manager').then(
+      (m) => m.QuickRepliesManager
+    ),
+  { loading: PanelLoading }
+);
+const FieldsAndTagsPanel = dynamic(
+  () =>
+    import('@/components/settings/fields-and-tags-panel').then(
+      (m) => m.FieldsAndTagsPanel
+    ),
+  { loading: PanelLoading }
+);
+const DealsSettings = dynamic(
+  () =>
+    import('@/components/settings/deals-settings').then((m) => m.DealsSettings),
+  { loading: PanelLoading }
+);
+const MembersTab = dynamic(
+  () => import('@/components/settings/members-tab').then((m) => m.MembersTab),
+  { loading: PanelLoading }
+);
+const ApiKeysSettings = dynamic(
+  () =>
+    import('@/components/settings/api-keys-settings').then(
+      (m) => m.ApiKeysSettings
+    ),
+  { loading: PanelLoading }
+);
+
+function preloadSection(section: SettingsSection) {
+  // Intent preloads code only. No account read, provider call or mutation.
+  let loading: Promise<unknown> | undefined;
+  switch (section) {
+    case 'security':
+      loading = import('@/components/settings/security-panel');
+      break;
+    case 'whatsapp':
+      loading = import('@/components/settings/whatsapp-config');
+      break;
+    case 'templates':
+      loading = import('@/components/settings/template-manager');
+      break;
+    case 'quick-replies':
+      loading = import('@/components/settings/quick-replies-manager');
+      break;
+    case 'fields':
+      loading = import('@/components/settings/fields-and-tags-panel');
+      break;
+    case 'deals':
+      loading = import('@/components/settings/deals-settings');
+      break;
+    case 'members':
+      loading = import('@/components/settings/members-tab');
+      break;
+    case 'api':
+      loading = import('@/components/settings/api-keys-settings');
+      break;
+  }
+  void loading?.catch(() => {});
+}
 
 // `useSearchParams` opts this page out of static prerendering unless it
 // sits under a Suspense boundary. Without one, the production build hits
@@ -41,7 +118,6 @@ export default function SettingsPage() {
 }
 
 function SettingsPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { defaultCurrency } = useAuth();
   const { mode } = useTheme();
@@ -54,9 +130,15 @@ function SettingsPageInner() {
   const section = resolveSection(searchParams.get('tab'));
 
   const go = (next: SettingsSection) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', next);
-    router.replace(`/settings?${params.toString()}`, { scroll: false });
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', next);
+    // These panels are client state. Next synchronizes useSearchParams with
+    // native history without a server navigation/authentication round trip.
+    window.history.replaceState(
+      null,
+      '',
+      `${url.pathname}${url.search}${url.hash}`
+    );
   };
 
   // Cheap, fetch-free rail hints. The Overview landing carries the
@@ -67,7 +149,7 @@ function SettingsPageInner() {
       appearance: mode.charAt(0).toUpperCase() + mode.slice(1),
       deals: defaultCurrency,
     }),
-    [mode, defaultCurrency],
+    [mode, defaultCurrency]
   );
 
   const panel: Record<SettingsSection, ReactNode> = {
@@ -87,13 +169,16 @@ function SettingsPageInner() {
   return (
     <div>
       <div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t('pageDesc')}
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">{t('pageDesc')}</p>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[236px_minmax(0,1fr)] lg:items-start">
-        <SettingsRail active={section} onSelect={go} hints={hints} />
+        <SettingsRail
+          active={section}
+          onSelect={go}
+          onIntent={preloadSection}
+          hints={hints}
+        />
         <div className="min-w-0">{panel[section]}</div>
       </div>
     </div>
