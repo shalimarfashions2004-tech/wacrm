@@ -11,6 +11,7 @@ import { NextRequest } from "next/server";
 //                      of the test is that these must survive onto whatever
 //                      response the middleware returns — including redirects.
 let mockUser: { id: string } | null = null;
+let authCalls = 0;
 let refreshedCookies: Array<{
   name: string;
   value: string;
@@ -30,6 +31,7 @@ vi.mock("@supabase/ssr", () => ({
       // refreshed inside getUser(), which rotates the refresh token and
       // pushes the new cookies through setAll() before resolving.
       getUser: async () => {
+        authCalls += 1;
         if (refreshedCookies.length) opts.cookies.setAll(refreshedCookies);
         return { data: { user: mockUser } };
       },
@@ -44,6 +46,7 @@ beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
   mockUser = null;
+  authCalls = 0;
   refreshedCookies = [];
 });
 
@@ -54,6 +57,19 @@ const ROTATED = {
   value: "rotated-refresh-token",
   options: { path: "/", httpOnly: true },
 };
+
+describe('snapshot handler owns its fresh authentication', () => {
+  it('does not duplicate the account-authenticated read handler verification', async () => {
+    const res = await middleware(new NextRequest('https://app.test/api/settings/snapshot'));
+    expect(res.headers.get('x-middleware-next')).toBe('1');
+    expect(authCalls).toBe(0);
+  });
+  it('keeps adjacent APIs protected by the existing middleware check', async () => {
+    const res = await middleware(new NextRequest('https://app.test/api/whatsapp/config'));
+    expect(res.status).toBe(401);
+    expect(authCalls).toBe(1);
+  });
+});
 
 describe("middleware — refreshed auth cookies survive redirects", () => {
   it("carries the rotated token when redirecting a signed-in user off /login", async () => {

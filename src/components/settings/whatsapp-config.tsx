@@ -33,7 +33,9 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
-import type { WhatsAppConfig as WhatsAppConfigType } from '@/types';
+import type { WhatsAppSettingsView } from '@/lib/settings/snapshot';
+import { loadSettingsView } from '@/lib/settings/load-view';
+import { crmFetch } from '@/lib/supabase/read-cache';
 import { INVALID_META_ACCESS_TOKEN_MESSAGE, isValidMetaAccessToken } from '@/lib/whatsapp/access-token-input';
 
 const MASKED_TOKEN = '••••••••••••••••';
@@ -64,7 +66,7 @@ type WabaSubscription = {
   error?: string;
 };
 
-export function WhatsAppConfig() {
+export function WhatsAppConfig({ active = true }: { active?: boolean }) {
   const t = useTranslations('Settings.whatsapp');
   const supabase = createClient();
   // After multi-user, whatsapp_config is one-row-per-account, not
@@ -80,12 +82,16 @@ export function WhatsAppConfig() {
     canEditSettings,
   } = useAuth();
 
+  const userId = user?.id;
+
+  const [loadError, setLoadError] = useState(false);
+  const [checkingHealth, setCheckingHealth] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [showToken, setShowToken] = useState(false);
-  const [config, setConfig] = useState<WhatsAppConfigType | null>(null);
+  const [config, setConfig] = useState<WhatsAppSettingsView | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('unknown');
   const [resetReason, setResetReason] = useState<ResetReason>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
@@ -145,94 +151,117 @@ export function WhatsAppConfig() {
       ? `${window.location.origin}/api/whatsapp/webhook`
       : '';
 
-  const fetchConfig = useCallback(async (acctId: string) => {
-    setLoading(true);
-    try {
-      // Load form values from Supabase (shows what's in DB).
-      // Switched from `user_id` (which would only match the row's
-      // original author) to `account_id` so every member of the
-      // account sees the same saved configuration. UNIQUE(account_id)
-      // on the table guarantees the .maybeSingle() return type
-      // remains accurate.
-      const { data, error } = await supabase
-        .from('whatsapp_config')
-        .select('*')
-        .eq('account_id', acctId)
-        .maybeSingle();
+  const healthSequence = useRef(0);
+  useEffect(() => {
+    const sequence = healthSequence;
+    return () => {
+      sequence.current += 1;
+    };
+  }, []);
 
-      if (error) {
-        console.error('Failed to load config row:', error);
-      }
-
-      if (data) {
-        setConfig(data);
-        setPhoneNumberId(data.phone_number_id || '');
-        setWabaId(data.waba_id || '');
-        setAccessToken(MASKED_TOKEN);
-        // Same treatment as the access token: the row carries the encrypted
-        // value, which is enough to know one exists. Show a mask instead of
-        // an empty box so nobody concludes the token was never saved.
-        setVerifyToken(data.verify_token ? MASKED_TOKEN : '');
-        setVerifyEdited(false);
-        setPin('');
-        setTokenEdited(false);
-        // Undefined on a row read before migration 039 — treat that as
-        // on, matching the webhook's own default.
-        setMirrorMedia(data.mirror_inbound_media !== false);
-      } else {
-        setConfig(null);
-        setPhoneNumberId('');
-        setWabaId('');
-        setAccessToken('');
-        setVerifyToken('');
-        setPin('');
-        setTokenEdited(false);
-        setVerifyEdited(false);
-        setMirrorMedia(true);
-      }
-      // Clear any stale probe result when reloading the row.
-      setRegistrationProbe(null);
-
-      // Then verify health via the API (decrypts token + pings Meta)
-      if (data) {
-        try {
-          const res = await fetch('/api/whatsapp/config', { method: 'GET' });
-          const payload = await res.json();
-
-          if (payload.connected) {
-            setConnectionStatus('connected');
-            setResetReason(null);
-            setStatusMessage('');
-            setStatusMeta(null);
-            setWabaSubscription(payload.waba_subscription ?? null);
-            setInboxDelivery(payload.inbox_delivery ?? null);
-          } else {
-            setConnectionStatus('disconnected');
-            setResetReason(payload.needs_reset ? 'token_corrupted' : payload.reason === 'meta_api_error' ? 'meta_api_error' : null);
-            setStatusMessage(payload.message || '');
-            setStatusMeta(payload.meta ?? null);
-            setWabaSubscription(null);
-            setInboxDelivery(null);
-          }
-        } catch (err) {
-          console.error('Health check failed:', err);
-          setConnectionStatus('disconnected');
+  const checkHealth = useCallback(
+    async (notify = false) => {
+      const requestId = ++healthSequence.current;
+      setCheckingHealth(true);
+      setConnectionStatus('unknown');
+      setStatusMessage('');
+      setStatusMeta(null);
+      setWabaSubscription(null);
+      setInboxDelivery(null);
+      try {
+        // Always fresh. A preloaded form is not evidence that Meta is healthy.
+        const res = await crmFetch('/api/whatsapp/config', {
+          cache: 'no-store',
+        });
+        const payload = await res.json();
+        if (requestId !== healthSequence.current) return;
+        if (!res.ok)
+          throw new Error(payload.error || t('connectionTestFailed'));
+        setConnectionStatus(payload.connected ? 'connected' : 'disconnected');
+        setResetReason(
+          payload.connected
+            ? null
+            : payload.needs_reset
+              ? 'token_corrupted'
+              : payload.reason === 'meta_api_error'
+                ? 'meta_api_error'
+                : null
+        );
+        setStatusMessage(payload.connected ? '' : payload.message || '');
+        setStatusMeta(payload.connected ? null : (payload.meta ?? null));
+        setWabaSubscription(
+          payload.connected ? (payload.waba_subscription ?? null) : null
+        );
+        setInboxDelivery(
+          payload.connected ? (payload.inbox_delivery ?? null) : null
+        );
+        if (notify) {
+          if (payload.connected)
+            toast.success(
+              payload.phone_info?.verified_name
+                ? t('connectedTo', { name: payload.phone_info.verified_name })
+                : t('apiConnectionOk')
+            );
+          else
+            toast.error(payload.message || t('apiConnectionFailed'), {
+              duration: 10000,
+            });
         }
-      } else {
-        setConnectionStatus('disconnected');
-        setResetReason(null);
-        setStatusMessage('');
-        setStatusMeta(null);
-        setWabaSubscription(null);
-        setInboxDelivery(null);
+      } catch {
+        if (requestId !== healthSequence.current) return;
+        // A failed check cannot establish that the saved number is disconnected.
+        setConnectionStatus('unknown');
+        setStatusMessage(t('connectionTestFailed'));
+        if (notify) toast.error(t('connectionTestFailed'));
+      } finally {
+        if (requestId === healthSequence.current) setCheckingHealth(false);
       }
-    } catch (err) {
-      console.error('fetchConfig error:', err);
-      toast.error(t('loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, t]);
+    },
+    [t]
+  );
+
+  const fetchConfig = useCallback(
+    async (acctId: string, fresh = false) => {
+      setLoading(true);
+      setLoadError(false);
+      try {
+        const data = await loadSettingsView('whatsapp', acctId, fresh);
+        setConfig(data);
+        setPhoneNumberId(data?.phone_number_id || '');
+        setWabaId(data?.waba_id || '');
+        setAccessToken(data?.has_access_token ? MASKED_TOKEN : '');
+        setVerifyToken(data?.has_verify_token ? MASKED_TOKEN : '');
+        setVerifyEdited(false);
+        setPin('');
+        setTokenEdited(false);
+        setMirrorMedia(data?.mirror_inbound_media !== false);
+        if (data && fresh && active && config?.id === data.id) {
+          void checkHealth();
+        } else if (!data) {
+          healthSequence.current += 1;
+          setCheckingHealth(false);
+          setConnectionStatus('disconnected');
+          setResetReason(null);
+          setStatusMessage('');
+          setStatusMeta(null);
+          setWabaSubscription(null);
+          setInboxDelivery(null);
+        }
+      } catch {
+        setLoadError(true);
+        toast.error(t('loadFailed'));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [active, config?.id, checkHealth, t]
+  );
+
+  useEffect(() => {
+    // On return, refresh the health indicator without blanking saved details.
+    if (active && config?.id) void checkHealth();
+  }, [active, config?.id, checkHealth]);
+
 
   useEffect(() => {
     // Need both the auth session (`!authLoading`) AND the profile
@@ -241,7 +270,7 @@ export function WhatsAppConfig() {
     // for the first render window and bail without ever retrying
     // once the profile arrives.
     if (authLoading || profileLoading) return;
-    if (!user || !accountId) {
+    if (!userId || !accountId) {
       loadedAccountIdRef.current = null;
       setLoading(false);
       return;
@@ -249,7 +278,7 @@ export function WhatsAppConfig() {
     if (loadedAccountIdRef.current === accountId) return;
     loadedAccountIdRef.current = accountId;
     fetchConfig(accountId);
-  }, [authLoading, profileLoading, user?.id, accountId, fetchConfig]);
+  }, [authLoading, profileLoading, userId, accountId, fetchConfig]);
 
   async function handleToggleMirrorMedia(next: boolean) {
     if (!config || !accountId || savingMirror) return;
@@ -332,7 +361,7 @@ export function WhatsAppConfig() {
         return;
       }
 
-      const res = await fetch('/api/whatsapp/config', {
+      const res = await crmFetch('/api/whatsapp/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -391,7 +420,7 @@ export function WhatsAppConfig() {
         setPin('');
       }
 
-      if (accountId) await fetchConfig(accountId);
+      if (accountId) await fetchConfig(accountId, true);
     } catch (err) {
       console.error('Save error:', err);
       toast.error(t('saveFailed'));
@@ -401,36 +430,9 @@ export function WhatsAppConfig() {
   }
 
   async function handleTestConnection() {
+    setTesting(true);
     try {
-      setTesting(true);
-      const res = await fetch('/api/whatsapp/config', { method: 'GET' });
-      const payload = await res.json();
-
-      if (payload.connected) {
-        setConnectionStatus('connected');
-        setResetReason(null);
-        setStatusMessage('');
-        setStatusMeta(null);
-        setWabaSubscription(payload.waba_subscription ?? null);
-        setInboxDelivery(payload.inbox_delivery ?? null);
-        toast.success(
-          payload.phone_info?.verified_name
-            ? t('connectedTo', { name: payload.phone_info.verified_name })
-            : t('apiConnectionOk')
-        );
-      } else {
-        setConnectionStatus('disconnected');
-        setResetReason(payload.needs_reset ? 'token_corrupted' : payload.reason === 'meta_api_error' ? 'meta_api_error' : null);
-        setStatusMessage(payload.message || '');
-        setStatusMeta(payload.meta ?? null);
-        setWabaSubscription(null);
-        setInboxDelivery(null);
-        toast.error(payload.message || t('apiConnectionFailed'), { duration: 10000 });
-      }
-    } catch (err) {
-      console.error('Test connection error:', err);
-      setConnectionStatus('disconnected');
-      toast.error(t('connectionTestFailed'));
+      await checkHealth(true);
     } finally {
       setTesting(false);
     }
@@ -453,7 +455,7 @@ export function WhatsAppConfig() {
           { duration: 8000 },
         );
       }
-      if (accountId) await fetchConfig(accountId);
+      if (accountId) await fetchConfig(accountId, true);
     } catch (err) {
       console.error('verify-registration failed:', err);
       toast.error(t('verifyEndpointUnreachable'));
@@ -469,7 +471,7 @@ export function WhatsAppConfig() {
 
     try {
       setResetting(true);
-      const res = await fetch('/api/whatsapp/config', { method: 'DELETE' });
+      const res = await crmFetch('/api/whatsapp/config', { method: 'DELETE' });
       const data = await res.json();
 
       if (!res.ok) {
@@ -478,6 +480,8 @@ export function WhatsAppConfig() {
       }
 
       toast.success(t('resetDone'));
+      healthSequence.current += 1;
+      setCheckingHealth(false);
       setConfig(null);
       setPhoneNumberId('');
       setWabaId('');
@@ -503,6 +507,22 @@ export function WhatsAppConfig() {
   function handleCopyWebhookUrl() {
     navigator.clipboard.writeText(webhookUrl);
     toast.success(t('webhookCopied'));
+  }
+
+  if (loadError) {
+    return (
+      <Alert>
+        <AlertTitle>{t('loadFailed')}</AlertTitle>
+        <AlertDescription>
+          <Button
+            variant="outline"
+            onClick={() => accountId && void fetchConfig(accountId, true)}
+          >
+            {t('retryLoad')}
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   if (loading) {
@@ -614,48 +634,66 @@ export function WhatsAppConfig() {
           </Alert>
         )}
 
-        {/* Connection Status */}
-        <Alert className="bg-card border-border">
-          <div className="flex items-center gap-2">
-            {connectionStatus === 'connected' ? (
-              <CheckCircle2 className="size-4 text-primary" />
-            ) : (
-              <XCircle className="size-4 text-red-500" />
-            )}
-            <AlertTitle className="text-foreground mb-0">
-              {connectionStatus === 'connected' ? t('credentialsValid') : t('notConnected')}
-            </AlertTitle>
-          </div>
-          <AlertDescription className="text-muted-foreground">
-            {connectionStatus === 'connected'
-              ? t('connectedDesc')
-              : statusMessage ||
-                t('notConnectedDesc')}
-          </AlertDescription>
-          {connectionStatus === 'connected' && wabaSubscription?.checked && (
-            <p
-              className={
-                'mt-1 text-xs ' +
-                (wabaSubscription.subscribed === false
-                  ? 'text-amber-800 dark:text-amber-300'
-                  : 'text-muted-foreground')
-              }
-            >
-              {wabaSubscription.subscribed === false
-                ? t('wabaNotSubscribed')
-                : wabaSubscription.subscribed === true
-                  ? t('wabaSubscribed')
-                  : wabaSubscription.error}
-            </p>
-          )}
-          {connectionStatus === 'connected' && inboxDelivery && (
-            <div className="mt-3 space-y-1 text-sm text-muted-foreground" aria-live="polite">
-              <p>{inboxDelivery.message}</p>
-              <p>Campaign and automatic-message controls are shown below.</p>
+          {/* Connection Status */}
+          <Alert className="bg-card border-border">
+            <div className="flex items-center gap-2">
+              {connectionStatus === 'unknown' ? (
+                checkingHealth ? (
+                  <Loader2 className="text-muted-foreground size-4 animate-spin" />
+                ) : (
+                  <AlertTriangle className="text-muted-foreground size-4" />
+                )
+              ) : connectionStatus === 'connected' ? (
+                <CheckCircle2 className="text-primary size-4" />
+              ) : (
+                <XCircle className="size-4 text-red-500" />
+              )}
+              <AlertTitle className="text-foreground mb-0">
+                {connectionStatus === 'unknown'
+                  ? checkingHealth
+                    ? t('checkingConnection')
+                    : t('connectionTestFailed')
+                  : connectionStatus === 'connected'
+                    ? t('credentialsValid')
+                    : t('notConnected')}
+              </AlertTitle>
             </div>
-          )}
-          {connectionStatus !== 'connected' && statusMeta && renderMetaDetails(statusMeta)}
-        </Alert>
+            <AlertDescription className="text-muted-foreground">
+              {connectionStatus === 'unknown'
+                ? statusMessage || t('checkingConnectionDesc')
+                : connectionStatus === 'connected'
+                  ? t('connectedDesc')
+                  : statusMessage || t('notConnectedDesc')}
+            </AlertDescription>
+            {connectionStatus === 'connected' && wabaSubscription?.checked && (
+              <p
+                className={
+                  'mt-1 text-xs ' +
+                  (wabaSubscription.subscribed === false
+                    ? 'text-amber-800 dark:text-amber-300'
+                    : 'text-muted-foreground')
+                }
+              >
+                {wabaSubscription.subscribed === false
+                  ? t('wabaNotSubscribed')
+                  : wabaSubscription.subscribed === true
+                    ? t('wabaSubscribed')
+                    : wabaSubscription.error}
+              </p>
+            )}
+            {connectionStatus === 'connected' && inboxDelivery && (
+              <div
+                className="text-muted-foreground mt-3 space-y-1 text-sm"
+                aria-live="polite"
+              >
+                <p>{inboxDelivery.message}</p>
+                <p>Campaign and automatic-message controls are shown below.</p>
+              </div>
+            )}
+            {connectionStatus !== 'connected' &&
+              statusMeta &&
+              renderMetaDetails(statusMeta)}
+          </Alert>
 
         <ManagedMessagingSettings />
 
@@ -843,7 +881,7 @@ export function WhatsAppConfig() {
                 className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
               />
               <p className="text-xs text-muted-foreground">
-                {config?.verify_token && !verifyEdited
+                {config?.has_verify_token && !verifyEdited
                   ? t('webhookVerifyTokenSaved')
                   : t('webhookVerifyTokenHint')}
               </p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, type ReactNode } from 'react';
+import { Suspense, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
@@ -17,6 +17,8 @@ import {
 } from '@/components/settings/settings-sections';
 import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 import { PanelLoading } from '@/components/dashboard/panel-loading';
+import { preloadSettingsViews } from '@/lib/settings/load-view';
+import { PanelActivity } from '@/components/dashboard/panel-activity';
 
 // Load the selected panel rather than shipping every integration/editor first.
 const SecurityPanel = dynamic(
@@ -70,7 +72,9 @@ const ApiKeysSettings = dynamic(
 );
 
 function preloadSection(section: SettingsSection) {
-  // Intent preloads code only. No account read, provider call or mutation.
+  if (section === 'whatsapp' || section === 'templates') {
+    void preloadSettingsViews().catch(() => {});
+  }
   let loading: Promise<unknown> | undefined;
   switch (section) {
     case 'security':
@@ -118,6 +122,15 @@ export default function SettingsPage() {
 }
 
 function SettingsPageInner() {
+  const { user, accountId, accountRole, accountStatus } = useAuth();
+  if (accountStatus === 'loading') return <DashboardPageLoading />;
+  if (accountStatus !== 'ready') return null;
+  return (
+    <ScopedSettings key={JSON.stringify([user?.id, accountId, accountRole])} />
+  );
+}
+
+function ScopedSettings() {
   const searchParams = useSearchParams();
   const { defaultCurrency } = useAuth();
   const { mode } = useTheme();
@@ -128,6 +141,10 @@ function SettingsPageInner() {
   // app sidebar/header working. Legacy tab values (tags, custom-fields)
   // resolve onto their new home; unknown/empty → the Overview landing.
   const section = resolveSection(searchParams.get('tab'));
+  const [visited, setVisited] = useState<SettingsSection[]>([section]);
+  // A deep link/history update can select a panel without a rail click. Record
+  // it during render so returning to it keeps its data and unsaved form state.
+  if (!visited.includes(section)) setVisited([...visited, section]);
 
   const go = (next: SettingsSection) => {
     const url = new URL(window.location.href);
@@ -157,7 +174,7 @@ function SettingsPageInner() {
     profile: <ProfileForm />,
     security: <SecurityPanel />,
     appearance: <AppearancePanel />,
-    whatsapp: <WhatsAppConfig />,
+    whatsapp: <WhatsAppConfig active={section === 'whatsapp'} />,
     templates: <TemplateManager />,
     'quick-replies': <QuickRepliesManager />,
     fields: <FieldsAndTagsPanel />,
@@ -179,7 +196,15 @@ function SettingsPageInner() {
           onIntent={preloadSection}
           hints={hints}
         />
-        <div className="min-w-0">{panel[section]}</div>
+        <div className="min-w-0">
+          {visited.map((id) => (
+            <PanelActivity key={id} value={id === section}>
+              <div hidden={id !== section} inert={id !== section}>
+                {panel[id]}
+              </div>
+            </PanelActivity>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1588,6 +1588,9 @@
       "ownerHint": "계정과 결제에 대한 전체 권한"
     },
     "whatsapp": {
+      "checkingConnection": "연결 확인 중",
+      "checkingConnectionDesc": "저장된 정보가 준비되었습니다. Meta에서 인증 정보와 웹훅 구독을 확인하고 있습니다…",
+      "retryLoad": "다시 시도",
       "title": "WhatsApp 연결",
       "description": "Meta WhatsApp 비즈니스 API를 연결하세요. 자격 증명, 웹훅, 설정 단계가 모두 여기 있습니다.",
       "tokenCorrupted": "저장된 토큰을 복호화할 수 없습니다",

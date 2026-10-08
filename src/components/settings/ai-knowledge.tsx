@@ -1,9 +1,17 @@
 'use client';
 
 import { crmFetch } from '@/lib/supabase/read-cache';
+import { loadSettingsView } from '@/lib/settings/load-view';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2, Pencil, RefreshCw, BookOpen } from 'lucide-react';
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  Pencil,
+  RefreshCw,
+  BookOpen,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,33 +54,38 @@ export function AiKnowledgeCard({
   const loadedAccountIdRef = useRef<string | null>(null);
   const t = useTranslations('Settings.aiKnowledge');
 
-  const fetchDocs = useCallback(async (fresh = false) => {
-    setLoading(true);
-    setLoadError(false);
+  const fetchDocs = useCallback(
+    async (fresh = false) => {
+      if (!accountId) return;
+      setLoading(true);
+      setLoadError(false);
 
-    // The knowledge endpoint depends on the authenticated account context
-    // and PostgREST schema cache. Retry once so a short session/schema
-    // hiccup does not produce a misleading failure toast during page load.
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        const res = await crmFetch('/api/ai/knowledge', { cache: fresh || attempt > 0 ? 'no-store' : 'default' });
-        const data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          setDocs(data.documents ?? []);
+      // The knowledge endpoint depends on the authenticated account context
+      // and PostgREST schema cache. Retry once so a short session/schema
+      // hiccup does not produce a misleading failure toast during page load.
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const documents = await loadSettingsView(
+            'knowledge',
+            accountId,
+            fresh || attempt > 0
+          );
+          setDocs(documents);
           setLoading(false);
           return;
+        } catch {
+          // Retry below; surface one stable inline error only after both tries.
         }
-      } catch {
-        // Retry below; surface one stable inline error only after both tries.
+        if (attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
       }
-      if (attempt === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-      }
-    }
 
-    setLoadError(true);
-    setLoading(false);
-  }, []);
+      setLoadError(true);
+      setLoading(false);
+    },
+    [accountId]
+  );
 
   useEffect(() => {
     if (!accountId || loadedAccountIdRef.current === accountId) return;
@@ -121,14 +134,18 @@ export function AiKnowledgeCard({
         {
           method: isNew ? 'POST' : 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: title.trim(), content: content.trim() }),
-        },
+          body: JSON.stringify({
+            title: title.trim(),
+            content: content.trim(),
+          }),
+        }
       );
       const data = await res.json();
       if (res.ok) {
         // A 200 with `warning` means saved but indexing degraded.
         if (data.warning) toast.warning(data.warning);
-        else toast.success(isNew ? t('saveSuccessNew') : t('saveSuccessUpdate'));
+        else
+          toast.success(isNew ? t('saveSuccessNew') : t('saveSuccessUpdate'));
         cancelEdit();
         await fetchDocs();
       } else {
@@ -143,7 +160,9 @@ export function AiKnowledgeCard({
 
   const remove = async (id: string) => {
     try {
-      const res = await crmFetch(`/api/ai/knowledge/${id}`, { method: 'DELETE' });
+      const res = await crmFetch(`/api/ai/knowledge/${id}`, {
+        method: 'DELETE',
+      });
       if (res.ok) {
         toast.success(t('removeSuccess'));
         setDocs((d) => d.filter((x) => x.id !== id));
@@ -159,7 +178,9 @@ export function AiKnowledgeCard({
   const reindex = async () => {
     setReindexing(true);
     try {
-      const res = await crmFetch('/api/ai/knowledge/reindex', { method: 'POST' });
+      const res = await crmFetch('/api/ai/knowledge/reindex', {
+        method: 'POST',
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success(t('reindexSuccess', { count: data.reindexed }));
@@ -177,42 +198,46 @@ export function AiKnowledgeCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <BookOpen className="h-4 w-4 text-primary" /> {t('title')}
+          <BookOpen className="text-primary h-4 w-4" /> {t('title')}
         </CardTitle>
         <CardDescription>
           {t('description', {
-            searchType: hasEmbeddingsKey ? t('semanticSearchOn') : t('keywordSearchOn')
+            searchType: hasEmbeddingsKey
+              ? t('semanticSearchOn')
+              : t('keywordSearchOn'),
           })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
-          <div className="flex items-center py-4 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center py-4 text-sm">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('loading')}
           </div>
         ) : loadError ? (
-          <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">
+          <div className="border-border text-muted-foreground flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm">
             <span>{t('loadFailed')}</span>
-            <Button variant="outline" size="sm" onClick={() => void fetchDocs(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void fetchDocs(true)}
+            >
               <RefreshCw className="mr-2 h-3.5 w-3.5" /> {t('retry')}
             </Button>
           </div>
         ) : (
           <>
             {docs.length === 0 && editing === null && (
-              <p className="text-sm text-muted-foreground">
-                {t('noDocs')}
-              </p>
+              <p className="text-muted-foreground text-sm">{t('noDocs')}</p>
             )}
 
             {docs.length > 0 && (
-              <ul className="divide-y divide-border rounded-md border border-border">
+              <ul className="divide-border border-border divide-y rounded-md border">
                 {docs.map((doc) => (
                   <li
                     key={doc.id}
                     className="flex items-center justify-between gap-2 px-3 py-2"
                   >
-                    <span className="min-w-0 truncate text-sm text-foreground">
+                    <span className="text-foreground min-w-0 truncate text-sm">
                       {doc.title}
                     </span>
                     {canEdit && (
@@ -229,7 +254,7 @@ export function AiKnowledgeCard({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
                           onClick={() => void remove(doc.id)}
                           title={t('deleteDoc')}
                         >
@@ -243,7 +268,7 @@ export function AiKnowledgeCard({
             )}
 
             {editing !== null ? (
-              <div className="space-y-3 rounded-md border border-border p-3">
+              <div className="border-border space-y-3 rounded-md border p-3">
                 <div className="space-y-2">
                   <Label htmlFor="kb-title">{t('editDocTitle')}</Label>
                   <Input
@@ -266,11 +291,17 @@ export function AiKnowledgeCard({
                   />
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" onClick={cancelEdit} disabled={saving}>
+                  <Button
+                    variant="ghost"
+                    onClick={cancelEdit}
+                    disabled={saving}
+                  >
                     {t('cancel')}
                   </Button>
                   <Button onClick={save} disabled={saving}>
-                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {saving && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     {t('saveDoc')}
                   </Button>
                 </div>

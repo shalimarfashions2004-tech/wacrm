@@ -9,6 +9,7 @@ import { AiConfig } from '@/components/settings/ai-config';
 import { useAuth } from '@/hooks/use-auth';
 import { canEditSettings } from '@/lib/auth/roles';
 import { PanelLoading } from '@/components/dashboard/panel-loading';
+import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 
 const AiPlayground = dynamic(
   () => import('@/components/agents/ai-playground').then((m) => m.AiPlayground),
@@ -22,6 +23,15 @@ const AiUsageCard = dynamic(
 type Tab = 'playground' | 'setup' | 'usage';
 
 export default function AgentsPage() {
+  const { user, accountId, accountRole, accountStatus } = useAuth();
+  if (accountStatus === 'loading') return <DashboardPageLoading />;
+  if (accountStatus !== 'ready') return null;
+  return (
+    <ScopedAgents key={JSON.stringify([user?.id, accountId, accountRole])} />
+  );
+}
+
+function ScopedAgents() {
   const t = useTranslations('Agents');
   const { accountRole } = useAuth();
   const canViewUsage = accountRole ? canEditSettings(accountRole) : false;
@@ -51,7 +61,9 @@ export default function AgentsPage() {
             onMouseEnter={() =>
               void import('@/components/agents/ai-playground').catch(() => {})
             }
-            onFocus={() => void import('@/components/agents/ai-playground').catch(() => {})}
+            onFocus={() =>
+              void import('@/components/agents/ai-playground').catch(() => {})
+            }
           >
             <Sparkles className="mr-1.5 h-4 w-4" /> {t('tabPlayground')}
           </TabsTrigger>
@@ -61,19 +73,23 @@ export default function AgentsPage() {
           {canViewUsage && (
             <TabsTrigger
               value="usage"
-              onMouseEnter={() => void import('@/components/agents/ai-usage').catch(() => {})}
-              onFocus={() => void import('@/components/agents/ai-usage').catch(() => {})}
+              onMouseEnter={() =>
+                void import('@/components/agents/ai-usage').catch(() => {})
+              }
+              onFocus={() =>
+                void import('@/components/agents/ai-usage').catch(() => {})
+              }
             >
               <BarChart3 className="mr-1.5 h-4 w-4" /> {t('tabUsage')}
             </TabsTrigger>
           )}
         </TabsList>
 
-        <TabsContent value="playground" className="mt-4">
+        <TabsContent value="playground" className="mt-4" keepMounted>
           <AiPlayground onGoToSetup={() => setTab('setup')} />
         </TabsContent>
 
-        <TabsContent value="setup" className="mt-4">
+        <TabsContent value="setup" className="mt-4" keepMounted>
           <AiConfig onConfigured={handleConfigured} />
         </TabsContent>
 

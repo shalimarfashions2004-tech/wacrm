@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-08",
+  "owner_feedback": {
+    "first_release": "Still slow",
+    "affected_views": [
+      "AI Agents",
+      "Settings/Templates",
+      "WhatsApp details"
+    ],
+    "reported_symptom": "Page loads first; details load again slowly"
+  },
+  "baseline_code": "0ad8f92061f29a5088c6beb954cbd0c09a50881b",
+  "changes": [
+    "Single account-authenticated, parallel saved-settings snapshot",
+    "Safe form/data and screen-code preloading after live account resolution",
+    "Scoped per-tab application state; HTTP private/no-store preserved",
+    "Retain visited Settings panels and AI Setup/Playground; reset on account/role/user changes",
+    "WhatsApp live health no longer blocks saved form; refresh health and campaign controls on return",
+    "Account-scoped template catalog; fresh mutation readback"
+  ],
+  "view_limits": {
+    "ttl_ms": 60000,
+    "max_entries_shared_with_display_cache": 64,
+    "max_response_bytes": 256000
+  },
+  "boundaries": {
+    "provider_health_cached": false,
+    "budget_cached": false,
+    "approvals_cached": false,
+    "sending_changed": false,
+    "schema_changed": false,
+    "credentials_returned": false,
+    "public_git_push": false
+  },
+  "region": {
+    "vercel_deployment_confirmed": "iad1",
+    "database": "Unknown",
+    "changed": false
+  },
+  "validation": {
+    "unit_suite": {
+      "files": 113,
+      "tests": 1281,
+      "result": "Passed",
+      "new_regressions": 38
+    },
+    "typecheck": "Passed; rerun sequentially after build regenerating .next/types collided with a parallel attempt",
+    "lint": {
+      "errors": 0,
+      "existing_warnings": 36
+    },
+    "local_build": "Webpack production build passed using placeholder credentials and live sending disabled",
+    "diff_check": "Passed",
+    "local_http_readback": [
+      {
+        "path": "/login",
+        "status": 200,
+        "cache_control": "public, max-age=0, s-maxage=300, stale-while-revalidate=86400"
+      },
+      {
+        "path": "/api/settings/snapshot",
+        "status": 401,
+        "cache_control": "no-store",
+        "error": "Unauthorized"
+      },
+      {
+        "path": "/api/settings/snapshot?account=other",
+        "status": 401,
+        "cache_control": "no-store",
+        "error": "Unauthorized"
+      }
+    ]
+  },
+  "deployment": {
+    "status": "Not deployed yet"
+  },
+  "authenticated_browser": {
+    "status": "Unavailable",
+    "reason": "Earlier automatic approval review rejected signed-in CRM access; no bypass used"
+  },
+  "owner_after_release_readback": "Pending"
+}

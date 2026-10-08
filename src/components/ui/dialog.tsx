@@ -6,9 +6,11 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { usePanelActive } from "@/components/dashboard/panel-activity"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  const active = usePanelActive()
+  return <DialogPrimitive.Root data-slot="dialog" {...props} {...(!active ? { open: false } : {})} />
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {

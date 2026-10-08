@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Sparkles, CheckCircle2, Trash2, Eye, EyeOff } from 'lucide-react';
+import {
+  Loader2,
+  Sparkles,
+  CheckCircle2,
+  Trash2,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { canEditSettings } from '@/lib/auth/roles';
 import { Button } from '@/components/ui/button';
@@ -31,6 +38,8 @@ import type { AiProvider } from '@/lib/ai/types';
 import type { AccountMember } from '@/types';
 import { fetchAccountMembers, memberLabel } from '@/lib/account/members';
 import { useTranslations } from 'next-intl';
+import { loadSettingsView } from '@/lib/settings/load-view';
+import { crmFetch } from '@/lib/supabase/read-cache';
 
 const MASKED_KEY = '••••••••••••••••';
 
@@ -52,8 +61,10 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
   const { accountId, accountRole, profileLoading } = useAuth();
   const canEdit = accountRole ? canEditSettings(accountRole) : false;
   const t = useTranslations('Settings.aiConfig');
+  const common = useTranslations('Common');
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -82,38 +93,39 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
   // the loadedAccountIdRef pattern in whatsapp-config.tsx.
   const loadedAccountIdRef = useRef<string | null>(null);
 
-  const fetchConfig = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/ai/config');
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? t('loadFailed'));
-        return;
+  const fetchConfig = useCallback(
+    async (fresh = false) => {
+      if (!accountId) return;
+      setLoading(true);
+      setLoadError(false);
+      try {
+        const data = await loadSettingsView('ai', accountId, fresh);
+        if (data.configured) {
+          setConfigured(true);
+          setProvider(data.provider ?? 'openai');
+          setModel(data.model ?? AI_PROVIDER_DEFAULT_MODEL.openai);
+          setSystemPrompt(data.system_prompt ?? '');
+          setIsActive(Boolean(data.is_active));
+          setAutoReplyEnabled(Boolean(data.auto_reply_enabled));
+          setMaxPerConversation(data.auto_reply_max_per_conversation ?? 3);
+          setHandoffAgentId(data.handoff_agent_id ?? '');
+          setHasStoredKey(Boolean(data.has_key));
+          setApiKey(data.has_key ? MASKED_KEY : '');
+          setKeyEdited(false);
+          setHasStoredEmbeddingsKey(Boolean(data.has_embeddings_key));
+          setEmbeddingsKey(data.has_embeddings_key ? MASKED_KEY : '');
+          setEmbeddingsKeyEdited(false);
+          onConfigured?.();
+        }
+      } catch {
+        setLoadError(true);
+        toast.error(t('loadFailed'));
+      } finally {
+        setLoading(false);
       }
-      if (data.configured) {
-        setConfigured(true);
-        setProvider(data.provider);
-        setModel(data.model);
-        setSystemPrompt(data.system_prompt ?? '');
-        setIsActive(data.is_active);
-        setAutoReplyEnabled(data.auto_reply_enabled);
-        setMaxPerConversation(data.auto_reply_max_per_conversation ?? 3);
-        setHandoffAgentId(data.handoff_agent_id ?? '');
-        setHasStoredKey(Boolean(data.has_key));
-        setApiKey(data.has_key ? MASKED_KEY : '');
-        setKeyEdited(false);
-        setHasStoredEmbeddingsKey(Boolean(data.has_embeddings_key));
-        setEmbeddingsKey(data.has_embeddings_key ? MASKED_KEY : '');
-        setEmbeddingsKeyEdited(false);
-        onConfigured?.();
-      }
-    } catch {
-      toast.error(t('loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [onConfigured, t]);
+    },
+    [accountId, onConfigured, t]
+  );
 
   useEffect(() => {
     if (!accountId || loadedAccountIdRef.current === accountId) return;
@@ -187,7 +199,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/ai/config', {
+      const res = await crmFetch('/api/ai/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(buildBody()),
@@ -195,7 +207,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
       const data = await res.json();
       if (res.ok) {
         toast.success(t('saveSuccess'));
-        await fetchConfig();
+        await fetchConfig(true);
       } else {
         toast.error(data.error ?? t('saveFailed'));
       }
@@ -209,7 +221,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
   const handleRemove = async () => {
     setRemoving(true);
     try {
-      const res = await fetch('/api/ai/config', { method: 'DELETE' });
+      const res = await crmFetch('/api/ai/config', { method: 'DELETE' });
       if (res.ok) {
         toast.success(t('removeSuccess'));
         setConfigured(false);
@@ -233,8 +245,23 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
 
   if (loading || profileLoading) {
     return (
-      <div className="flex items-center justify-center py-16 text-muted-foreground">
+      <div className="text-muted-foreground flex items-center justify-center py-16">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('loading')}
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div role="alert" className="border-border rounded-xl border p-5">
+        <p>{t('loadFailed')}</p>
+        <Button
+          className="mt-3"
+          variant="outline"
+          onClick={() => void fetchConfig(true)}
+        >
+          {common('retry')}
+        </Button>
       </div>
     );
   }
@@ -243,13 +270,10 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
 
   return (
     <div>
-      <SettingsPanelHead
-        title={t('title')}
-        description={t('description')}
-      />
+      <SettingsPanelHead title={t('title')} description={t('description')} />
 
       {!canEdit && (
-        <p className="mb-4 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+        <p className="border-border bg-muted/40 text-muted-foreground mb-4 rounded-md border px-3 py-2 text-sm">
           {t('adminOnlyConfig')}
         </p>
       )}
@@ -258,11 +282,10 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-4 w-4 text-primary" /> {t('providerAndKey')}
+              <Sparkles className="text-primary h-4 w-4" />{' '}
+              {t('providerAndKey')}
             </CardTitle>
-            <CardDescription>
-              {t('encryptionNotice')}
-            </CardDescription>
+            <CardDescription>{t('encryptionNotice')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -277,7 +300,9 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="openai">{PROVIDER_LABEL.openai}</SelectItem>
+                    <SelectItem value="openai">
+                      {PROVIDER_LABEL.openai}
+                    </SelectItem>
                     <SelectItem value="anthropic">
                       {PROVIDER_LABEL.anthropic}
                     </SelectItem>
@@ -322,7 +347,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
                   <button
                     type="button"
                     onClick={() => setShowKey((s) => !s)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2"
                     tabIndex={-1}
                   >
                     {showKey ? (
@@ -350,7 +375,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
             <div className="space-y-2">
               <Label htmlFor="ai-embeddings-key">
                 {t('embeddingsKey')}{' '}
-                <span className="font-normal text-muted-foreground">
+                <span className="text-muted-foreground font-normal">
                   {t('optionalSemanticSearch')}
                 </span>
               </Label>
@@ -372,7 +397,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
                 disabled={disabled}
                 autoComplete="off"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {t('embeddingsHint', {
                   sameKeyText: provider === 'openai' ? t('sameKeyText') : '',
                 })}
@@ -384,9 +409,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t('behaviour')}</CardTitle>
-            <CardDescription>
-              {t('behaviourDesc')}
-            </CardDescription>
+            <CardDescription>{t('behaviourDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -401,12 +424,12 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
               />
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
+            <div className="border-border flex items-center justify-between gap-4 rounded-md border p-3">
               <div>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-foreground text-sm font-medium">
                   {t('enableAssistant')}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {t('enableAssistantDesc')}
                 </p>
               </div>
@@ -417,12 +440,12 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
               />
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
+            <div className="border-border flex items-center justify-between gap-4 rounded-md border p-3">
               <div>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-foreground text-sm font-medium">
                   {t('autoReply')}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {t('autoReplyDesc')}
                 </p>
               </div>
@@ -436,7 +459,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <Label htmlFor="ai-max">{t('maxAutoReplies')}</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {t('maxAutoRepliesDesc')}
                 </p>
               </div>
@@ -448,7 +471,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
                 value={maxPerConversation}
                 onChange={(e) =>
                   setMaxPerConversation(
-                    Math.min(20, Math.max(1, Number(e.target.value) || 1)),
+                    Math.min(20, Math.max(1, Number(e.target.value) || 1))
                   )
                 }
                 disabled={disabled || !autoReplyEnabled}
@@ -458,7 +481,7 @@ export function AiConfig({ onConfigured }: { onConfigured?: () => void }) {
 
             <div className="space-y-2">
               <Label htmlFor="ai-handoff">{t('handoffTo')}</Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {t('handoffToDesc')}
               </p>
               <Select

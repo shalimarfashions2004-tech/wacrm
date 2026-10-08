@@ -37,6 +37,10 @@ const API_READS = new Set([
   '/api/tags',
 ]);
 const TTL_MS = 10_000;
+// Explicit application state for a sanitized screen snapshot. HTTP responses
+// remain no-store; this is per-tab memory, like already-rendered form state.
+const VIEW_READS = new Set(['/api/settings/snapshot']);
+const VIEW_TTL_MS = 60_000;
 const MAX_ENTRIES = 64;
 const MAX_BYTES = 256_000;
 
@@ -84,7 +88,14 @@ export class AccountReadCache {
     this.pending.clear();
   }
 
-  fetch: Fetcher = async (input, init) => {
+  fetch: Fetcher = (input, init) => this.read(input, init, false);
+  viewFetch: Fetcher = (input, init) => this.read(input, init, true);
+
+  private async read(
+    input: Parameters<Fetcher>[0],
+    init: Parameters<Fetcher>[1],
+    view: boolean
+  ) {
     const request = input instanceof Request ? input : null;
     const url = new URL(request?.url ?? String(input), this.appOrigin());
     const method = (init?.method ?? request?.method ?? 'GET').toUpperCase();
@@ -104,27 +115,44 @@ export class AccountReadCache {
     const headers = new Headers(init?.headers ?? request?.headers);
     const scope = this.scope;
     const table = url.pathname.slice('/rest/v1/'.length);
+    const sensitiveQuery = Array.from(url.searchParams.keys()).some((key) =>
+      /token|secret|api.?key|password|pin|authorization/i.test(key)
+    );
+    const viewEligible =
+      view &&
+      application &&
+      VIEW_READS.has(url.pathname) &&
+      !url.search &&
+      method === 'GET' &&
+      !headers.has('authorization');
     const eligible =
       scope &&
       ['GET', 'HEAD'].includes(method) &&
       !init?.signal &&
       !request &&
+      !sensitiveQuery &&
       !/token|secret|api_key|password|registration_pin|messages|conversations|profiles|accounts|automation_steps|consent|budget|ledger|approval|delivery/i.test(
         url.searchParams.get('select') ?? ''
       ) &&
-      ((database &&
+      ((!view &&
+        database &&
         TABLES.has(table) &&
         tokenUser(headers.get('authorization')) === scope.userId) ||
-        (application &&
+        (!view &&
+          application &&
           API_READS.has(url.pathname) &&
-          init?.credentials !== 'omit'));
+          init?.credentials !== 'omit') ||
+        (viewEligible && init?.credentials !== 'omit'));
     if (!eligible) return this.transport(input, init);
     if (init?.cache === 'no-store' || init?.cache === 'reload') {
       this.invalidate();
-      return this.transport(input, init);
+      if (!viewEligible) return this.transport(input, init);
+      // A forced view refresh still updates application state for the next
+      // screen, while bypassing every HTTP cache and the old memory entry.
     }
     const key = JSON.stringify([
       scope,
+      view,
       method,
       url.href,
       [
@@ -149,7 +177,9 @@ export class AccountReadCache {
         // Leave errors and large/non-JSON responses intact, including streaming.
         if (
           ![200, 206].includes(response.status) ||
-          /no-store/i.test(response.headers.get('cache-control') ?? '') ||
+          (!viewEligible &&
+            /no-store/i.test(response.headers.get('cache-control') ?? '')) ||
+          response.headers.get('x-crm-view-cache') === 'skip' ||
           !response.headers.get('content-type')?.includes('application/json') ||
           Number(response.headers.get('content-length')) > MAX_BYTES
         )
@@ -161,7 +191,7 @@ export class AccountReadCache {
             status: response.status,
             statusText: response.statusText,
             headers: Array.from(response.headers.entries()),
-            expires: Date.now() + TTL_MS,
+            expires: Date.now() + (viewEligible ? VIEW_TTL_MS : TTL_MS),
           };
           if (this.entries.size >= MAX_ENTRIES)
             this.entries.delete(this.entries.keys().next().value!);
@@ -179,7 +209,7 @@ export class AccountReadCache {
     } finally {
       if (this.pending.get(key) === work) this.pending.delete(key);
     }
-  };
+  }
 }
 
 function restore(entry: Entry) {
@@ -222,3 +252,5 @@ export const crmReadCache = new AccountReadCache(
 );
 export const crmFetch: Fetcher = (input, init) =>
   crmReadCache.fetch(input, init);
+export const crmViewFetch: Fetcher = (input, init) =>
+  crmReadCache.viewFetch(input, init);

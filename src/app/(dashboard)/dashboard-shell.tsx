@@ -9,6 +9,7 @@ import { AccountAccessAlert } from "@/components/layout/account-access-alert";
 import { PresenceHeartbeat } from "@/components/presence/presence-heartbeat";
 import { BrowserNotificationsListener } from "@/components/notifications/browser-notifications-listener";
 import { DashboardShellLoading } from "@/components/dashboard/page-loading";
+import { ScreenPreloader } from "@/components/dashboard/screen-preloader";
 
 // Auth-gated dashboard shell. Extracted from the layout so the layout
 // itself can stay a server component and export metadata (noindex) —
@@ -37,6 +38,7 @@ function DashboardShellInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell-bg flex h-screen overflow-hidden">
+      <ScreenPreloader />
       {/* Reports this tab's online/away presence once we know a user is
           signed in. Headless — renders nothing. */}
       <PresenceHeartbeat />

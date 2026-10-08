@@ -2,6 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // This read-only handler performs getCurrentAccount itself before every
+  // query, including getUser + account/RLS checks. Its Route Handler cookie
+  // adapter also persists rotated sessions. Avoid a second serial getUser
+  // round trip here; every other route keeps its existing middleware guard.
+  if (request.nextUrl.pathname === '/api/settings/snapshot') {
+    return NextResponse.next({ request })
+  }
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

@@ -1588,6 +1588,9 @@
       "ownerHint": "Full control over account and billing"
     },
     "whatsapp": {
+      "checkingConnection": "Checking connection",
+      "checkingConnectionDesc": "Saved details are ready. Checking credentials and webhook subscription with Meta…",
+      "retryLoad": "Try again",
       "title": "WhatsApp connection",
       "description": "Connect your Meta WhatsApp Business API. Credentials, webhook, and setup steps all live here.",
       "tokenCorrupted": "Stored token can't be decrypted",

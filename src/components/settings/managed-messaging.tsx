@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ManagedBudget } from '@/lib/whatsapp/managed-policy';
 import { WhatsAppCostGuide } from './whatsapp-cost-guide';
+import { usePanelActive } from '@/components/dashboard/panel-activity';
 
 export const rupees = (paise: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -29,6 +30,7 @@ interface Settings {
   reviewedRate: { reservationPaise: number; validUntil: string };
 }
 export function ManagedMessagingSettings() {
+  const active = usePanelActive();
   const [data, setData] = useState<Settings | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -51,8 +53,8 @@ export function ManagedMessagingSettings() {
     }
   }, []);
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (active) void load();
+  }, [active, load]);
   async function act(action: 'verify' | 'enable' | 'pause') {
     setBusy(true);
     try {

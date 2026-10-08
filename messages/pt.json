@@ -1578,6 +1578,9 @@
       "ownerHint": "Controle total da conta e do faturamento"
     },
     "whatsapp": {
+      "checkingConnection": "Verificando a conexão",
+      "checkingConnectionDesc": "Os dados salvos estão prontos. Verificando as credenciais e a assinatura do webhook com a Meta…",
+      "retryLoad": "Tentar novamente",
       "title": "Conexão com o WhatsApp",
       "description": "Conecte sua API do WhatsApp Business da Meta. Credenciais, webhook e etapas de configuração ficam todos aqui.",
       "tokenCorrupted": "Não foi possível descriptografar o token armazenado",

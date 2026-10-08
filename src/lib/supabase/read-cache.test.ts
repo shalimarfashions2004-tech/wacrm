@@ -88,7 +88,7 @@ describe('short account-scoped display reads', () => {
     transport.mockImplementation(async (_url, init) =>
       init?.method === 'PATCH'
         ? json([{ id: 'edited' }])
-          : json([{ id: 'contact-1' }], { 'content-range': '0-0/42' }, 206)
+        : json([{ id: 'contact-1' }], { 'content-range': '0-0/42' }, 206)
     );
     const db = createClient(origin, token(), {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -96,11 +96,11 @@ describe('short account-scoped display reads', () => {
     });
     const query = () =>
       db.from('contacts').select('*', { count: 'exact' }).range(0, 24);
-      expect(await query()).toMatchObject({
-        data: [{ id: 'contact-1' }],
-        count: 42,
-        error: null,
-        status: 206,
+    expect(await query()).toMatchObject({
+      data: [{ id: 'contact-1' }],
+      count: 42,
+      error: null,
+      status: 206,
     });
     expect(await query()).toMatchObject({ count: 42 });
     expect(transport).toHaveBeenCalledTimes(1);
@@ -321,6 +321,114 @@ describe('short account-scoped display reads', () => {
     await cache.fetch(contacts, options());
     cache.invalidate();
     await cache.fetch(contacts, options());
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('explicit saved settings views', () => {
+  const path = '/api/settings/snapshot';
+  beforeEach(() => {
+    transport.mockImplementation(async () =>
+      json(
+        { accountId: scope.accountId },
+        { 'cache-control': 'private, no-store' }
+      )
+    );
+  });
+  it('shares preload and screen requests while preserving HTTP no-store', async () => {
+    const [preload, screen] = await Promise.all([
+      cache.viewFetch(path),
+      cache.viewFetch(path),
+    ]);
+    expect(preload.headers.get('cache-control')).toBe('private, no-store');
+    expect(await screen.json()).toEqual({ accountId: scope.accountId });
+    await cache.viewFetch(path);
+    expect(transport).toHaveBeenCalledTimes(1);
+  });
+  it('retains a saved view for at most sixty seconds', async () => {
+    const now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+    await cache.viewFetch(path);
+    clock.mockReturnValue(now + 59_000);
+    await cache.viewFetch(path);
+    expect(transport).toHaveBeenCalledTimes(1);
+    clock.mockReturnValue(now + 60_001);
+    await cache.viewFetch(path);
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
+  it.each(['accountId', 'userId', 'role'] as const)(
+    'clears the saved view on %s change',
+    async (field) => {
+      await cache.viewFetch(path);
+      cache.setScope({ ...scope, [field]: 'changed' });
+      await cache.viewFetch(path);
+      expect(transport).toHaveBeenCalledTimes(2);
+    }
+  );
+  it('does not return an old pending view after scope changes', async () => {
+    const pending = deferred<Response>();
+    transport.mockReturnValueOnce(pending.promise);
+    const read = cache.viewFetch(path);
+    const check = expect(read).rejects.toMatchObject({ name: 'AbortError' });
+    cache.setScope(null);
+    pending.resolve(json({ accountId: 'old' }));
+    await check;
+  });
+  it('does not cache partial failures or failed auth', async () => {
+    transport.mockResolvedValueOnce(json({}, { 'x-crm-view-cache': 'skip' }));
+    await cache.viewFetch(path);
+    transport.mockResolvedValueOnce(json({}, {}, 401));
+    await cache.viewFetch(path);
+    await cache.viewFetch(path);
+    await cache.viewFetch(path);
+    expect(transport).toHaveBeenCalledTimes(3);
+  });
+  it('fresh refresh and writes invalidate saved views', async () => {
+    await cache.viewFetch(path);
+    await cache.viewFetch(path, { cache: 'no-store' });
+    await cache.viewFetch(path);
+    expect(transport).toHaveBeenCalledTimes(2);
+    await cache.fetch('/api/ai/config', { method: 'POST', body: '{}' });
+    await cache.viewFetch(path);
+    expect(transport).toHaveBeenCalledTimes(4);
+  });
+  it.each([
+    '/api/whatsapp/config',
+    '/api/whatsapp/managed/settings',
+    '/api/ai/test',
+    '/api/ai/usage',
+    '/api/whatsapp/config/verify-registration',
+    '/api/settings/snapshot?token=secret',
+    '/api/settings/snapshot?account=another',
+  ])('keeps %s outside view memoization', async (url) => {
+    await cache.viewFetch(url);
+    await cache.viewFetch(url);
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
+  it('keeps private headers and cancellation requests outside memoization', async () => {
+    await cache.viewFetch(path, {
+      headers: { Authorization: 'Bearer private' },
+    });
+    await cache.viewFetch(path, {
+      headers: { Authorization: 'Bearer private' },
+    });
+    await cache.viewFetch(path, { signal: new AbortController().signal });
+    await cache.viewFetch(path, { credentials: 'omit' });
+    expect(transport).toHaveBeenCalledTimes(4);
+  });
+  it('does not retain speculative data across mutations already in progress', async () => {
+    const pending = deferred<Response>();
+    transport.mockReturnValueOnce(pending.promise);
+    const write = cache.fetch('/api/ai/config', { method: 'POST' });
+    await cache.viewFetch(path);
+    pending.resolve(json({ success: true }));
+    await write;
+    await cache.viewFetch(path);
+    expect(transport).toHaveBeenCalledTimes(3);
+  });
+  it('never puts sensitive query parameters in ordinary display cache keys', async () => {
+    await cache.fetch('/api/flows?access_token=private');
+    await cache.fetch('/api/flows?access_token=private');
     expect(transport).toHaveBeenCalledTimes(2);
   });
 });
