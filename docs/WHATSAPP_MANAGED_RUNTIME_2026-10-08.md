@@ -49,3 +49,11 @@ The final checks include the draft-log await and progress-display corrections. A
 The budget caps managed reservations in this CRM, not manual Inbox use, AI-provider usage, taxes, external senders or the entire Meta invoice. Do not label it actual billed spend. Approved media should use controlled immutable URLs; replacing the bytes behind the same URL requires a new review. Generic external media URLs are not content-addressed by the current ledger, so their immutability is a remaining activation check.
 
 Pause the protected budget through the admin API and switch managed deployment permission off if needed. Preserve ledger and approvals; never delete attempts or reset reservations to obtain retries. Retain the known-working Inbox path and previous Vercel deployment for rollback. Customer contacts, original documents and unrelated working files were preserved. No public GitHub push was made.
+
+## Production release receipt
+
+Committed source **3eec14eaee22410703f94b8362605273ce61f540** was deployed from an isolated archive containing committed files only. Vercel deployment **dpl_p65FZYWmYnDsSHz5ZpgCHNgJivxf** reported **READY**; a fresh provider API read confirmed its production target and the `crm.shalimarfashions.com` alias points to this exact deployment. Hosted Turbopack compilation and TypeScript completed successfully. No placeholder local build was promoted.
+
+Public readback: `/login` 200; brand PNG 200 / image/png / 250,892 bytes, SHA-256 matching the committed source; vCard 200 / text/x-vcard / 331 bytes, matching the committed CRLF source. Unauthenticated managed settings, WhatsApp config and AI usage API calls each returned 401. These checks verify deployment, public asset retrieval and authentication boundaries; they do not prove authenticated screen rendering or Meta image delivery.
+
+The owner has been asked to refresh WhatsApp settings and click **Check with Meta** for an authenticated, read-only provider receipt. Managed sending remains OFF, AI auto-replies remain unactivated, introduction templates still need Meta approval, and customer campaigns need separate owner review. Machine-readable sanitized evidence is in `docs/evidence/shalimar-managed-runtime-20261008.json`.

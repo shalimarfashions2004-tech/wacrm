@@ -51,5 +51,71 @@
     "supabase/migrations/051_managed_messaging_runtime.sql": "2b442e3d1401f7ca65e9f0424c500dfe34fdcde858e95bdc52508c3eaa3f9d62",
     "docs/sql/SHALIMAR_RUN_THIS_051.sql": "56bfa7c74f22c33e1b294bf468bf19871ad058b3c2444c417237d4c89adb159b",
     "public/brand/shalimar-store-introduction.png": "c6598b0b4e833ace7d9657043dcc7d4c0146161f7f0ac133479fa118eaf5c6eb"
+  },
+  "production_release": {
+    "source_commit": "3eec14eaee22410703f94b8362605273ce61f540",
+    "provider_readback": {
+      "deployment": {
+        "id": "dpl_p65FZYWmYnDsSHz5ZpgCHNgJivxf",
+        "readyState": "READY",
+        "target": "production",
+        "projectId": "prj_8tVCzU4KZSBbTky0BHqmxBFZif1O",
+        "url": "shalimar-connect-gjlkubvx3-shalimarfashions2004-9466.vercel.app",
+        "alias": [
+          "crm.shalimarfashions.com",
+          "shalimar-connect.vercel.app",
+          "shalimar-connect-shalimarfashions2004-9466.vercel.app"
+        ],
+        "createdAt": 1791464482260
+      },
+      "alias": {
+        "alias": "crm.shalimarfashions.com",
+        "deploymentId": "dpl_p65FZYWmYnDsSHz5ZpgCHNgJivxf",
+        "projectId": "prj_8tVCzU4KZSBbTky0BHqmxBFZif1O"
+      },
+      "production_configuration_keys_confirmed": [
+        "MESSAGING_MANAGED_DELIVERY_APPROVED",
+        "META_APP_ID"
+      ]
+    },
+    "public_route_readback": [
+      {
+        "path": "/login",
+        "status": 200,
+        "final_url": "https://crm.shalimarfashions.com/login",
+        "content_type": "text/html; charset=utf-8",
+        "bytes": 100585
+      },
+      {
+        "path": "/brand/shalimar-store-introduction.png",
+        "status": 200,
+        "final_url": "https://crm.shalimarfashions.com/brand/shalimar-store-introduction.png",
+        "content_type": "image/png",
+        "bytes": 250892,
+        "matches_committed_asset": true
+      },
+      {
+        "path": "/brand/shalimar-fashions.vcf",
+        "status": 200,
+        "final_url": "https://crm.shalimarfashions.com/brand/shalimar-fashions.vcf",
+        "content_type": "text/x-vcard; charset=utf-8",
+        "bytes": 331,
+        "matches_committed_asset": true
+      },
+      {
+        "path": "/api/whatsapp/managed/settings",
+        "status": 401
+      },
+      {
+        "path": "/api/whatsapp/config",
+        "status": 401
+      },
+      {
+        "path": "/api/ai/usage",
+        "status": 401
+      }
+    ],
+    "authenticated_crm_ui": "Owner check requested; no browser-session bypass",
+    "live_image_delivery": "Not attempted; explicit controlled-test approval and Meta-approved template still needed"
   }
 }
