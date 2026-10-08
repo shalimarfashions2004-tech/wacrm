@@ -66,3 +66,14 @@ Visited Settings panels keep their state while on the Settings route. AI Setup/P
 The currently deployed server region was confirmed as `iad1` in Vercel. The database region has not been established from available provider metadata. No region change was made based on an assumption.
 
 Validation is recorded in `docs/evidence/shalimar-preload-20261008.json`. Authenticated production browser inspection remains unavailable because the earlier automatic approval review rejected that access. No alternative browser or session extraction bypassed it. A first load still requires authentication/network access, and actual owner-observed timing remains a separate acceptance check. No credentials, delivery flag, budget limit, schema, customer record or approved Inbox reply policy was changed.
+
+
+### Follow-up release receipt
+
+Code source: `b48ee1d4dc95883ccdd143723493a13e64d2b8ce`. Vercel deployment `dpl_XPVXzhLn9qWCGzSdjaLEU9nbfcDw` is READY and the provider's alias readback confirms `crm.shalimarfashions.com` points to that exact deployment. A fresh committed Git archive was built by the hosted Turbopack builder; no placeholder prebuilt bundle or untracked asset was uploaded. Rollback for this follow-up is the first performance deployment `dpl_WKu9AXySZ9Rxe1JYeeTzYLFcQnjb`.
+
+Final local checks: 113 files / 1,281 tests passed (38 new regression results since the first performance release), typecheck passed after a sequential rerun, lint 0 errors / 36 existing warnings, local Webpack production build passed, and diff check passed. One parallel typecheck attempt collided with the build regenerating `.next/types`; it was rerun after the build and passed. Local HTTP reads confirmed `/login` 200 and the snapshot route 401, including a caller-supplied account query that cannot select an account. The task's local verification server was then stopped.
+
+Production public readback: `/login` 200; six protected APIs, including the new snapshot endpoint, return 401 without authentication. All 15 observed public login script assets return 200; the new snapshot/view code marker is present and CI placeholder credentials are absent. These checks establish deployment identity and public authentication boundaries, not signed-in database results or loading timings.
+
+The owner was asked to refresh once and check AI Setup → WhatsApp → Templates → WhatsApp. That after-release acceptance result is pending. No instant-loading or overall production-readiness claim is made without it.
