@@ -128,6 +128,25 @@ beforeEach(() => {
 });
 
 describe("runAutomationsForTrigger — tenant isolation", () => {
+  it("preserves non-messaging runs with managed delivery off and an older schema", async () => {
+    vi.stubEnv("MESSAGING_MANAGED_DELIVERY_APPROVED", "false");
+    try {
+      h.state.owned = { id: "c1" };
+      h.state.automations = [automationWithUpdateStep()];
+      h.state.steps = [updateStep()];
+      await runAutomationsForTrigger({
+        accountId: ACCOUNT,
+        triggerType: "new_message_received",
+        contactId: "c1",
+        context: {},
+      });
+      expect(h.state.logInserts).toHaveLength(1);
+      expect(h.state.logInserts[0]).not.toHaveProperty("messaging_fingerprint");
+      expect(h.state.updateCalls).toHaveLength(1);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it("refuses to dispatch when the contact is not in the account (GHSA-63cv-2c49-m5v3)", async () => {
     // Ownership lookup returns nothing — the contact belongs to another tenant.
     h.state.owned = null;

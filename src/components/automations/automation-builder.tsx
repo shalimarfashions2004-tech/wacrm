@@ -1,5 +1,7 @@
 "use client"
 
+import { ManagedApproval } from "@/components/broadcasts/managed-approval"
+
 import {
   createContext,
   useContext,
@@ -638,6 +640,8 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
   const isEditing = !!initial.id
   const [state, setState] = useState<BuilderInitial>(initial)
   const [saving, setSaving] = useState(false)
+  const [savedSignature, setSavedSignature] = useState(JSON.stringify(initial))
+  const [approvalVersion, setApprovalVersion] = useState(0)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   function patchTop<K extends keyof BuilderInitial>(key: K, value: BuilderInitial[K]) {
@@ -709,6 +713,8 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
         }
         return
       }
+      setSavedSignature(JSON.stringify(state))
+      setApprovalVersion((v) => v + 1)
       toast.success(isEditing ? t("toasts.saved") : t("toasts.created"))
       if (!isEditing && body?.automation?.id) {
         router.replace(`/automations/${body.automation.id}/edit`)
@@ -760,6 +766,16 @@ export function AutomationBuilder({ initial }: { initial: BuilderInitial }) {
       <div className="relative flex-1 overflow-y-auto">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,var(--border)_1px,transparent_1px)] opacity-70 [background-size:20px_20px]" />
         <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-0 px-4 py-10 sm:py-14">
+          {initial.id && (
+            <div className="mb-6 w-full">
+              <ManagedApproval
+                kind="automation"
+                sourceId={initial.id}
+                version={approvalVersion}
+                dirty={JSON.stringify(state) !== savedSignature}
+              />
+            </div>
+          )}
           <ResourcesProvider>
             <TriggerCard
               type={state.trigger_type}

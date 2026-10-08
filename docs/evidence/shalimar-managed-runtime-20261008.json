@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-08",
+  "repository": "https://github.com/shalimarfashions2004-tech/wacrm.git",
+  "branch": "feature/shalimar-connect-platform",
+  "scope": "Managed broadcast review, protected runtime, English and Malayalam image starters, contact card and AI/WhatsApp cost estimates",
+  "validation": {
+    "unit_test_files": 109,
+    "unit_tests_passed": 1206,
+    "database_test_results_passed": 29,
+    "typecheck": "passed",
+    "lint_errors": 0,
+    "lint_preexisting_warnings": 37,
+    "production_webpack_build": "passed with placeholder credentials; separate from deployment",
+    "git_diff_check": "passed"
+  },
+  "owner_reported_database_receipt": {
+    "migration": "051 installed",
+    "monthly_limit_inr": 1000,
+    "reserved_this_month_inr": 0,
+    "managed_delivery": "OFF",
+    "connection": "Existing credentials and Inbox replies unchanged",
+    "next_step": "Each saved campaign or workflow requires approval in CRM"
+  },
+  "provider_evidence": {
+    "latest_native_meta_read": "2026-10-07",
+    "business_id": "965749722599371",
+    "waba_id": "28787952197487898",
+    "phone_number_id": "1391671597361924",
+    "sender": "+917025320333",
+    "status": "Connected; display name approved",
+    "badge": "Submit request disabled; no request submitted",
+    "owner_reported_inbox_recovery": "Connection check arrived after token rotation"
+  },
+  "release_controls": {
+    "general_delivery": "dry-run",
+    "general_live_approved": false,
+    "managed_delivery_approved": false,
+    "meta_app_id": "1652179446258694",
+    "inbox": "Existing separately approved replies preserved",
+    "actual_campaign_messages_sent_by_agent": 0
+  },
+  "remaining_verification": [
+    "Owner authenticated CRM readback",
+    "Hosted concurrent delivery claims",
+    "Meta-approved templates and recipient image-delivery receipt",
+    "Controlled immutable media",
+    "Wait scheduler drain receipt",
+    "Separate AI auto-reply budget and approval"
+  ],
+  "file_sha256": {
+    "supabase/migrations/051_managed_messaging_runtime.sql": "2b442e3d1401f7ca65e9f0424c500dfe34fdcde858e95bdc52508c3eaa3f9d62",
+    "docs/sql/SHALIMAR_RUN_THIS_051.sql": "56bfa7c74f22c33e1b294bf468bf19871ad058b3c2444c417237d4c89adb159b",
+    "public/brand/shalimar-store-introduction.png": "c6598b0b4e833ace7d9657043dcc7d4c0146161f7f0ac133479fa118eaf5c6eb"
+  }
+}

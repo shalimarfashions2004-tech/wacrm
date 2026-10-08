@@ -17,6 +17,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { ManagedMessagingSettings } from './managed-messaging';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -650,13 +651,13 @@ export function WhatsAppConfig() {
           {connectionStatus === 'connected' && inboxDelivery && (
             <div className="mt-3 space-y-1 text-sm text-muted-foreground" aria-live="polite">
               <p>{inboxDelivery.message}</p>
-              {!inboxDelivery.generalDeliveryEnabled && (
-                <p>Broadcasts and automated messages are disabled while campaign checks are completed.</p>
-              )}
+              <p>Campaign and automatic-message controls are shown below.</p>
             </div>
           )}
           {connectionStatus !== 'connected' && statusMeta && renderMetaDetails(statusMeta)}
         </Alert>
+
+        <ManagedMessagingSettings />
 
         {/* Registration Status — the "is it actually live?" check.
             Credentials being valid is necessary but not sufficient;

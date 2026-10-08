@@ -17,8 +17,8 @@ import { AiError } from '@/lib/ai/types'
  * Body: { conversation_id }
  * Returns: { draft } — a suggested reply for the agent to edit + send.
  *
- * Uses the account's configured provider/key (BYO). Read-only: it never
- * sends or stores anything, just hands text back to the composer.
+ * Uses the account's configured provider/key (BYO). Returns a suggestion
+ * to the composer and records usage; it does not send the suggestion.
  */
 export async function POST(request: Request) {
   try {
@@ -108,13 +108,13 @@ export async function POST(request: Request) {
 
     // Record spend on the account's BYO key. Best-effort + via the
     // service role (the log has no `authenticated` INSERT policy). This
-    // must not fail or delay the draft the agent is waiting on, so:
+    // must not fail the draft the agent is waiting on, so:
     //  - the whole thing is wrapped (constructing the admin client throws
     //    if the service-role key is unset — that must not 500 the draft);
-    //  - it's fire-and-forget (`void`), not awaited, so the response
-    //    isn't held for a DB round-trip.
+    //  - await the append before returning so serverless shutdown cannot
+    //    discard the recorded usage; the logger itself never throws.
     try {
-      void logAiUsage(supabaseAdmin(), {
+      await logAiUsage(supabaseAdmin(), {
         accountId,
         conversationId,
         mode: 'draft',

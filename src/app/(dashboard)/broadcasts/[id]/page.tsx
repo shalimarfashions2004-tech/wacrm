@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { readPages } from '@/lib/supabase/read-pages';
 import { createClient } from '@/lib/supabase/client';
 import { Broadcast, BroadcastRecipient, RecipientStatus } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -33,11 +34,11 @@ import {
   ChevronDown,
   Trash2,
   PlayCircle,
-  RotateCcw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getBroadcastStatus, getRecipientStatus } from '@/lib/broadcast-status';
 import { useTranslations } from 'next-intl';
+import { ManagedApproval } from '@/components/broadcasts/managed-approval';
 import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 
 interface StatCardProps {
@@ -179,14 +180,17 @@ export default function BroadcastDetailPage() {
       if (bcError) throw bcError;
       setBroadcast(bc);
 
-      const { data: recs, error: recsError } = await supabase
-        .from('broadcast_recipients')
-        .select('*, contact:contacts(*)')
-        .eq('broadcast_id', broadcastId)
-        .order('created_at', { ascending: false });
-
-      if (recsError) throw recsError;
-      setRecipients(recs ?? []);
+      const recs = await readPages((from, to) =>
+        supabase
+          .from('broadcast_recipients')
+          .select('*, contact:contacts(*)')
+          .eq('broadcast_id', broadcastId)
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to)
+      );
+      setRecipients(recs);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('notFound'));
     } finally {
@@ -197,6 +201,14 @@ export default function BroadcastDetailPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (broadcast?.status !== 'sending') return;
+    const timer = setInterval(() => {
+      void fetchData();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [broadcast?.status, fetchData]);
 
   const filteredRecipients = useMemo(
     () =>
@@ -233,14 +245,7 @@ export default function BroadcastDetailPage() {
     downloadBlob(`broadcast-${safeName}-${broadcastId.slice(0, 8)}.csv`, csv);
   }
 
-  /**
-   * Hand the leftovers to the server (issue #472).
-   *
-   * The wizard's send loop lives in the tab that started the campaign,
-   * so navigating away strands the rest as 'pending' with the broadcast
-   * stuck 'sending'. This is the recovery, and the same call retries
-   * failed recipients.
-   */
+  /** Continue only saved recipients with no prior attempt through the server. */
   async function handleResume(scope: 'pending' | 'failed') {
     setResumingScope(scope);
     try {
@@ -260,14 +265,7 @@ export default function BroadcastDetailPage() {
         return;
       }
 
-      toast.success(
-        payload.remaining > 0
-          ? t('toastResumeStartedCapped', {
-              count: payload.resuming,
-              remaining: payload.remaining,
-            })
-          : t('toastResumeStarted', { count: payload.resuming })
-      );
+      toast.success('The server is processing the remaining recipients.');
       // Delivery runs server-side after the 202, so the counts here are
       // a snapshot — reload to pick up the first of it.
       await fetchData();
@@ -327,10 +325,8 @@ export default function BroadcastDetailPage() {
 
   const pendingCount = recipients.filter((r) => r.status === 'pending').length;
   const retryableCount = recipients.filter((r) => r.status === 'failed').length;
-  // A campaign whose tab went away sits in 'sending' with recipients
-  // still pending and nothing left to move them. Name that state rather
-  // than leaving a permanently pulsing "sending" badge.
-  const isStalled = broadcast.status === 'sending' && pendingCount > 0;
+  const isProcessing = broadcast.status === 'sending' && !!broadcast.delivery_locked_at
+    && Date.now() - Date.parse(broadcast.delivery_locked_at) < 30 * 60 * 1000;
 
   const funnelSteps: FunnelStep[] = [
     {
@@ -390,9 +386,11 @@ export default function BroadcastDetailPage() {
             {broadcast.delivery_mode === 'dry-run' && (
               <div
                 role="status"
-                className="mt-3 inline-flex items-center rounded-full border border-primary/30 bg-pale-lime px-3 py-1 text-xs font-medium text-foreground"
+                className="border-primary/30 bg-pale-lime text-foreground mt-3 inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
               >
-                Dry run — no WhatsApp messages were sent
+                {broadcast.status === 'draft'
+                  ? 'Prepared for review — no messages sent'
+                  : 'Dry run — no WhatsApp messages were sent'}
               </div>
             )}
           </div>
@@ -444,18 +442,23 @@ export default function BroadcastDetailPage() {
         )}
       </div>
 
+      <ManagedApproval
+        version={recipients.filter((r) => r.status !== 'pending').length}
+        kind="broadcast"
+        sourceId={String(broadcastId)}
+        onStarted={fetchData}
+      />
+
       {/* Resume / retry (issue #472). Only rendered when there is
           actually something outstanding. */}
       {(pendingCount > 0 || retryableCount > 0) && (
         <div className="border-border bg-card flex flex-wrap items-center justify-between gap-4 rounded-[22px] border p-5">
           <div className="text-sm">
             <p className="text-foreground font-medium">
-              {isStalled ? t('resumeStalledTitle') : t('resumeTitle')}
+              {isProcessing ? 'Campaign processing' : 'Campaign progress'}
             </p>
             <p className="text-muted-foreground mt-0.5">
-              {isStalled
-                ? t('resumeStalledHint', { count: pendingCount })
-                : t('resumeHint', { count: retryableCount })}
+              {isProcessing ? 'The server is checking and processing this saved campaign.' : `${pendingCount} recipients remain unattempted. ${retryableCount} exclusions or earlier attempts need review.`}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -463,31 +466,23 @@ export default function BroadcastDetailPage() {
               <Button
                 size="sm"
                 onClick={() => handleResume('pending')}
-                disabled={resumingScope !== null}
+                disabled={
+                  resumingScope !== null || isProcessing
+                }
               >
                 {resumingScope === 'pending' ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <PlayCircle className="h-3.5 w-3.5" />
                 )}
-                {t('resumePending', { count: pendingCount })}
+                Continue unattempted recipients ({pendingCount})
               </Button>
             )}
             {retryableCount > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleResume('failed')}
-                disabled={resumingScope !== null}
-                className="border-border bg-card-2 text-muted-foreground hover:bg-pale-lime hover:text-foreground rounded-full"
-              >
-                {resumingScope === 'failed' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <RotateCcw className="h-3.5 w-3.5" />
-                )}
-                {t('retryFailed', { count: retryableCount })}
-              </Button>
+              <p className="text-muted-foreground max-w-sm text-sm">
+                Previous attempts need review and will not be resent
+                automatically.
+              </p>
             )}
           </div>
         </div>

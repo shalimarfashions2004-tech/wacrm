@@ -1,3 +1,5 @@
+import { managedSender } from '@/lib/whatsapp/managed-policy'
+import { readManagedSource } from '@/lib/whatsapp/managed-source'
 import type {
   Automation,
   AutomationLogStepResult,
@@ -202,10 +204,21 @@ export async function resumePendingExecution(pending: {
 async function executeAutomation(automation: Automation, input: DispatchInput) {
   const db = supabaseAdmin()
 
+  const messagingFingerprint = managedSender()
+    ? (
+        await readManagedSource(
+          db,
+          automation.account_id,
+          'automation',
+          automation.id
+        )
+      ).fingerprint
+    : null
   const { data: log, error: logErr } = await db
     .from('automation_logs')
     .insert({
       automation_id: automation.id,
+      ...(messagingFingerprint ? { messaging_fingerprint: messagingFingerprint } : {}),
       // Tenancy: matches automation.account_id (NOT NULL post-017).
       account_id: automation.account_id,
       // Audit: keeps the historical "author of this automation"
@@ -392,6 +405,7 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       if (!text.trim()) throw new Error('send_message has empty text')
       const conversationId = await resolveConversationId(args)
       const { whatsapp_message_id } = await engineSendText({
+        managed: { sourceId: args.automation.id, runId: args.logId, stepId: step.id, context: args.context },
         accountId: args.automation.account_id,
         userId: args.automation.user_id,
         conversationId,
@@ -412,6 +426,7 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       if (!check.ok) throw new Error(check.error)
       const conversationId = await resolveConversationId(args)
       const { whatsapp_message_id } = await engineSendInteractive({
+        managed: { sourceId: args.automation.id, runId: args.logId, stepId: step.id, context: args.context },
         accountId: args.automation.account_id,
         userId: args.automation.user_id,
         conversationId,
@@ -445,6 +460,7 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
             .map((k) => String(cfg.variables![k]))
         : []
       const { whatsapp_message_id } = await engineSendTemplate({
+        managed: { sourceId: args.automation.id, runId: args.logId, stepId: step.id, context: args.context },
         accountId: args.automation.account_id,
         userId: args.automation.user_id,
         conversationId,

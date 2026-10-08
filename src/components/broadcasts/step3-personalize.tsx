@@ -14,6 +14,12 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, Eye, ImageIcon, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import {
+  uploadAccountMedia,
+  MEDIA_MAX_BYTES_BY_KIND,
+} from '@/lib/storage/upload-media';
+import { MEDIA_HEADER_SPECS } from '@/lib/whatsapp/media-header-types';
+import { toast } from 'sonner';
 
 type VariableType = 'static' | 'field' | 'custom_field';
 
@@ -84,6 +90,32 @@ export function Step3Personalize({
     Map<string, string>
   >(new Map());
   const [loadingPreview, setLoadingPreview] = useState(true);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+
+  async function uploadHeader(file: File) {
+    if (!mediaHeaderType) return;
+    const spec = MEDIA_HEADER_SPECS[mediaHeaderType];
+    if (
+      !spec.mimeTypes.includes(file.type) ||
+      file.size === 0 ||
+      file.size > MEDIA_MAX_BYTES_BY_KIND[mediaHeaderType]
+    ) {
+      toast.error(
+        `Choose ${spec.formats}, up to ${MEDIA_MAX_BYTES_BY_KIND[mediaHeaderType] / 1024 / 1024} MB.`
+      );
+      return;
+    }
+    setUploadingMedia(true);
+    try {
+      const { publicUrl } = await uploadAccountMedia('chat-media', file);
+      onHeaderMediaUrlChange(publicUrl);
+      toast.success('Image or file ready for campaign review.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Upload failed.');
+    } finally {
+      setUploadingMedia(false);
+    }
+  }
 
   // Load user's custom fields + a representative contact for the
   // live preview. Fall back to sample data if no contacts exist yet.
@@ -258,6 +290,25 @@ export function Step3Personalize({
               {mediaHeaderType}
             </span>
           </div>
+          <label className="mb-3 block text-sm">
+            Upload the {mediaHeaderType} for this campaign
+            <Input
+              type="file"
+              className="mt-2"
+              disabled={uploadingMedia}
+              accept={MEDIA_HEADER_SPECS[mediaHeaderType].mimeTypes.join(',')}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void uploadHeader(file);
+                e.target.value = '';
+              }}
+            />
+          </label>
+          {uploadingMedia && (
+            <p className="text-sm" role="status">
+              Uploading…
+            </p>
+          )}
           <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
             {t('personalize.imageUrl')}
           </label>
@@ -461,7 +512,11 @@ export function Step3Personalize({
         </Button>
         <Button
           onClick={onNext}
-          disabled={unmappedKeys.length > 0 || headerMediaError !== null}
+          disabled={
+            uploadingMedia ||
+            unmappedKeys.length > 0 ||
+            headerMediaError !== null
+          }
           className="bg-primary text-primary-foreground hover:bg-primary-hover h-10 rounded-full px-5 disabled:opacity-50"
         >
           {t('next')}

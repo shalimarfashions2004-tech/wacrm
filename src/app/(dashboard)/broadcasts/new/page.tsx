@@ -36,8 +36,7 @@ function NewBroadcastPageInner() {
   const t = useTranslations('Broadcasts.new');
   const params = useSearchParams();
   const { accountId } = useAuth();
-  const { createAndSendBroadcast, isProcessing, progress } =
-    useBroadcastSending();
+  const { prepareBroadcast, isProcessing, progress } = useBroadcastSending();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [template, setTemplate] = useState<MessageTemplate | null>(null);
@@ -61,7 +60,7 @@ function NewBroadcastPageInner() {
     if (!template) return;
 
     try {
-      const broadcastId = await createAndSendBroadcast({
+      const broadcastId = await prepareBroadcast({
         name,
         template,
         audience: {

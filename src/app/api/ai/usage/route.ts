@@ -1,6 +1,12 @@
+import { readPages } from '@/lib/supabase/read-pages'
+import { summarizeAiCost } from '@/lib/ai/costs'
 import { NextResponse } from 'next/server'
 import { requireRole, toErrorResponse } from '@/lib/auth/account'
-import { daysAgoStart, lastNDayKeys, localDayKey } from '@/lib/dashboard/date-utils'
+import {
+  daysAgoStart,
+  lastNDayKeys,
+  localDayKey,
+} from '@/lib/dashboard/date-utils'
 
 // Rows are aggregated in-process over a bounded window. An active
 // account writes a handful of rows per conversation, so 30 days sits
@@ -51,25 +57,20 @@ export async function GET(request: Request) {
     // chart (see lib/dashboard/date-utils).
     const since = daysAgoStart(days - 1)
 
-    const { data, error } = await supabase
-      .from('ai_usage_log')
-      .select(
-        'created_at, mode, provider, model, prompt_tokens, completion_tokens, total_tokens',
-      )
-      .eq('account_id', accountId)
-      .gte('created_at', since.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(MAX_ROWS + 1)
-
-    if (error) {
-      console.error('[ai/usage GET] fetch error:', error)
-      return NextResponse.json(
-        { error: 'Failed to load usage' },
-        { status: 500 },
-      )
-    }
-
-    const all = (data ?? []) as UsageRow[]
+    const all = (await readPages(
+      (from, to) =>
+        supabase
+          .from('ai_usage_log')
+          .select(
+            'created_at, mode, provider, model, prompt_tokens, completion_tokens, total_tokens'
+          )
+          .eq('account_id', accountId)
+          .gte('created_at', since.toISOString())
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, Math.min(to, MAX_ROWS)),
+      MAX_ROWS + 500
+    )) as UsageRow[]
     const truncated = all.length > MAX_ROWS
     const rows = truncated ? all.slice(0, MAX_ROWS) : all
 
@@ -91,7 +92,10 @@ export async function GET(request: Request) {
     // Zero-filled daily buckets so the chart shows quiet days as gaps,
     // not missing points. Local-day keys, oldest → newest — the same
     // helper every other dashboard chart uses, so day boundaries agree.
-    const daily = new Map<string, { date: string; tokens: number; calls: number }>()
+    const daily = new Map<
+      string,
+      { date: string; tokens: number; calls: number }
+    >()
     for (const key of lastNDayKeys(days)) {
       daily.set(key, { date: key, tokens: 0, calls: 0 })
     }
@@ -106,9 +110,12 @@ export async function GET(request: Request) {
       byMode[r.mode].tokens += r.total_tokens
 
       const mk = `${r.provider}:${r.model}`
-      const m =
-        modelMap.get(mk) ??
-        { model: r.model, provider: r.provider, calls: 0, tokens: 0 }
+      const m = modelMap.get(mk) ?? {
+        model: r.model,
+        provider: r.provider,
+        calls: 0,
+        tokens: 0,
+      }
       m.calls += 1
       m.tokens += r.total_tokens
       modelMap.set(mk, m)
@@ -123,6 +130,7 @@ export async function GET(request: Request) {
     const byModel = [...modelMap.values()].sort((a, b) => b.tokens - a.tokens)
 
     return NextResponse.json({
+      cost_estimate: summarizeAiCost(rows),
       window_days: days,
       truncated,
       totals: {

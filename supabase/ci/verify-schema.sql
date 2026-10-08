@@ -247,6 +247,16 @@ BEGIN
     RAISE EXCEPTION 'managed messaging RPC grants are incorrect';
   END IF;
 
+  IF to_regprocedure('public.read_messaging_source(uuid,text,uuid)') IS NULL
+    OR to_regprocedure('public.read_messaging_budget(uuid)') IS NULL
+    OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='automation_logs' AND column_name='messaging_fingerprint') THEN
+    RAISE EXCEPTION 'managed runtime is missing — migration 051 did not apply';
+  END IF;
+  IF has_function_privilege('authenticated', 'public.read_messaging_source(uuid,text,uuid)', 'EXECUTE')
+    OR NOT has_function_privilege('service_role', 'public.read_messaging_source(uuid,text,uuid)', 'EXECUTE')
+    OR has_function_privilege('anon', 'public.read_messaging_budget(uuid)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'managed runtime grants are incorrect';
+  END IF;
   RAISE NOTICE 'schema verification passed';
 END
 $$;

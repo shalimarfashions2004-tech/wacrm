@@ -1,5 +1,7 @@
 # Campaign budget and approval database handoff — 7 October 2026
 
+> Historical database handoff. The owner subsequently confirmed `050 installed`, limit ₹1,000, zero reserved and managed delivery OFF. Runtime implementation and remaining checks are recorded in `WHATSAPP_MANAGED_RUNTIME_2026-10-08.md`. Do not repeat migration 050 for the current handoff.
+
 ## Current status
 
 The owner asked to complete campaign approval, consent checks and a **₹1,000/month** ceiling, then confirmed that the Shalimar Supabase SQL Editor is available and requested a prepared migration. Migration 050 and the exact SQL Editor installer are prepared and locally tested. **They have not been applied to production in this turn. The CRM delivery workers and approval interface are not yet connected to these new functions.** This is a database handoff, not a production-readiness claim.

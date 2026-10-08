@@ -53,6 +53,7 @@ import type {
   TemplateSampleValues,
 } from '@/types';
 import { templateStatusConfig } from '@/lib/template-status';
+import { SHALIMAR_INTRO_TEMPLATES } from '@/lib/whatsapp/shalimar-templates';
 import {
   extractVariableIndices,
   TEMPLATE_LIMITS,
@@ -97,6 +98,9 @@ const emptyForm: TemplateFormData = {
 };
 
 const COMMON_LANGUAGE_CODES = [
+  'ml',
+  'hi',
+  'ta',
   'en_US',
   'en_GB',
   'en',
@@ -540,6 +544,56 @@ export function TemplateManager() {
           </div>
         }
       />
+
+      <div className="border-border bg-card space-y-3 rounded-[22px] border p-4">
+        <h3 className="font-medium">Shalimar store introductions</h3>
+        <p className="text-muted-foreground text-sm">
+          Start with your brand image, shop contact and a STOP option. Review
+          the English or Malayalam version, then submit it to Meta for approval.
+          This does not send a broadcast.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {SHALIMAR_INTRO_TEMPLATES.map(({ label, payload }) => (
+            <Button
+              key={payload.name}
+              variant="outline"
+              className="rounded-full"
+              onClick={() => {
+                const existing = templates.find(
+                  (t) =>
+                    t.name === payload.name && t.language === payload.language
+                );
+                if (existing) {
+                  openEdit(existing);
+                  return;
+                }
+                setEditingId(null);
+                setForm({
+                  ...emptyForm,
+                  name: payload.name,
+                  language: payload.language,
+                  category: 'Marketing',
+                  header_format: 'image',
+                  header_media_url: payload.header_media_url ?? '',
+                  body_text: payload.body_text,
+                  footer_text: payload.footer_text ?? '',
+                  buttons: payload.buttons ?? [],
+                });
+                setDialogOpen(true);
+              }}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <a
+          className="text-sm underline"
+          href="/brand/shalimar-fashions.vcf"
+          download
+        >
+          Download Shalimar contact card
+        </a>
+      </div>
 
       {templates.length === 0 ? (
         <Card>

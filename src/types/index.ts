@@ -456,6 +456,7 @@ export interface Broadcast {
    * send. Added in migration 038.
    */
   delivery_locked_at?: string | null;
+  delivery_error?: string | null;
   /** Delivery controls added in migration 043. */
   delivery_mode?: 'dry-run' | 'live';
   live_approval_status?: 'pending' | 'approved' | 'revoked';

@@ -1,0 +1,2 @@
+# Contact cards use the CRLF line endings required by the vCard format.
+public/brand/*.vcf whitespace=cr-at-eol

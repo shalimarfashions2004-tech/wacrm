@@ -57,7 +57,7 @@ for (const name of (
   await readdir(resolve(root, 'supabase/migrations'))
 ).sort()) {
   const n = Number(name.slice(0, 3));
-  if (n <= 28 || prerequisites.has(n) || n === 50) {
+  if (n <= 28 || prerequisites.has(n) || n === 50 || n === 51) {
     try {
       await db.exec(await file(`supabase/migrations/${name}`));
     } catch (error) {
@@ -144,6 +144,10 @@ async function fixture() {
     `INSERT INTO messages(conversation_id,sender_type,content_text,message_id,created_at)
     VALUES ($1,'customer','Hello','synthetic-inbound',now()-interval '1 minute') RETURNING id`,
     [conversation]
+  );
+  await sql(
+    `UPDATE automation_logs SET messaging_fingerprint=messaging_source_fingerprint($1,'automation',$2) WHERE id=$3`,
+    [account, automation, run]
   );
   return {
     account,
@@ -619,6 +623,16 @@ await test('managed messaging PostgreSQL controls', async (t) => {
         'messaging_source_changed'
       );
       await approve('automation');
+      await rejects(
+        () => claim({ kind: 'automation' }),
+        'messaging_run_not_found'
+      );
+      // A new run may bind the edited version; an already waiting run may not.
+      state.run = await scalar(
+        `INSERT INTO automation_logs(user_id,account_id,automation_id,contact_id,trigger_event,status,messaging_fingerprint)
+        VALUES ($1,$2,$3,$4,'test','failed',messaging_source_fingerprint($2,'automation',$3)) RETURNING id`,
+        [user, state.account, state.automation, state.contacts[0]]
+      );
       await sql(`UPDATE messages SET created_at=now()-interval '24 hours'`);
       await rejects(
         () => claim({ kind: 'automation' }),
@@ -634,6 +648,135 @@ await test('managed messaging PostgreSQL controls', async (t) => {
         () => claim({ kind: 'automation' }),
         'messaging_service_window_closed'
       );
+    }
+  );
+  await check(
+    'source read returns the exact snapshot and its matching hash',
+    async () => {
+      const fp = await fingerprint();
+      const source = await scalar(
+        `SELECT read_messaging_source($1,'broadcast',$2)`,
+        [state.account, state.broadcast]
+      );
+      assert.equal(source.fingerprint, fp);
+      assert.equal(source.snapshot.children.length, 6);
+      assert.equal(source.snapshot.source.id, state.broadcast);
+      await sql(`UPDATE broadcasts SET name='Edited' WHERE id=$1`, [
+        state.broadcast,
+      ]);
+      assert.notEqual(await fingerprint(), fp);
+      assert.equal(source.snapshot.source.name, 'Synthetic campaign');
+    }
+  );
+  await check(
+    'runtime helpers are scoped and browser cannot activate policy',
+    async () => {
+      for (const role of ['anon', 'authenticated']) {
+        for (const fn of [
+          'read_messaging_source(uuid,text,uuid)',
+          'configure_messaging_budget(uuid,uuid,boolean,integer,text,timestamptz,timestamptz)',
+        ])
+          assert.equal(
+            await scalar("SELECT has_function_privilege($1,$2,'EXECUTE')", [
+              role,
+              fn,
+            ]),
+            false
+          );
+      }
+      await sql(`SELECT set_config('request.jwt.claim.sub',$1,true)`, [
+        outsider,
+      ]);
+      await db.exec('SET LOCAL ROLE authenticated');
+      await rejects(
+        () => sql('SELECT read_messaging_budget($1)', [state.account]),
+        'messaging_account_required'
+      );
+      await db.exec('RESET ROLE');
+    }
+  );
+  await check(
+    'activation checks actor and rates, preserves monthly ceiling, and pause preserves spend',
+    async () => {
+      const configure = (
+        actor = user,
+        rate = 200,
+        valid = "now()+interval '1 day'"
+      ) =>
+        sql(
+          `SELECT configure_messaging_budget($1,$2,true,$3,'test-only',now(),${valid})`,
+          [state.account, actor, rate]
+        );
+      await db.exec('SET LOCAL ROLE service_role');
+      await rejects(() => configure(outsider), 'messaging_admin_required');
+      await rejects(() => configure(user, 0), 'messaging_rate_review_required');
+      await rejects(
+        () => configure(user, 200, "now()+interval '32 days'"),
+        'messaging_rate_review_required'
+      );
+      await configure();
+      await db.exec('RESET ROLE');
+      assert.equal(
+        await scalar(
+          'SELECT monthly_limit_paise FROM messaging_budget_policies'
+        ),
+        1000
+      );
+      assert.equal(
+        await scalar('SELECT enabled_by FROM messaging_budget_policies'),
+        user
+      );
+      await approve();
+      await claim();
+      await db.exec('SET LOCAL ROLE service_role');
+      await sql(
+        'SELECT configure_messaging_budget($1,$2,false,NULL,NULL,NULL,NULL)',
+        [state.account, user]
+      );
+      await db.exec('RESET ROLE');
+      const budget = await scalar('SELECT read_messaging_budget($1)', [
+        state.account,
+      ]);
+      assert.equal(budget.enabled, false);
+      assert.equal(budget.reservedPaise, 200);
+      assert.equal(budget.remainingPaise, 800);
+    }
+  );
+  await check(
+    'authenticated users cannot replace the server-bound workflow identity',
+    async () => {
+      await db.exec('SET LOCAL ROLE authenticated');
+      assert.deepEqual(
+        await sql(
+          `UPDATE automation_logs SET messaging_fingerprint=$1 WHERE id=$2 RETURNING id`,
+          ['b'.repeat(64), state.run]
+        ),
+        []
+      );
+      await db.exec('RESET ROLE');
+      // Exercise defense in depth even if an operator later grants browser updates.
+      // This synthetic policy exists only inside the rolled-back test transaction.
+      await db.exec(
+        'CREATE POLICY test_run_update ON automation_logs FOR UPDATE TO authenticated USING (true) WITH CHECK (true)'
+      );
+      await db.exec('SET LOCAL ROLE authenticated');
+      await rejects(
+        () =>
+          sql(
+            `UPDATE automation_logs SET messaging_fingerprint=$1 WHERE id=$2`,
+            ['b'.repeat(64), state.run]
+          ),
+        'messaging_run_server_only'
+      );
+      await rejects(
+        () =>
+          sql(`UPDATE automation_logs SET contact_id=$1 WHERE id=$2`, [
+            state.contacts[1],
+            state.run,
+          ]),
+        'messaging_run_server_only'
+      );
+      await db.exec('RESET ROLE');
     }
   );
   await check(
@@ -761,6 +904,33 @@ await test('managed messaging PostgreSQL controls', async (t) => {
       assert.equal(
         await scalar('SELECT count(*)::int FROM messaging_delivery_ledger'),
         0
+      );
+      const runtime = await file('docs/sql/SHALIMAR_RUN_THIS_051.sql');
+      assert.ok(
+        runtime.includes(
+          await file('supabase/migrations/051_managed_messaging_runtime.sql')
+        )
+      );
+      await db.exec(runtime);
+      await db.exec(runtime);
+      assert.equal(
+        await scalar('SELECT enabled FROM messaging_budget_policies'),
+        false
+      );
+      assert.equal(
+        await scalar(
+          'SELECT monthly_limit_paise FROM messaging_budget_policies'
+        ),
+        100000
+      );
+      const snapshot = await scalar(
+        `SELECT read_messaging_source($1,'broadcast',$2)`,
+        [state.account, state.broadcast]
+      );
+      assert.equal(snapshot.fingerprint, await fingerprint());
+      assert.equal(
+        await scalar('SELECT access_token FROM whatsapp_config'),
+        'test-placeholder'
       );
     }
   );

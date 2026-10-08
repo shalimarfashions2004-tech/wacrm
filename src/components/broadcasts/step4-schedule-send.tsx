@@ -178,7 +178,7 @@ export function Step4ScheduleSend({
             <div className="flex items-center gap-2">
               <Loader2 className="text-primary h-4 w-4 animate-spin" />
               <p className="text-foreground text-sm font-medium">
-                {t('scheduleSend.sending')}
+                Preparing campaign
               </p>
             </div>
             <span className="text-primary text-xs font-medium">
@@ -232,23 +232,17 @@ export function Step4ScheduleSend({
               }
             >
               <Send className="h-4 w-4" />
-              {t('scheduleSend.sendNow')}
+              Prepare for review
             </DialogTrigger>
             <DialogContent className="border-border bg-popover rounded-[28px] sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="text-popover-foreground">
-                  {t('scheduleSend.confirmTitle')}
+                  Prepare this campaign?
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">
-                  {t.rich('scheduleSend.confirmDesc', {
-                    count: estimatedReach,
-                    template: template.name,
-                    b: (chunks) => (
-                      <span className="text-popover-foreground font-medium">
-                        {chunks}
-                      </span>
-                    ),
-                  })}
+                  Save the selected template and audience for review. An admin
+                  will approve the final message and spending allowance before
+                  sending.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -267,7 +261,7 @@ export function Step4ScheduleSend({
                   className="bg-primary text-primary-foreground hover:bg-primary-hover rounded-full"
                 >
                   <Send className="h-4 w-4" />
-                  {t('scheduleSend.sendNow')}
+                  Prepare for review
                 </Button>
               </DialogFooter>
             </DialogContent>
