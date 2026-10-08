@@ -76,4 +76,7 @@ Final local checks: 113 files / 1,281 tests passed (38 new regression results si
 
 Production public readback: `/login` 200; six protected APIs, including the new snapshot endpoint, return 401 without authentication. All 15 observed public login script assets return 200; the new snapshot/view code marker is present and CI placeholder credentials are absent. These checks establish deployment identity and public authentication boundaries, not signed-in database results or loading timings.
 
-The owner was asked to refresh once and check AI Setup → WhatsApp → Templates → WhatsApp. That after-release acceptance result is pending. No instant-loading or overall production-readiness claim is made without it.
+After refreshing once and checking AI Setup → WhatsApp → Templates → WhatsApp, the owner replied: “Details appear quickly now.” This confirms the targeted signed-in loading acceptance after the follow-up release. No numeric timing, universal instant-loading guarantee or overall production-readiness claim is inferred from that readback.
+
+
+Owner acceptance received on 8 October 2026: **Details appear quickly now.** The targeted loading fix is complete. Broader managed WhatsApp/AI activation checks remain separate from this performance release.

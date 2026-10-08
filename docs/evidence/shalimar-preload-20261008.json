@@ -99,7 +99,19 @@
     "status": "Unavailable",
     "reason": "Earlier automatic approval review rejected signed-in CRM access; no bypass used"
   },
-  "owner_after_release_readback": "Pending",
+  "owner_after_release_readback": {
+    "checked_at_utc": "2026-10-08T14:32:00.525850+00:00",
+    "requested_sequence": [
+      "Refresh CRM once",
+      "AI Agents Setup",
+      "Settings WhatsApp",
+      "Templates",
+      "Return to WhatsApp"
+    ],
+    "response": "Details appear quickly now",
+    "source": "Owner signed-in production readback",
+    "scope": "Targeted loading acceptance; no numeric timing or universal network guarantee inferred"
+  },
   "source_commit": "b48ee1d4dc95883ccdd143723493a13e64d2b8ce",
   "public_readback": {
     "routes": [
