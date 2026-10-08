@@ -40,4 +40,12 @@ Owner readback on 8 October: “Meta checks passed for Shalimar Fashions (+91 70
 
 Native history and lazy loading follow the installed Next 16.3.8 guides in `node_modules/next/dist/docs/01-app/01-getting-started/04-linking-and-navigating.md` and `01-app/02-guides/lazy-loading.md`. PostgREST documents paginated 206 responses and count headers in [Pagination and Count](https://postgrest.org/en/stable/references/api/pagination_count.html).
 
-Rollback target is the previously verified Vercel deployment `dpl_p65FZYWmYnDsSHz5ZpgCHNgJivxf`. The next production receipt will record the new source commit, READY deployment, CRM alias and public authentication-boundary checks. No public GitHub push is part of this release.
+Rollback target is the previously verified Vercel deployment `dpl_p65FZYWmYnDsSHz5ZpgCHNgJivxf`. The production receipt below records the new source commit, READY deployment, CRM alias and public authentication-boundary checks. No public GitHub push is part of this release.
+
+## Production receipt
+
+Committed source `0ad8f92061f29a5088c6beb954cbd0c09a50881b` was deployed from a clean Git archive with existing project linkage, using hosted environment values. Local placeholder build artifacts and unrelated/untracked files were excluded. Vercel hosted Turbopack build passed; deployment `dpl_WKu9AXySZ9Rxe1JYeeTzYLFcQnjb` is **READY**. Fresh provider metadata confirms `crm.shalimarfashions.com` points to this exact deployment in the existing Shalimar project.
+
+Public live readback: `/login` 200; managed settings, WhatsApp config, AI usage, AI knowledge and Flows each return 401 without authentication. All 15 script assets observed on the login page returned 200. The newly added account-cache code is present and local CI placeholders are absent from those public scripts. This verifies the published code and public authentication boundaries; it does not measure an authenticated page's loading time.
+
+The owner has been asked to refresh once and check Settings tab switching, AI, Contacts and Notifications. That readback is pending. The agent sent no messages, changed no WhatsApp credential, enabled no campaign and made no public GitHub push.

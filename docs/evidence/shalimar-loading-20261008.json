@@ -54,5 +54,82 @@
     "general_live_approved": false,
     "managed_delivery_approved": false,
     "messages_sent_by_agent": 0
+  },
+  "production_release": {
+    "source_commit": "0ad8f92061f29a5088c6beb954cbd0c09a50881b",
+    "hosted_build": "Vercel Turbopack build passed",
+    "provider_readback": {
+      "deployment": {
+        "id": "dpl_WKu9AXySZ9Rxe1JYeeTzYLFcQnjb",
+        "readyState": "READY",
+        "target": "production",
+        "projectId": "prj_8tVCzU4KZSBbTky0BHqmxBFZif1O",
+        "url": "shalimar-connect-n5kepdq6w-shalimarfashions2004-9466.vercel.app",
+        "alias": [
+          "crm.shalimarfashions.com",
+          "shalimar-connect.vercel.app",
+          "shalimar-connect-shalimarfashions2004-9466.vercel.app"
+        ],
+        "createdAt": 1791467454491
+      },
+      "alias": {
+        "alias": "crm.shalimarfashions.com",
+        "deploymentId": "dpl_WKu9AXySZ9Rxe1JYeeTzYLFcQnjb",
+        "projectId": "prj_8tVCzU4KZSBbTky0BHqmxBFZif1O"
+      }
+    },
+    "public_readback": {
+      "routes": [
+        {
+          "path": "/login",
+          "status": 200,
+          "final_url": "https://crm.shalimarfashions.com/login",
+          "content_type": "text/html; charset=utf-8",
+          "bytes": 100585
+        },
+        {
+          "path": "/api/whatsapp/managed/settings",
+          "status": 401,
+          "final_url": "https://crm.shalimarfashions.com/api/whatsapp/managed/settings",
+          "content_type": "application/json",
+          "bytes": 24
+        },
+        {
+          "path": "/api/whatsapp/config",
+          "status": 401,
+          "final_url": "https://crm.shalimarfashions.com/api/whatsapp/config",
+          "content_type": "application/json",
+          "bytes": 24
+        },
+        {
+          "path": "/api/ai/usage",
+          "status": 401,
+          "final_url": "https://crm.shalimarfashions.com/api/ai/usage",
+          "content_type": "application/json",
+          "bytes": 24
+        },
+        {
+          "path": "/api/ai/knowledge",
+          "status": 401,
+          "final_url": "https://crm.shalimarfashions.com/api/ai/knowledge",
+          "content_type": "application/json",
+          "bytes": 24
+        },
+        {
+          "path": "/api/flows",
+          "status": 401,
+          "final_url": "https://crm.shalimarfashions.com/api/flows",
+          "content_type": "application/json",
+          "bytes": 24
+        }
+      ],
+      "public_login_script_check": {
+        "scripts_checked": 15,
+        "all_200": true,
+        "account_cache_code_present": true,
+        "placeholder_present": false
+      }
+    },
+    "authenticated_speed_readback": "Requested from owner; no authenticated browser timing recorded yet"
   }
 }
