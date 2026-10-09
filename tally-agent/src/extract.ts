@@ -113,9 +113,9 @@ export async function extractSyncPayload(config: AgentConfig, period: Period, co
     const rightStart = new Date(midpoint + 86_400_000).toISOString().slice(0, 10);
     return [{ start: sourcePeriod.start, end: leftEnd }, { start: rightStart, end: sourcePeriod.end }];
   };
-  const readVoucherRoots = async (sourcePeriod: Period): Promise<XmlNode[]> => {
+  const readVoucherWindow = async (sourcePeriod: Period, consume: (root: XmlNode) => void): Promise<void> => {
     try {
-      return [await readCollection('ShalimarVouchers', sourcePeriod)];
+      consume(await readCollection('ShalimarVouchers', sourcePeriod));
     } catch (error) {
       // A busy shop can have one unusually large month. Split only that
       // window, retaining the bounded response limit and the full period.
@@ -124,32 +124,36 @@ export async function extractSyncPayload(config: AgentConfig, period: Period, co
       const split = splitPeriod(sourcePeriod);
       if (!split) throw error;
       const [left, right] = split;
-      return [...await readVoucherRoots(left), ...await readVoucherRoots(right)];
+      await readVoucherWindow(left, consume);
+      await readVoucherWindow(right, consume);
     }
   };
   const rows = (root: XmlNode, fallback: string) => { const reportRows = descendants(root, 'ROW'); return reportRows.length ? reportRows : descendants(root, fallback); };
-  const ledgerRoot = await readCollection('ShalimarLedgers', period);
+  const ledgers: Ledger[] = rows(await readCollection('ShalimarLedgers', period), 'LEDGER').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `ledger-${i + 1}`, name: value(n, 'NAME', 'LEDGERNAME'), phone: value(n, 'PHONE', 'PHONENO') || undefined, address: value(n, 'ADDRESS') || undefined })).filter(x => x.name);
   // Full voucher objects include inventory lines and are much heavier than
   // master reports. Read one calendar month at a time, splitting only a
-  // window that exceeds the bounded XML response limit.
-  const voucherRoots: XmlNode[] = [];
-  for (const window of periodWindows(period)) voucherRoots.push(...await readVoucherRoots(window));
-  const stockRoot = await readCollection('ShalimarStockItems', period);
-  const ledgers: Ledger[] = rows(ledgerRoot, 'LEDGER').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `ledger-${i + 1}`, name: value(n, 'NAME', 'LEDGERNAME'), phone: value(n, 'PHONE', 'PHONENO') || undefined, address: value(n, 'ADDRESS') || undefined })).filter(x => x.name);
+  // window that exceeds the bounded XML response limit. Consume each window
+  // immediately so large XML DOMs are not retained for the whole period.
   const seenVoucherIds = new Set<string>();
-  const vouchers: Voucher[] = voucherRoots.flatMap((voucherRoot) => rows(voucherRoot, 'VOUCHER')).map((n, i) => {
-    const inventory = [...descendants(n, 'ALLINVENTORYENTRIES.LIST'), ...descendants(n, 'INVENTORYENTRIES.LIST')];
-    const id = value(n, 'GUID', 'MASTERID') || `voucher-${i + 1}`;
-    if (seenVoucherIds.has(id)) throw new Error(`Duplicate voucher ${id}`);
-    seenVoucherIds.add(id);
-    const date = tallyDate(value(n, 'DATE'));
-    if (!date || date < period.start || date > period.end) throw new Error(`Voucher ${id} is outside the requested period`);
-    const isSales = tallyBoolean(value(n, 'ISSALES'), 'IsSales');
-    const isCancelled = tallyBoolean(value(n, 'ISCANCELLED'), 'IsCancelled');
-    const isOptional = tallyBoolean(value(n, 'ISOPTIONAL'), 'IsOptional');
-    return { id, number: value(n, 'VOUCHERNUMBER', 'VOUCHERNO') || undefined, date, party: value(n, 'PARTYLEDGERNAME', 'PARTYNAME') || undefined, voucherType: value(n, 'VOUCHERTYPENAME') || undefined, isSales, isCancelled, isOptional, grossValuePaise: money(value(n, 'AMOUNT', 'GROSSVALUE')), lines: inventory.map(l => ({ item: value(l, 'STOCKITEMNAME', 'ITEM'), quantity: quantity(value(l, 'ACTUALQTY', 'BILLEDQTY', 'QUANTITY')), ratePaise: money(value(l, 'RATE')), valuePaise: money(value(l, 'AMOUNT')) })) };
-  }).filter((voucher) => voucher.isSales && !voucher.isCancelled && !voucher.isOptional);
-  const stock_items: StockItem[] = rows(stockRoot, 'STOCKITEM').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `stock-${i + 1}`, name: value(n, 'NAME', 'STOCKITEMNAME'), group: value(n, 'PARENT', 'GROUP') || undefined, unit: value(n, 'BASEUNITS', 'UNIT') || undefined, quantity: Number(value(n, 'CLOSINGBALANCE', 'QUANTITY')) || undefined, ratePaise: money(value(n, 'RATE')), valuePaise: money(value(n, 'CLOSINGVALUE', 'VALUE')) })).filter(x => x.name);
+  const vouchers: Voucher[] = [];
+  let fallbackVoucherIndex = 0;
+  const consumeVouchers = (voucherRoot: XmlNode) => {
+    const parsed = rows(voucherRoot, 'VOUCHER').map((n) => {
+      const inventory = [...descendants(n, 'ALLINVENTORYENTRIES.LIST'), ...descendants(n, 'INVENTORYENTRIES.LIST')];
+      const id = value(n, 'GUID', 'MASTERID') || `voucher-${++fallbackVoucherIndex}`;
+      if (seenVoucherIds.has(id)) throw new Error(`Duplicate voucher ${id}`);
+      seenVoucherIds.add(id);
+      const date = tallyDate(value(n, 'DATE'));
+      if (!date || date < period.start || date > period.end) throw new Error(`Voucher ${id} is outside the requested period`);
+      const isSales = tallyBoolean(value(n, 'ISSALES'), 'IsSales');
+      const isCancelled = tallyBoolean(value(n, 'ISCANCELLED'), 'IsCancelled');
+      const isOptional = tallyBoolean(value(n, 'ISOPTIONAL'), 'IsOptional');
+      return { id, number: value(n, 'VOUCHERNUMBER', 'VOUCHERNO') || undefined, date, party: value(n, 'PARTYLEDGERNAME', 'PARTYNAME') || undefined, voucherType: value(n, 'VOUCHERTYPENAME') || undefined, isSales, isCancelled, isOptional, grossValuePaise: money(value(n, 'AMOUNT', 'GROSSVALUE')), lines: inventory.map(l => ({ item: value(l, 'STOCKITEMNAME', 'ITEM'), quantity: quantity(value(l, 'ACTUALQTY', 'BILLEDQTY', 'QUANTITY')), ratePaise: money(value(l, 'RATE')), valuePaise: money(value(l, 'AMOUNT')) })) };
+    }).filter((voucher) => voucher.isSales && !voucher.isCancelled && !voucher.isOptional);
+    vouchers.push(...parsed);
+  };
+  for (const window of periodWindows(period)) await readVoucherWindow(window, consumeVouchers);
+  const stock_items: StockItem[] = rows(await readCollection('ShalimarStockItems', period), 'STOCKITEM').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `stock-${i + 1}`, name: value(n, 'NAME', 'STOCKITEMNAME'), group: value(n, 'PARENT', 'GROUP') || undefined, unit: value(n, 'BASEUNITS', 'UNIT') || undefined, quantity: Number(value(n, 'CLOSINGBALANCE', 'QUANTITY')) || undefined, ratePaise: money(value(n, 'RATE')), valuePaise: money(value(n, 'CLOSINGVALUE', 'VALUE')) })).filter(x => x.name);
   const payloadBase = { company_name: company, company_fingerprint: fingerprint, tally_release: config.tallyRelease, source_period_start: period.start, source_period_end: period.end, ledgers, vouchers, stock_items, counts: { ledgers: ledgers.length, vouchers: vouchers.length, stock_items: stock_items.length }, gross_value_paise: vouchers.reduce((sum, v) => sum + v.grossValuePaise, 0), metric_scope: 'posted_sales_gross_v1' as const, ...(controlTotals ? { control_totals: controlTotals } : {}) };
   return { ...payloadBase, payload_sha256: sha256(JSON.stringify(payloadBase)) };
 }

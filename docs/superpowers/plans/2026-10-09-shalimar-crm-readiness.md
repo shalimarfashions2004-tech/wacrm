@@ -41,9 +41,10 @@
   and legacy gate are installed. The prior 6,351-ledger/3,519-voucher run is
   now `blocked` with `missing_control_totals`; its rows and old `tally-v1`
   snapshot remain retained.
-- The version 19 kit is packaged at `/downloads/SHALIMAR_TALLY_SYNC_KIT.zip`.
+- The version 20 kit is packaged at `/downloads/SHALIMAR_TALLY_SYNC_KIT.zip`.
   It requires the operator's Sales Register voucher count and gross INR amount
   for the exact period. Oversized month reads split into bounded date windows;
   large master reads have a bounded ten-minute timeout, and the company should
-  remain at Gateway while the kit runs. A shop run and exact controls are still
+  remain at Gateway while the kit runs. Voucher windows are parsed and released
+  one at a time to keep memory bounded. A shop run and exact controls are still
   required before a report snapshot can be created.

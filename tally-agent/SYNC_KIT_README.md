@@ -14,6 +14,8 @@ The closed-period read allows up to 10 minutes per local Tally request and 64 Mi
 
 The console prints each loading stage, including the collection and date window, then shows the final record counts before the CRM upload. If a run stops, the last stage printed identifies which local read needs attention.
 
+Voucher windows are parsed and released one at a time. The agent does not retain every XML document for the full period, which keeps memory bounded during large shop imports.
+
 The Sales Register values are an independent operator readback. The CRM will only create a report snapshot when the posted-sales count and gross total match both the Tally payload and the stored voucher rows. A missing or mismatched control total blocks reports; it does not delete the upload.
 
 To read the controls, keep `SHALIMAR FASHIONS` open, open TallyPrime's Sales Register, set the same From and To dates, and record the posted sales count and gross total shown for that period. Enter the count as a whole number and the amount as INR (for example `1234.05`). Do not include purchases, cancelled vouchers, optional vouchers, or a different period.
