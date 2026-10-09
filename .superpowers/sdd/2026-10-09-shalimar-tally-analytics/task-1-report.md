@@ -19,3 +19,13 @@
 ## Safety boundaries
 
 The agent accepts only localhost HTTP endpoints, sends only an Export request, rejects DTD/external entities, bounds response memory, requires exact company identity, and produces no CRM upload or messaging side effect. Tally port 9000 remains private.
+
+## Review fixes (follow-up)
+
+- XML now rejects non-whitespace before or after the single root and rejects localhost URLs containing userinfo credentials.
+- Company and period values are validated before request construction; company text is XML-escaped and dates must be valid ordered ISO dates.
+- Company identity is read only from the dedicated `COMPANYNAME` field; generic `NAME` descendants cannot satisfy the identity gate.
+- The Export request now embeds explicit read-only TDL collection definitions for ledgers, vouchers, and stock items, with bounded fetched fields; no Import or Execute operation is used.
+- Queue retry metadata stores a fixed safe error marker instead of arbitrary exception text. Added queue and regression coverage.
+
+Follow-up validation: `npm test -- --run tally-agent/tests` — passed, 3 files and 10 tests.

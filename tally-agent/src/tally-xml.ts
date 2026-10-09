@@ -26,6 +26,8 @@ function parseXml(raw: string): SafeXmlDocument {
   let match: RegExpExecArray | null; let sawRoot = false; let consumed = 0;
   while ((match = token.exec(raw))) { consumed = token.lastIndex;
     const full = match[0]; if (full.startsWith('<!--') || full.startsWith('<?')) continue;
+    if (!full.startsWith('<') && !sawRoot && full.trim() !== '') throw new Error('Malformed XML');
+    if (!full.startsWith('<') && sawRoot && stack.length === 1 && full.trim() !== '') throw new Error('Malformed XML');
     if (full.startsWith('</')) { const name = match[1]; if (stack.length === 1 || localName(stack.pop()!.tagName).toLowerCase() !== localName(name).toLowerCase()) throw new Error('Malformed XML'); continue; }
     if (full.startsWith('<')) { const name = match[1]; const child = node(name); stack[stack.length - 1].children.push(child); if (stack.length === 1) { if (sawRoot) throw new Error('Malformed XML'); sawRoot = true; } if (!/\/\s*>$/.test(full)) stack.push(child); continue; }
     stack[stack.length - 1].textContent += full;
@@ -36,7 +38,7 @@ function parseXml(raw: string): SafeXmlDocument {
 
 export async function readTallyXml(url: string, requestXml: string, options: { maxResponseBytes?: number; timeoutMs?: number; fetchImpl?: typeof fetch } = {}): Promise<Document> {
   let parsed: URL; try { parsed = new URL(url); } catch { throw new Error('Tally URL must be localhost'); }
-  if (parsed.protocol !== 'http:' || !LOCAL_HOSTS.has(parsed.hostname)) throw new Error('Tally URL must be localhost');
+  if (parsed.protocol !== 'http:' || !LOCAL_HOSTS.has(parsed.hostname) || parsed.username || parsed.password) throw new Error('Tally URL must be localhost');
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 10_000);
   try {
     const response = await (options.fetchImpl ?? fetch)(parsed, { method: 'POST', body: requestXml, headers: { 'content-type': 'text/xml; charset=utf-8', accept: 'text/xml, application/xml' }, signal: controller.signal });

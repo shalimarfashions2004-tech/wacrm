@@ -11,3 +11,5 @@ The queue is bounded and stores only retry metadata and payload references. Do n
 ## Rollback
 
 Stop the worker, remove its local scheduled task or folder, and leave Tally's HTTP/ODBC settings unchanged. Preserve the run receipt for review. Never enable public port forwarding or branch synchronisation.
+
+The request contains explicit read-only TDL collection definitions for `ShalimarLedgers` (`Ledger`), `ShalimarVouchers` (`Voucher`), and `ShalimarStockItems` (`Stock Item`). Each collection fetches only identity and reporting fields. The request uses Tally's `Export` operation and never uses `Import` or `Execute`.
