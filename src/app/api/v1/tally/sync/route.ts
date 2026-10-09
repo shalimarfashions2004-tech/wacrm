@@ -29,13 +29,13 @@ function validate(payload: unknown): string | null {
   const counts = p.counts as Row;
   if (!counts || typeof counts !== 'object' || arrays.some((k) => counts[k] !== (p[k] as unknown[]).length)) return 'Counts do not match rows';
   if (money(p.gross_value_paise) === undefined) return 'Invalid gross value';
-  for (const row of p.ledgers as Row[]) if (!textValue(row.id) || !textValue(row.name)) return 'Invalid ledger row';
+  for (const row of p.ledgers as Row[]) if (!textValue(row.id) || !textValue(row.name) || (row.phone !== undefined && textValue(row.phone) === undefined) || (row.address !== undefined && textValue(row.address, 1000) === undefined)) return 'Invalid ledger row';
   for (const row of p.vouchers as Row[]) {
-    if (!textValue(row.id) || !validDate(row.date) || money(row.grossValuePaise) === undefined) return 'Invalid voucher row';
+    if (!textValue(row.id) || !validDate(row.date) || money(row.grossValuePaise) === undefined || (row.number !== undefined && textValue(row.number) === undefined) || (row.party !== undefined && textValue(row.party) === undefined)) return 'Invalid voucher row';
     if (!Array.isArray(row.lines) || row.lines.length > 1000) return 'Invalid voucher lines';
     for (const line of row.lines as Row[]) if ((line.item !== undefined && textValue(line.item) === undefined) || (line.quantity !== undefined && quantity(line.quantity) === undefined) || (line.ratePaise !== undefined && money(line.ratePaise) === undefined) || (line.valuePaise !== undefined && money(line.valuePaise) === undefined)) return 'Invalid voucher line';
   }
-  for (const row of p.stock_items as Row[]) if (!textValue(row.id) || !textValue(row.name) || (row.quantity !== undefined && quantity(row.quantity) === undefined) || (row.ratePaise !== undefined && money(row.ratePaise) === undefined) || (row.valuePaise !== undefined && money(row.valuePaise) === undefined)) return 'Invalid stock row';
+  for (const row of p.stock_items as Row[]) if (!textValue(row.id) || !textValue(row.name) || (row.group !== undefined && textValue(row.group) === undefined) || (row.unit !== undefined && textValue(row.unit) === undefined) || (row.quantity !== undefined && quantity(row.quantity) === undefined) || (row.ratePaise !== undefined && money(row.ratePaise) === undefined) || (row.valuePaise !== undefined && money(row.valuePaise) === undefined)) return 'Invalid stock row';
   return null;
 }
 
