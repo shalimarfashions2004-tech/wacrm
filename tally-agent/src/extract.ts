@@ -88,13 +88,35 @@ export async function extractSyncPayload(config: AgentConfig, period: Period, co
     const result = await readTallyXml(config.tallyUrl, request(config.companyName, sourcePeriod, collection), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
     return (result as unknown as { documentElement: XmlNode }).documentElement;
   };
+  const splitPeriod = (sourcePeriod: Period): [Period, Period] | null => {
+    const start = Date.parse(`${sourcePeriod.start}T00:00:00Z`);
+    const end = Date.parse(`${sourcePeriod.end}T00:00:00Z`);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) return null;
+    const midpoint = start + Math.floor((end - start) / 2);
+    const leftEnd = new Date(midpoint).toISOString().slice(0, 10);
+    const rightStart = new Date(midpoint + 86_400_000).toISOString().slice(0, 10);
+    return [{ start: sourcePeriod.start, end: leftEnd }, { start: rightStart, end: sourcePeriod.end }];
+  };
+  const readVoucherRoots = async (sourcePeriod: Period): Promise<XmlNode[]> => {
+    try {
+      return [await readCollection('ShalimarVouchers', sourcePeriod)];
+    } catch (error) {
+      // A busy shop can have one unusually large month. Split only that
+      // window, retaining the bounded response limit and the full period.
+      if (!(error instanceof Error) || !/response exceeds size limit/i.test(error.message)) throw error;
+      const split = splitPeriod(sourcePeriod);
+      if (!split) throw error;
+      const [left, right] = split;
+      return [...await readVoucherRoots(left), ...await readVoucherRoots(right)];
+    }
+  };
   const rows = (root: XmlNode, fallback: string) => { const reportRows = descendants(root, 'ROW'); return reportRows.length ? reportRows : descendants(root, fallback); };
   const ledgerRoot = await readCollection('ShalimarLedgers', period);
   // Full voucher objects include inventory lines and are much heavier than
-  // master reports. Read one calendar month at a time so Tally does not have
-  // to build one unbounded response for a multi-month closed period.
+  // master reports. Read one calendar month at a time, splitting only a
+  // window that exceeds the bounded XML response limit.
   const voucherRoots: XmlNode[] = [];
-  for (const window of periodWindows(period)) voucherRoots.push(await readCollection('ShalimarVouchers', window));
+  for (const window of periodWindows(period)) voucherRoots.push(...await readVoucherRoots(window));
   const stockRoot = await readCollection('ShalimarStockItems', period);
   const ledgers: Ledger[] = rows(ledgerRoot, 'LEDGER').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `ledger-${i + 1}`, name: value(n, 'NAME', 'LEDGERNAME'), phone: value(n, 'PHONE', 'PHONENO') || undefined, address: value(n, 'ADDRESS') || undefined })).filter(x => x.name);
   const seenVoucherIds = new Set<string>();
