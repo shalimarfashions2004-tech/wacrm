@@ -4,6 +4,8 @@ export interface AgentConfig {
   tallyRelease: string;
   maxResponseBytes?: number;
   requestTimeoutMs?: number;
+  crmSyncEndpoint?: string;
+  crmApiKey?: string;
   fetchImpl?: typeof fetch;
 }
 
