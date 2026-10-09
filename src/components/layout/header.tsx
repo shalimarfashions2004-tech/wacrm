@@ -8,6 +8,7 @@ import {
   BarChart3,
   GitBranch,
   LayoutDashboard,
+  LineChart,
   LogOut,
   Menu,
   MessageSquare,
@@ -37,6 +38,7 @@ const pageTitles: Record<string, { key: string; source: "header" | "sidebar" }> 
   "/notifications": { key: "notifications", source: "header" },
   "/contacts": { key: "contacts", source: "header" },
   "/contacts/data-sheet": { key: "customerData", source: "header" },
+  "/reports/tally": { key: "reports", source: "header" },
   "/pipelines": { key: "pipelines", source: "header" },
   "/broadcasts": { key: "broadcasts", source: "header" },
   "/automations": { key: "automations", source: "header" },
@@ -50,6 +52,7 @@ const primaryNav = [
   { href: "/inbox", key: "inbox", icon: MessageSquare },
   { href: "/contacts", key: "contacts", icon: Users },
   { href: "/contacts/data-sheet", key: "customerData", icon: BarChart3 },
+  { href: "/reports/tally", key: "reports", icon: LineChart },
   { href: "/pipelines", key: "pipelines", icon: GitBranch },
   { href: "/broadcasts", key: "broadcasts", icon: Radio },
 ] as const;
