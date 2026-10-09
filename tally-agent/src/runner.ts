@@ -16,6 +16,9 @@ export async function uploadSyncPayload(config: AgentConfig, payload: SyncPayloa
     signal: AbortSignal.timeout(config.requestTimeoutMs ?? 15_000),
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(`CRM sync failed with HTTP ${response.status}`);
+  if (!response.ok) {
+    const message = body && typeof body === 'object' && 'error' in body && typeof (body as { error?: unknown }).error === 'string' ? (body as { error: string }).error : `HTTP ${response.status}`;
+    throw new Error(`CRM sync failed: ${message.slice(0, 240)}`);
+  }
   return body;
 }
