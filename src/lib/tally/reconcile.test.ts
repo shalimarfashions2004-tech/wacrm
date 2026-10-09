@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test doubles and Supabase row fixtures are intentionally structural. */
 import { describe, expect, it, vi } from 'vitest'
 import { reconcileRun } from './reconcile'
 

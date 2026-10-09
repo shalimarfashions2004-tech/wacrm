@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test doubles and Supabase row fixtures are intentionally structural. */
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ReportFilters = {

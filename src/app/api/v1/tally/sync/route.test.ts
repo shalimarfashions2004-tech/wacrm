@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test doubles and Supabase row fixtures are intentionally structural. */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { forbidden, unauthorized } from '@/lib/api/v1/respond';
 

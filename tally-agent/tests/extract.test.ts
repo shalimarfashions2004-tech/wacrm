@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test doubles and Supabase row fixtures are intentionally structural. */
 import { describe, expect, it } from 'vitest';
 import { extractSyncPayload } from '../src/extract';
 const xml = (company: string) => `<ENVELOPE><COMPANYNAME>${company}</COMPANYNAME><COMPANYGUID>abc</COMPANYGUID><LEDGER><GUID>l1</GUID><NAME>Asha</NAME><PHONE>+91 999</PHONE></LEDGER><VOUCHER><GUID>v1</GUID><DATE>20260401</DATE><PARTYLEDGERNAME>Asha</PARTYLEDGERNAME><AMOUNT>100.00</AMOUNT><INVENTORYENTRIES.LIST><STOCKITEMNAME>Silk</STOCKITEMNAME><QUANTITY>2</QUANTITY><RATE>50</RATE><AMOUNT>100</AMOUNT></INVENTORYENTRIES.LIST></VOUCHER><STOCKITEM><GUID>s1</GUID><NAME>Silk</NAME><CLOSINGVALUE>100</CLOSINGVALUE></STOCKITEM></ENVELOPE>`;

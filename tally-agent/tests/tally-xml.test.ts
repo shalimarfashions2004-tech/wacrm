@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- test doubles and Supabase row fixtures are intentionally structural. */
 import { describe, expect, it } from 'vitest';
 import { readTallyXml } from '../src/tally-xml';
 const response = (body: string, type = 'text/xml') => new Response(body, { status: 200, headers: { 'content-type': type } });
