@@ -44,7 +44,7 @@ Counts refer to customer rows, not verified WhatsApp accounts, current phone own
 
 ## Owner steps
 
-1. On the shop computer, open the correct **TallyPrime Gold** company and record the exact company name, release and local HTTP port. Gold is the licence edition; it does not by itself identify the release or prove the correct company is open.
+1. On the shop computer, open the **SHALIMAR FASHIONS** company in **TallyPrime Gold** and record the release and local HTTP port. Gold is the licence edition; it does not by itself identify the release or prove the correct company is open.
 2. In the **Shalimar** Supabase SQL Editor, run the entire `docs/sql/SHALIMAR_RUN_THIS_052.sql` in a new query. The bundle checks the expected existing sender/policy and rolls back in a different database. It installs tables/functions only; it inserts no customers, enables no delivery, and does not alter credentials or the INR 1,000 policy. Keep the result row as the schema receipt.
 3. Open CRM → Contacts → Customer Data. Select the private `SHALIMAR_CUSTOMER_DATA_REVIEWED_2026-10-08.csv`, check counts/source dates and choose **Save reviewed data privately**. Keep the returned source window and count as import evidence.
 4. Choose **Add / link reviewed Contacts**. Record created, linked and conflict counts, then refresh and check a few records. No message is sent. Resolve phone conflicts in the source and upload a newly reviewed version; never guess the first number from a multi-number cell.
