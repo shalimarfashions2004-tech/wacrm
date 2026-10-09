@@ -1,0 +1,3 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+export function ProductOpportunityCard({ product, units, value, noSale, href }: { product: string; units: number; value: number; noSale?: boolean; href?: string }) { return <Card size="sm"><CardHeader><CardTitle><a className="hover:underline" href={href ?? `/reports/tally?product=${encodeURIComponent(product)}`}>{product}</a></CardTitle></CardHeader><CardContent className="flex items-center justify-between"><span className="text-sm text-muted-foreground">{units.toLocaleString()} units · ₹{(value / 100).toLocaleString('en-IN')}</span>{noSale && <Badge variant="destructive">No recent sale</Badge>}</CardContent></Card> }

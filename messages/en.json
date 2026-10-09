@@ -1706,7 +1706,8 @@
       "fields": "Fields & tags",
       "deals": "Deals & currency",
       "members": "Team members",
-      "api": "API keys"
+      "api": "API keys",
+      "tally-sync": "Tally Sync"
     },
     "groups": {
       "account": "Account",

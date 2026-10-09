@@ -19,6 +19,7 @@ import { DashboardPageLoading } from '@/components/dashboard/page-loading';
 import { PanelLoading } from '@/components/dashboard/panel-loading';
 import { preloadSettingsViews } from '@/lib/settings/load-view';
 import { PanelActivity } from '@/components/dashboard/panel-activity';
+import { TallySyncStatus } from '@/components/tally/tally-sync-status';
 
 // Load the selected panel rather than shipping every integration/editor first.
 const SecurityPanel = dynamic(
@@ -181,6 +182,7 @@ function ScopedSettings() {
     deals: <DealsSettings />,
     members: <MembersTab />,
     api: <ApiKeysSettings />,
+    'tally-sync': <TallySyncStatus />,
   };
 
   return (

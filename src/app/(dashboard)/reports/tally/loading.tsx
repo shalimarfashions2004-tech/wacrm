@@ -1,0 +1,1 @@
+export default function Loading() { return <div role="status" aria-label="Loading Tally reports" className="space-y-5"><div className="h-10 w-72 animate-pulse rounded-xl bg-muted" /><div className="h-32 animate-pulse rounded-2xl bg-muted" /><div className="h-72 animate-pulse rounded-2xl bg-muted" /></div> }
