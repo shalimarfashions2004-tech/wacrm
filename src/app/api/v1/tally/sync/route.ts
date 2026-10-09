@@ -1,7 +1,10 @@
+import { gunzipSync } from 'node:zlib';
 import { badRequest, ok, toApiErrorResponse } from '@/lib/api/v1/respond';
 import { requireApiKey } from '@/lib/auth/api-context';
 
-const MAX_BODY = 2 * 1024 * 1024;
+export const runtime = 'nodejs';
+const MAX_WIRE_BODY = 2 * 1024 * 1024;
+const MAX_BODY = 8 * 1024 * 1024;
 const MAX_ROWS = 50_000;
 const HEX64 = /^[a-f0-9]{64}$/;
 type Row = Record<string, unknown>;
@@ -43,9 +46,17 @@ export async function POST(request: Request) {
   try {
     const ctx = await requireApiKey(request, 'tally:sync');
     const declared = Number(request.headers.get('content-length') ?? 0);
-    if (declared > MAX_BODY) throw badRequest('Request body exceeds 2 MB');
-    const raw = await request.text();
-    if (new TextEncoder().encode(raw).byteLength > MAX_BODY) throw badRequest('Request body exceeds 2 MB');
+    if (declared > MAX_WIRE_BODY) throw badRequest('Request body exceeds 2 MB on the wire');
+    const wire = new Uint8Array(await request.arrayBuffer());
+    if (wire.byteLength > MAX_WIRE_BODY) throw badRequest('Request body exceeds 2 MB on the wire');
+    const encoding = request.headers.get('content-encoding')?.trim().toLowerCase() ?? 'identity';
+    if (encoding !== 'identity' && encoding !== 'gzip') throw badRequest('Unsupported request compression');
+    let body: Uint8Array = wire;
+    if (encoding === 'gzip') {
+      try { body = gunzipSync(wire, { maxOutputLength: MAX_BODY }); } catch { throw badRequest('Compressed request body is invalid or too large'); }
+    }
+    if (body.byteLength > MAX_BODY) throw badRequest('Request body exceeds 8 MB after decompression');
+    const raw = new TextDecoder().decode(body);
     let payload: unknown;
     try { payload = JSON.parse(raw); } catch { throw badRequest('Request body must be valid JSON'); }
     const error = validate(payload);

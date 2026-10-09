@@ -1,3 +1,4 @@
+import { gzipSync } from 'node:zlib';
 import { AgentConfig, Period, SyncPayload } from './config';
 import { extractSyncPayload } from './extract';
 import { BoundedQueue } from './queue';
@@ -9,16 +10,17 @@ export async function uploadSyncPayload(config: AgentConfig, payload: SyncPayloa
   if (!config.crmSyncEndpoint || !config.crmApiKey) throw new Error('CRM sync endpoint and scoped API key are required');
   const endpoint = new URL(config.crmSyncEndpoint);
   if (endpoint.protocol !== 'https:') throw new Error('CRM sync endpoint must use HTTPS');
+  const compressedBody = gzipSync(Buffer.from(JSON.stringify(payload), 'utf8'));
   const response = await (config.fetchImpl ?? fetch)(endpoint, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${config.crmApiKey}` },
-    body: JSON.stringify(payload),
+    headers: { 'content-type': 'application/json', 'content-encoding': 'gzip', authorization: `Bearer ${config.crmApiKey}` },
+    body: compressedBody,
     signal: AbortSignal.timeout(config.requestTimeoutMs ?? 15_000),
   });
-  const body = await response.json().catch(() => null);
+  const responseBody = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = body && typeof body === 'object' && 'error' in body && typeof (body as { error?: unknown }).error === 'string' ? (body as { error: string }).error : `HTTP ${response.status}`;
+    const message = responseBody && typeof responseBody === 'object' && 'error' in responseBody && typeof (responseBody as { error?: unknown }).error === 'string' ? (responseBody as { error: string }).error : `HTTP ${response.status}`;
     throw new Error(`CRM sync failed: ${message.slice(0, 240)}`);
   }
-  return body;
+  return responseBody;
 }

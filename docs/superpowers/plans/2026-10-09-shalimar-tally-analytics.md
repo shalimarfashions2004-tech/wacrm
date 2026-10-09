@@ -61,7 +61,7 @@
 - Create: `src/app/api/v1/tally/sync/route.test.ts`
 
 **Interfaces:**
-- `POST /api/v1/tally/sync` requires the `tally:sync` scope and accepts `SyncPayload` up to 2 MB.
+- `POST /api/v1/tally/sync` requires the `tally:sync` scope and accepts gzip-compressed `SyncPayload` up to 2 MB on the wire and 8 MB after decompression (identity JSON remains supported).
 - Response: `{ data: { run: { id, status, received_at, counts }, delivery_enabled: false } }`.
 - Tables: `tally_sync_runs`, `tally_sync_ledgers`, `tally_sync_vouchers`, `tally_sync_voucher_lines`, `tally_sync_stock_items`.
 
