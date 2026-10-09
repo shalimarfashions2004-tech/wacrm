@@ -18,3 +18,10 @@
 
 - The intake route writes the run and child tables through separate Supabase calls. A later hardening task could move this into a single database RPC for all-or-nothing persistence if production operational requirements demand transactional ingestion.
 - Migration parser/lint tooling was not available in this checkout; the SQL is written as an idempotent Supabase migration and should be applied in the normal migration CI/environment.
+
+## Review fixes
+
+- Gross totals now reject negatives before any database call.
+- Added `tally_sync_ingest` as a service-role-only Postgres function so run and child inserts commit atomically.
+- Voucher lines now use a composite `(voucher_id, run_id, account_id)` foreign key and matching uniqueness constraint.
+- Unique checksum races re-read the account-scoped run and return the documented duplicate result.

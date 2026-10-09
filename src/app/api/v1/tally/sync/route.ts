@@ -28,7 +28,7 @@ function validate(payload: unknown): string | null {
   for (const key of arrays) if (!Array.isArray(p[key]) || p[key].length > MAX_ROWS) return `Invalid ${key}`;
   const counts = p.counts as Row;
   if (!counts || typeof counts !== 'object' || arrays.some((k) => counts[k] !== (p[k] as unknown[]).length)) return 'Counts do not match rows';
-  if (money(p.gross_value_paise) === undefined) return 'Invalid gross value';
+  if (integer(p.gross_value_paise, 0, 99_999_999_999_999_999) === undefined) return 'Invalid gross value';
   for (const row of p.ledgers as Row[]) if (!textValue(row.id) || !textValue(row.name) || (row.phone !== undefined && textValue(row.phone) === undefined) || (row.address !== undefined && textValue(row.address, 1000) === undefined)) return 'Invalid ledger row';
   for (const row of p.vouchers as Row[]) {
     if (!textValue(row.id) || !validDate(row.date) || money(row.grossValuePaise) === undefined || (row.number !== undefined && textValue(row.number) === undefined) || (row.party !== undefined && textValue(row.party) === undefined)) return 'Invalid voucher row';
@@ -54,22 +54,22 @@ export async function POST(request: Request) {
     const existing = await ctx.supabase.from('tally_sync_runs').select('id,status,received_at,counts').eq('account_id', ctx.accountId).eq('payload_sha256', p.payload_sha256).maybeSingle();
     if (existing.error) throw existing.error;
     if (existing.data) return ok({ run: { ...existing.data, status: 'duplicate' }, delivery_enabled: false });
-    const runInsert = await ctx.supabase.from('tally_sync_runs').insert({ account_id: ctx.accountId, payload_sha256: p.payload_sha256, company_name: p.company_name, company_fingerprint: p.company_fingerprint, tally_release: p.tally_release, source_period_start: p.source_period_start, source_period_end: p.source_period_end, counts: p.counts, gross_value_paise: p.gross_value_paise }).select('id,status,received_at,counts').single();
-    if (runInsert.error || !runInsert.data) throw runInsert.error ?? new Error('Run insert failed');
-    const runId = runInsert.data.id;
+    const runInsert = await ctx.supabase.rpc('tally_sync_ingest', { p_account_id: ctx.accountId, p_payload: p });
+    if (runInsert.error) {
+      const retry = await ctx.supabase.from('tally_sync_runs').select('id,status,received_at,counts').eq('account_id', ctx.accountId).eq('payload_sha256', p.payload_sha256).maybeSingle();
+      if (retry.data) return ok({ run: { ...retry.data, status: 'duplicate' }, delivery_enabled: false });
+      throw runInsert.error;
+    }
+    const runData = runInsert.data as Row;
+    const runId = runData?.id;
+    if (!runId) throw new Error('Run insert failed');
     const ledgers = (p.ledgers as Row[]).map((r) => ({ run_id: runId, account_id: ctx.accountId, source_id: r.id, name: r.name, phone: r.phone, address: r.address }));
     const vouchers = (p.vouchers as Row[]).map((r) => ({ run_id: runId, account_id: ctx.accountId, source_id: r.id, voucher_number: r.number, voucher_date: r.date, party: r.party, gross_value_paise: r.grossValuePaise }));
-    if (ledgers.length) { const result = await ctx.supabase.from('tally_sync_ledgers').insert(ledgers); if (result.error) throw result.error; }
+    /* Child writes are performed by the transaction RPC above. */
     const voucherIds: Record<string, string> = {};
-    for (const row of vouchers) {
-      const result = await ctx.supabase.from('tally_sync_vouchers').insert(row).select('id').single();
-      if (result.error || !result.data) throw result.error ?? new Error('Voucher insert failed');
-      voucherIds[String(row.source_id)] = result.data.id;
-    }
+    for (const row of vouchers) voucherIds[String(row.source_id)] = '';
     const lines = (p.vouchers as Row[]).flatMap((voucher) => (voucher.lines as Row[]).map((line, index) => ({ voucher_id: voucherIds[String(voucher.id)], run_id: runId, account_id: ctx.accountId, line_no: index + 1, item: line.item, quantity: line.quantity, rate_paise: line.ratePaise, value_paise: line.valuePaise })));
-    if (lines.length) { const result = await ctx.supabase.from('tally_sync_voucher_lines').insert(lines); if (result.error) throw result.error; }
     const stocks = (p.stock_items as Row[]).map((r) => ({ run_id: runId, account_id: ctx.accountId, source_id: r.id, name: r.name, item_group: r.group, unit: r.unit, quantity: r.quantity, rate_paise: r.ratePaise, value_paise: r.valuePaise }));
-    if (stocks.length) { const result = await ctx.supabase.from('tally_sync_stock_items').insert(stocks); if (result.error) throw result.error; }
-    return ok({ run: runInsert.data, delivery_enabled: false }, 201);
+    return ok({ run: runData, delivery_enabled: false }, 201);
   } catch (error) { return toApiErrorResponse(error); }
 }
