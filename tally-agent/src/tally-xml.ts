@@ -20,10 +20,11 @@ function node(tagName: string, attributes: Record<string, string> = {}): XmlNode
 
 function parseXml(raw: string): SafeXmlDocument {
   if (!raw.trim().startsWith('<')) throw new Error('Malformed XML');
-  if (/<!ENTITY|\bSYSTEM\b|\bPUBLIC\b/i.test(raw)) throw new Error('DTD and external entities are not allowed');
+  const doctype = raw.match(/<!DOCTYPE\b[\s\S]*?(?:\][\s]*>|>)/i)?.[0] ?? '';
+  if (/<!ENTITY|\bSYSTEM\b|\bPUBLIC\b/i.test(doctype) || /<!ENTITY/i.test(raw)) throw new Error('DTD and external entities are not allowed');
   // Tally may include a local DOCTYPE declaration. Remove the declaration
   // after rejecting external-entity markers; never resolve or fetch it.
-  raw = raw.replace(/<!DOCTYPE\b[^>]*(?:\[[\s\S]*?\]\s*)?>/gi, '');
+  raw = raw.replace(/<!DOCTYPE\b[\s\S]*?(?:\][\s]*>|>)/gi, '');
   const root: XmlNode = node('__root__'); const stack = [root];
   const token = /<!--[\s\S]*?-->|<\?[^>]*\?>|<\/?([A-Za-z_][\w:.-]*)(?:\s[^>]*)?\/?>|([^<]+)/g;
   let match: RegExpExecArray | null; let sawRoot = false; let consumed = 0;
