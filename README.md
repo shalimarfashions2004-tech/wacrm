@@ -187,6 +187,25 @@ outbound Meta helper can run. See `docs/AUDIT.md`,
 `docs/COMPLIANCE.md` and `docs/PROVIDER_RESEARCH.md` for the dated decision
 record.
 
+### Shalimar Tally read-only sync
+
+The Tally integration is a staged, one-way data path: a local Windows agent
+reads the exact `SHALIMAR FASHIONS` company through TallyPrime's private
+localhost service, then submits bounded HTTPS receipts to the account-scoped
+CRM intake. The agent never writes XML back to Tally, and the intake always
+returns `delivery_enabled: false`. A voucher-count and gross-value mismatch
+blocks reconciliation and prevents a report snapshot from being created.
+
+Operators must complete the closed-month read, migration/readback checks, and
+three-cycle evidence sequence before treating the connection as live. Use the
+[Tally read-only sync plan](./docs/SHALIMAR_TALLY_READONLY_SYNC_PLAN.md),
+[local agent handoff](./docs/SHALIMAR_TALLY_AGENT_INSTALL.md), and
+[operator evidence runbook](./docs/evidence/tally-sync-runbook.md). Local tests,
+staged receipts, or a successful build do not establish hosted Supabase/Tally
+compatibility, Meta approval, consent, or production readiness. Keep delivery
+in dry-run and do not enable broadcasts until the runbook's live evidence and
+owner approval gates are complete.
+
 ## Contributing
 
 This is a template, not a collaborative product — the expected flow is
