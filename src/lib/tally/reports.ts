@@ -41,22 +41,26 @@ async function load(filters: ReportFilters) {
   const { supabase, accountId } = filters
   const latest = await supabase.from('tally_sync_runs').select('id,source_period_start,source_period_end,received_at,reconciliation_status,reconciliation_reason_codes').eq('account_id', accountId).order('received_at', { ascending: false }).limit(1).maybeSingle()
   if (latest.error) throw latest.error
-  const valid = await supabase.from('tally_report_snapshots').select('id,run_id,period_start,period_end,coverage,currency,created_at').eq('account_id', accountId).order('period_end', { ascending: false }).limit(1).maybeSingle()
-  if (valid.error) throw valid.error
+  const validResult = await supabase.from('tally_report_snapshots').select('id,run_id,period_start,period_end,coverage,currency,created_at').eq('account_id', accountId).order('period_end', { ascending: false }).limit(2)
+  if (validResult.error) throw validResult.error
+  const validRows = validResult.data ?? []
+  const valid = { data: validRows[0] ?? null }
+  const priorSnapshot = validRows[1] ?? null
   const runId = valid.data?.run_id as string | undefined
   const run = runId ? await supabase.from('tally_sync_runs').select('id,source_period_start,source_period_end,received_at,reconciliation_status').eq('account_id', accountId).eq('id', runId).maybeSingle() : { data: null, error: null }
   if (run.error) throw run.error
   const status = latest.data && latest.data.reconciliation_status !== 'reconciled' ? 'blocked' : valid.data ? 'reconciled' : 'empty'
   const source = valid.data ? { start: valid.data.period_start, end: valid.data.period_end } : null
   const meta: ReportMeta = { source_period: source, currency: 'INR', coverage: (valid.data?.coverage as Record<string, unknown>) ?? {}, last_sync_at: latest.data?.received_at ?? run.data?.received_at ?? null, reconciliation_status: status }
-  if (!runId) return { meta, vouchers: [] as Row[], lines: [] as Row[], stock: [] as Row[] }
-  const [vouchers, lines, stock] = await Promise.all([
+  if (!runId) return { meta, vouchers: [] as Row[], priorVouchers: [] as Row[], lines: [] as Row[], stock: [] as Row[] }
+  const [vouchers, lines, stock, priorVouchers] = await Promise.all([
     supabase.from('tally_sync_vouchers').select('id,source_id,voucher_date,party,gross_value_paise').eq('account_id', accountId).eq('run_id', runId),
     supabase.from('tally_sync_voucher_lines').select('voucher_id,item,quantity,value_paise').eq('account_id', accountId).eq('run_id', runId),
     supabase.from('tally_sync_stock_items').select('name,quantity,value_paise,item_group').eq('account_id', accountId).eq('run_id', runId),
+    priorSnapshot ? supabase.from('tally_sync_vouchers').select('id,source_id,voucher_date,party,gross_value_paise').eq('account_id', accountId).eq('run_id', priorSnapshot.run_id) : Promise.resolve({ data: [], error: null } as any),
   ])
   for (const result of [vouchers, lines, stock]) if (result.error) throw result.error
-  return { meta, vouchers: vouchers.data ?? [], lines: lines.data ?? [], stock: stock.data ?? [] }
+  return { meta, vouchers: vouchers.data ?? [], priorVouchers: priorVouchers.data ?? [], lines: lines.data ?? [], stock: stock.data ?? [] }
 }
 function inRange(row: Row, start: string, end: string) { return row.voucher_date >= start && row.voucher_date <= end }
 function paise(value: unknown): number { const n = Number(value ?? 0); if (!Number.isSafeInteger(n)) throw new Error('Report contains unsafe paise value'); return n }
@@ -65,7 +69,7 @@ function pageRows<T>(rows: T[], page: number, pageSize: number) { return rows.sl
 export async function getSalesOverview(filters: ReportFilters): Promise<SalesOverview> {
   const range = bounded(filters); const d = await load(filters); const vouchers = d.vouchers.filter(v => inRange(v, range.start, range.end) && (!filters.customer || String(v.party || '').toLowerCase().includes(filters.customer.toLowerCase().slice(0, 100)))); const lines = d.lines.filter(l => vouchers.some(v => v.id === l.voucher_id) && (!filters.product || String(l.item || '').toLowerCase().includes(filters.product.toLowerCase().slice(0, 100))));
   const revenue = vouchers.reduce((n, v) => n + paise(v.gross_value_paise), 0); const units = lines.reduce((n, l) => n + Number(l.quantity || 0), 0); const customers = new Set(vouchers.map(v => String(v.party || '').trim()).filter(Boolean));
-  return { ...d.meta, revenue_paise: revenue, invoice_count: vouchers.length, units, average_order_value_paise: vouchers.length ? Math.round(revenue / vouchers.length) : 0, active_customers: customers.size, previous_period: null, comparison_status: 'unavailable' }
+  return { ...d.meta, revenue_paise: revenue, invoice_count: vouchers.length, units, average_order_value_paise: vouchers.length ? Math.round(revenue / vouchers.length) : 0, active_customers: customers.size, previous_period: (() => { const prior = d.priorVouchers.filter(v => inRange(v, range.start, range.end)); if (!prior.length) return null; return { revenue_paise: prior.reduce((n, v) => n + paise(v.gross_value_paise), 0), invoice_count: prior.length } })(), comparison_status: d.priorVouchers.length ? 'available' : 'unavailable' }
 }
 export async function getCustomerSegments(filters: ReportFilters): Promise<CustomerSegmentReport> {
   const range = bounded(filters); const d = await load(filters); const vouchers = d.vouchers.filter(v => inRange(v, range.start, range.end) && (!filters.customer || String(v.party || '').toLowerCase().includes(filters.customer.toLowerCase().slice(0, 100)))); const map = new Map<string, CustomerSegment>();
