@@ -3,6 +3,19 @@ import { readTallyXml, sha256, text, descendants, XmlNode } from './tally-xml';
 
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('\"', '&quot;').replaceAll("'", '&apos;');
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
+function periodWindows(period: Period): Period[] {
+  const windows: Period[] = [];
+  let cursor = new Date(`${period.start}T00:00:00Z`);
+  const end = new Date(`${period.end}T00:00:00Z`);
+  while (cursor <= end) {
+    const monthEnd = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0));
+    const windowEnd = monthEnd < end ? monthEnd : end;
+    windows.push({ start: cursor.toISOString().slice(0, 10), end: windowEnd.toISOString().slice(0, 10) });
+    cursor = new Date(windowEnd);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return windows;
+}
 const request = (company: string, period: Period, collection: 'ShalimarCompany' | 'ShalimarLedgers' | 'ShalimarVouchers' | 'ShalimarStockItems') => {
   if (!company.trim() || /[<>]/.test(company) || !validDate(period.start) || !validDate(period.end) || period.start > period.end) throw new Error('Invalid company or period');
   const escaped = escapeXml(company);
@@ -20,7 +33,10 @@ const request = (company: string, period: Period, collection: 'ShalimarCompany' 
     return `<FIELD NAME="fld_${field}"><SET>${expression}</SET><XMLTAG>${field}</XMLTAG></FIELD>`;
   }).join('');
   const names = fields.map((field) => `fld_${field}`).join(',');
-  const fetch = collection === 'ShalimarVouchers' ? '<FETCH>AllInventoryEntries,AllLedgerEntries,PartyLedgerName</FETCH>' : '';
+  // Inventory lines drive product reports; ledger masters are read separately.
+  // Avoid fetching every ledger allocation inside each voucher because it
+  // makes large closed-period responses much slower without adding CRM data.
+  const fetch = collection === 'ShalimarVouchers' ? '<FETCH>AllInventoryEntries,PartyLedgerName</FETCH>' : '';
   const fullObject = collection === 'ShalimarVouchers' ? '<FULLOBJECT>Yes</FULLOBJECT>' : '';
   return `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Data</TYPE><ID>ShalimarLiveReport</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT><SVCURRENTCOMPANY>${escaped}</SVCURRENTCOMPANY><SVFROMDATE>${period.start.replaceAll('-', '')}</SVFROMDATE><SVTODATE>${period.end.replaceAll('-', '')}</SVTODATE></STATICVARIABLES><TDL><TDLMESSAGE><REPORT NAME="ShalimarLiveReport"><FORMS>ShalimarForm</FORMS></REPORT><FORM NAME="ShalimarForm"><PARTS>ShalimarPart</PARTS><XMLTAG>DATA</XMLTAG></FORM><PART NAME="ShalimarPart"><LINES>ShalimarLine</LINES><REPEAT>ShalimarLine : ShalimarCollection</REPEAT><SCROLLED>Vertical</SCROLLED></PART><LINE NAME="ShalimarLine"><FIELDS>${names}</FIELDS><XMLTAG>ROW</XMLTAG>${fullObject}</LINE>${fieldXml}<COLLECTION NAME="ShalimarCollection"><TYPE>${type}</TYPE>${fetch}</COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
 };
@@ -52,16 +68,20 @@ export async function extractSyncPayload(config: AgentConfig, period: Period): P
   const companyId = companyNode?.getAttribute('GUID') || (companyNode ? first(companyNode, 'GUID') : '') || first(root, 'COMPANYGUID', 'GUID');
   if (!companyId) return null;
   const fingerprint = sha256(`${company}\n${companyId}`);
-  const readCollection = async (collection: 'ShalimarLedgers' | 'ShalimarVouchers' | 'ShalimarStockItems') => {
-    const result = await readTallyXml(config.tallyUrl, request(config.companyName, period, collection), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
+  const readCollection = async (collection: 'ShalimarLedgers' | 'ShalimarVouchers' | 'ShalimarStockItems', sourcePeriod: Period) => {
+    const result = await readTallyXml(config.tallyUrl, request(config.companyName, sourcePeriod, collection), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
     return (result as unknown as { documentElement: XmlNode }).documentElement;
   };
-  const ledgerRoot = await readCollection('ShalimarLedgers');
-  const voucherRoot = await readCollection('ShalimarVouchers');
-  const stockRoot = await readCollection('ShalimarStockItems');
   const rows = (root: XmlNode, fallback: string) => { const reportRows = descendants(root, 'ROW'); return reportRows.length ? reportRows : descendants(root, fallback); };
+  const ledgerRoot = await readCollection('ShalimarLedgers', period);
+  // Full voucher objects include inventory lines and are much heavier than
+  // master reports. Read one calendar month at a time so Tally does not have
+  // to build one unbounded response for a multi-month closed period.
+  const voucherRoots: XmlNode[] = [];
+  for (const window of periodWindows(period)) voucherRoots.push(await readCollection('ShalimarVouchers', window));
+  const stockRoot = await readCollection('ShalimarStockItems', period);
   const ledgers: Ledger[] = rows(ledgerRoot, 'LEDGER').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `ledger-${i + 1}`, name: value(n, 'NAME', 'LEDGERNAME'), phone: value(n, 'PHONE', 'PHONENO') || undefined, address: value(n, 'ADDRESS') || undefined })).filter(x => x.name);
-  const vouchers: Voucher[] = rows(voucherRoot, 'VOUCHER').map((n, i) => {
+  const vouchers: Voucher[] = voucherRoots.flatMap((voucherRoot) => rows(voucherRoot, 'VOUCHER')).map((n, i) => {
     const inventory = [...descendants(n, 'ALLINVENTORYENTRIES.LIST'), ...descendants(n, 'INVENTORYENTRIES.LIST')];
     return { id: value(n, 'GUID', 'MASTERID') || `voucher-${i + 1}`, number: value(n, 'VOUCHERNUMBER', 'VOUCHERNO') || undefined, date: value(n, 'DATE'), party: value(n, 'PARTYLEDGERNAME', 'PARTYNAME') || undefined, grossValuePaise: money(value(n, 'AMOUNT', 'GROSSVALUE')), lines: inventory.map(l => ({ item: value(l, 'STOCKITEMNAME', 'ITEM'), quantity: quantity(value(l, 'ACTUALQTY', 'BILLEDQTY', 'QUANTITY')), ratePaise: money(value(l, 'RATE')), valuePaise: money(value(l, 'AMOUNT')) })) };
   });

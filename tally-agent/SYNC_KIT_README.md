@@ -10,4 +10,4 @@ Requirements: Windows PowerShell, Node.js 20+, TallyPrime open with `SHALIMAR FA
 
 The agent reads Tally through `http://127.0.0.1:9000/`, never uses Tally Import/Execute, and submits only to `https://crm.shalimarfashions.com/api/v1/tally/sync` with the `tally:sync` scope. It does not send WhatsApp messages or activate broadcasts.
 
-The closed-period read allows up to 180 seconds per local Tally request and 64 MiB per XML response. These are bounded read limits for full voucher and inventory records; the agent still never writes to Tally. The CRM upload is gzip-compressed so a complete closed-period payload can stay below the network request limit.
+The closed-period read allows up to 180 seconds per local Tally request and 64 MiB per XML response. Full voucher and inventory records are requested one calendar month at a time and combined locally, so a multi-month period does not create one oversized Tally response. These are bounded read limits; the agent still never writes to Tally. The CRM upload is gzip-compressed so a complete closed-period payload can stay below the network request limit.

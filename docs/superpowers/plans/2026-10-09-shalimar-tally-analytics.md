@@ -49,6 +49,7 @@
 
 - [ ] Write failing tests for localhost-only URLs, malformed XML, wrong company, response-size limits, and deterministic payload hashes.
 - [ ] Implement XML request/response parsing for company identity, ledger/customer records, voucher headers/lines, and stock items using read-only export collections.
+- [ ] Read full voucher objects in calendar-month windows and combine them into one closed-period payload so multi-month periods stay within Tally's local response limits.
 - [ ] Add a bounded local queue with retry metadata and no credential logging.
 - [ ] Run `npm test -- --run tally-agent/tests` and verify all agent tests pass without a Tally connection.
 
