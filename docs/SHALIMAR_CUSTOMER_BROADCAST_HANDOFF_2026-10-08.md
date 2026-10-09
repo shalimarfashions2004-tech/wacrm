@@ -36,6 +36,7 @@ The reviewed customer CSV and quality reports are saved in the private Shalimar 
 | Customer-master amounts recalculated | 7 differences above INR 0.01 |
 | Language / marketing permission from sources | Unknown |
 | WhatsApp-account lookup | Not performed |
+| Tally identity check | Verified: SHALIMAR FASHIONS, TallyPrime 7.1, local port 9000 |
 | Live Tally sync | Not connected |
 | Production CRM import | Not yet verified |
 | Customer messages sent during this setup | 0 |
@@ -44,7 +45,7 @@ Counts refer to customer rows, not verified WhatsApp accounts, current phone own
 
 ## Owner steps
 
-1. On the shop computer, open the **SHALIMAR FASHIONS** company in **TallyPrime Gold** and record the release and local HTTP port. Gold is the licence edition; it does not by itself identify the release or prove the correct company is open.
+1. The read-only Tally check has passed for **SHALIMAR FASHIONS** in **TallyPrime Gold 7.1** on local port 9000. It only verified the local company identity; it did not connect CRM, upload customer data or activate broadcasts.
 2. In the **Shalimar** Supabase SQL Editor, run the entire `docs/sql/SHALIMAR_RUN_THIS_052.sql` in a new query. The bundle checks the expected existing sender/policy and rolls back in a different database. It installs tables/functions only; it inserts no customers, enables no delivery, and does not alter credentials or the INR 1,000 policy. Keep the result row as the schema receipt.
 3. Open CRM → Contacts → Customer Data. Select the private `SHALIMAR_CUSTOMER_DATA_REVIEWED_2026-10-08.csv`, check counts/source dates and choose **Save reviewed data privately**. Keep the returned source window and count as import evidence.
 4. Choose **Add / link reviewed Contacts**. Record created, linked and conflict counts, then refresh and check a few records. No message is sent. Resolve phone conflicts in the source and upload a newly reviewed version; never guess the first number from a multi-number cell.
@@ -64,7 +65,7 @@ The shared INR 1,000 calendar-month managed reservation policy and live delivery
 - Webpack production build passed with harmless local Supabase placeholders. Existing Next.js middleware/Edge warnings remain. This verifies compilation, not production configuration.
 - Source parser read the actual private CSV; no private rows were added to the repository or logs.
 
-Authenticated CRM browser inspection was rejected by automatic approval review earlier in this conversation. No cookies, private token extraction, service-role queries or alternate browser route were used to bypass that decision. Owner import/readback remains required. Live Meta approval/image rendering and TallyPrime compatibility remain unverified in this release.
+Authenticated CRM browser inspection was rejected by automatic approval review earlier in this conversation. No cookies, private token extraction, service-role queries or alternate browser route were used to bypass that decision. Owner import/readback remains required. Live Meta approval/image rendering and Tally sales field compatibility remain unverified in this release.
 
 ## Release and rollback
 

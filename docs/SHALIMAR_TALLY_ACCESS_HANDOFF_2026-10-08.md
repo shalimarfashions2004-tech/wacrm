@@ -13,6 +13,10 @@
 
 The kit is a first access check, not the complete sync connector. No remote-control account or unattended access has been set up. No source upload or customer message is authorized by a diagnostic success.
 
+## Read-only check receipt — 9 October 2026
+
+The owner ran the check on the shop computer and it returned `company_read_verified` for the exact company `SHALIMAR FASHIONS`, TallyPrime release 7.1, on local port 9000. The check made one local read-only request and reported `crm_sync: not_connected`, `customer_data_uploaded: false` and `broadcasts_activated: false`. No customer data, credentials or messages were sent.
+
 ## Files prepared
 
 - `public/downloads/SHALIMAR_TALLY_ACCESS_KIT.zip` — code, printable instructions and SHA-256 manifest only.
@@ -33,7 +37,7 @@ Current customer-data audience resolution continues to reject sends because real
 
 Confirmed this session: repository `shalimarfashions2004-tech/wacrm`, branch `feature/shalimar-connect-platform`; owner uses TallyPrime Gold. The supplied About-screen readback shows TallyPrime release 7.1 (Latest), Gold edition, LAN connectivity enabled, and Client/Server with ODBC on local port 9000. The owner confirmed the exact Tally company name is `SHALIMAR FASHIONS`. Serial number, licence email, computer name and private LAN address are deliberately excluded from this document.
 
-Not yet confirmed: one local read-only Export check from this computer, the Tally company identifier returned by that check, sales field mapping/reconciliation, current Meta template approval/image rendering and authenticated CRM import/save/readback. The local Tally service is shown on port 9000, but the prepared diagnostic still needs to run on the shop computer. No production change or remote-access grant was performed in this preparation.
+Not yet confirmed: the Tally company identifier returned by the read-only check, sales field mapping/reconciliation, current Meta template approval/image rendering and authenticated CRM import/save/readback. The local identity check is complete, but it does not connect CRM or upload customer data. No production change or remote-access grant was performed in this preparation.
 
 Validation on 8 October: 27 PowerShell logic/security checks and 8 loopback HTTP fixture cases passed with an isolated official PowerShell 7.6.6 runtime. The runtime archive SHA-256 matched the official GitHub release digest. Tests covered exact company selection, escaped input, missing/ambiguous identity, Tally errors, unsafe XML, bounded responses and redirect rejection. The fixture server received one Export request per case; no CRM/Meta call or customer export occurred.
 
