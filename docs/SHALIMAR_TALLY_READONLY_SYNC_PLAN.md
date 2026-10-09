@@ -53,6 +53,10 @@ Migrations `053_tally_readonly_sync_staging.sql` through `056_tally_report_views
 
 The current `customer_data_imports` tables remain the controlled historical-import path. They do not prove that live Tally sync is active.
 
+### Completeness guard
+
+The local agent exports voucher amounts as plain signed numbers and requests the full voucher object so inventory entries are retained. The parser accepts TallyPrime's `ALLINVENTORYENTRIES.LIST` and `INVENTORYENTRIES.LIST` forms, including quantities with units and amounts with `Dr`/`Cr` decorations. A received run is not treated as report-ready until reconciliation confirms its declared voucher count and gross value; a run with missing amounts or lines must remain pending/blocked and be replaced by a corrected read.
+
 ## Operator rollout order
 
 Follow [`docs/evidence/tally-sync-runbook.md`](./evidence/tally-sync-runbook.md) for the concrete operator procedure and evidence register. The order is:
