@@ -29,3 +29,11 @@ The agent accepts only localhost HTTP endpoints, sends only an Export request, r
 - Queue retry metadata stores a fixed safe error marker instead of arbitrary exception text. Added queue and regression coverage.
 
 Follow-up validation: `npm test -- --run tally-agent/tests` — passed, 3 files and 10 tests.
+
+## Review fixes (follow-up 2)
+
+- XML tokenization now rejects any skipped non-whitespace between tokens, including malformed `<<ROOT/>` and `<ROOT/>< ` boundaries.
+- ISO dates are calendar-validated after parsing, preventing rollover dates such as 2026-04-31.
+- The Export request now uses a company identity collection followed by direct `ShalimarLedgers`, `ShalimarVouchers`, and `ShalimarStockItems` collection requests; each request references the collection it defines.
+
+Validation: `npm test -- --run tally-agent/tests` passed, 3 files and 13 tests.

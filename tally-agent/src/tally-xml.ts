@@ -24,7 +24,7 @@ function parseXml(raw: string): SafeXmlDocument {
   const root: XmlNode = node('__root__'); const stack = [root];
   const token = /<!--[\s\S]*?-->|<\?[^>]*\?>|<\/?([A-Za-z_][\w:.-]*)(?:\s[^>]*)?\/?>|([^<]+)/g;
   let match: RegExpExecArray | null; let sawRoot = false; let consumed = 0;
-  while ((match = token.exec(raw))) { consumed = token.lastIndex;
+  while ((match = token.exec(raw))) { if (match.index !== consumed) throw new Error('Malformed XML'); consumed = token.lastIndex;
     const full = match[0]; if (full.startsWith('<!--') || full.startsWith('<?')) continue;
     if (!full.startsWith('<') && !sawRoot && full.trim() !== '') throw new Error('Malformed XML');
     if (!full.startsWith('<') && sawRoot && stack.length === 1 && full.trim() !== '') throw new Error('Malformed XML');
