@@ -3,15 +3,15 @@ import { createHash } from 'node:crypto';
 export const DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1']);
 
-export interface XmlNode { tagName: string; textContent: string; children: XmlNode[]; getElementsByTagName(name: string): XmlNode[] }
+export interface XmlNode { tagName: string; textContent: string; children: XmlNode[]; getAttribute(name: string): string; getElementsByTagName(name: string): XmlNode[] }
 export class SafeXmlDocument {
   constructor(public readonly raw: string, public readonly documentElement: XmlNode) {}
 }
 
 function localName(tag: string) { return tag.includes(':') ? tag.slice(tag.lastIndexOf(':') + 1) : tag; }
-function node(tagName: string): XmlNode {
+function node(tagName: string, attributes: Record<string, string> = {}): XmlNode {
   const children: XmlNode[] = [];
-  const n: XmlNode = { tagName, children, textContent: '', getElementsByTagName: (name) => {
+  const n: XmlNode = { tagName, children, textContent: '', getAttribute: (name) => attributes[Object.keys(attributes).find((key) => key.toLowerCase() === name.toLowerCase()) ?? ''] ?? '', getElementsByTagName: (name) => {
     const out: XmlNode[] = []; const wanted = localName(name).toLowerCase();
     const visit = (x: XmlNode) => { if (localName(x.tagName).toLowerCase() === wanted) out.push(x); x.children.forEach(visit); };
     visit(n); return out;
@@ -29,7 +29,7 @@ function parseXml(raw: string): SafeXmlDocument {
     if (!full.startsWith('<') && !sawRoot && full.trim() !== '') throw new Error('Malformed XML');
     if (!full.startsWith('<') && sawRoot && stack.length === 1 && full.trim() !== '') throw new Error('Malformed XML');
     if (full.startsWith('</')) { const name = match[1]; if (stack.length === 1 || localName(stack.pop()!.tagName).toLowerCase() !== localName(name).toLowerCase()) throw new Error('Malformed XML'); continue; }
-    if (full.startsWith('<')) { const name = match[1]; const child = node(name); stack[stack.length - 1].children.push(child); if (stack.length === 1) { if (sawRoot) throw new Error('Malformed XML'); sawRoot = true; } if (!/\/\s*>$/.test(full)) stack.push(child); continue; }
+    if (full.startsWith('<')) { const name = match[1]; const attributes: Record<string, string> = {}; const attrText = full.slice(name.length + 1, full.length - (full.endsWith('/>') ? 2 : 1)); const attrPattern = /([A-Za-z_:][\w:.-]*)\s*=\s*(["'])(.*?)\2/g; let attr: RegExpExecArray | null; while ((attr = attrPattern.exec(attrText))) attributes[attr[1]] = attr[3].replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>'); const child = node(name, attributes); stack[stack.length - 1].children.push(child); if (stack.length === 1) { if (sawRoot) throw new Error('Malformed XML'); sawRoot = true; } if (!/\/\s*>$/.test(full)) stack.push(child); continue; }
     stack[stack.length - 1].textContent += full;
   }
   if (!sawRoot || stack.length !== 1 || raw.slice(consumed).trim() !== '') throw new Error('Malformed XML');

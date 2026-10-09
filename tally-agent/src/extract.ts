@@ -11,8 +11,14 @@ function first(root: XmlNode, ...names: string[]) { for (const n of names) { con
 export async function extractSyncPayload(config: AgentConfig, period: Period): Promise<SyncPayload | null> {
   const doc = await readTallyXml(config.tallyUrl, request(config.companyName, period, 'ShalimarCompany'), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
   const root = (doc as unknown as { documentElement: XmlNode }).documentElement;
-  const company = first(root, 'COMPANYNAME'); if (company !== config.companyName) return null;
-  const fingerprint = sha256(`${company}\n${first(root, 'COMPANYGUID', 'GUID')}`);
+  // TallyPrime returns the company identity as COMPANYNAME in some releases and
+  // as COMPANY NAME="..." in others. Accept only an exact match in either shape.
+  const companyNode = descendants(root, 'COMPANY').find((n) => n.getAttribute('NAME') || first(n, 'NAME'));
+  const company = (companyNode?.getAttribute('NAME') || (companyNode ? first(companyNode, 'NAME') : '') || first(root, 'COMPANYNAME')).trim();
+  if (company !== config.companyName.trim()) return null;
+  const companyId = companyNode?.getAttribute('GUID') || (companyNode ? first(companyNode, 'GUID') : '') || first(root, 'COMPANYGUID', 'GUID');
+  if (!companyId) return null;
+  const fingerprint = sha256(`${company}\n${companyId}`);
   const readCollection = async (collection: 'ShalimarLedgers' | 'ShalimarVouchers' | 'ShalimarStockItems') => {
     const result = await readTallyXml(config.tallyUrl, request(config.companyName, period, collection), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
     return (result as unknown as { documentElement: XmlNode }).documentElement;
