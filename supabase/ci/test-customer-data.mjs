@@ -55,7 +55,7 @@ for (const name of (
   await readdir(resolve(root, 'supabase/migrations'))
 ).sort()) {
   const n = Number(name.slice(0, 3));
-  if (n <= 28 || prerequisites.has(n) || n === 50 || n === 51 || n === 52) {
+    if (n <= 28 || prerequisites.has(n) || (n >= 50 && n <= 58)) {
     try {
       await db.exec(await file(`supabase/migrations/${name}`));
     } catch (error) {
@@ -96,6 +96,7 @@ const row = (n, changes = {}) => ({
   is_internal: false,
   ...changes,
 });
+
 const save = (rows, hash = 'a'.repeat(64), start = '2024-04-01') =>
   scalar(
     `SELECT save_customer_data_import('synthetic.csv',$1,$2,'2026-05-23',$3::jsonb)`,
@@ -623,5 +624,25 @@ await test('exact SQL Editor handoff and read-only status remain safe', async (t
       );
     }
   );
+});
+await test('Tally independent controls block legacy self-consistency', async () => {
+  await db.exec('RESET ROLE');
+  await db.exec('SET ROLE service_role');
+  const run = '10000000-0000-4000-8000-000000000001';
+  await sql(`INSERT INTO tally_sync_runs(id,account_id,payload_sha256,company_name,company_fingerprint,tally_release,source_period_start,source_period_end,counts,gross_value_paise) VALUES($1,$2,$3,'SHALIMAR FASHIONS',$4,'7.1','2026-06-01','2026-10-08','{"ledgers":0,"vouchers":1,"stock_items":0}',12500)`, [run, account, '1'.repeat(64), '2'.repeat(64)]);
+  await sql(`INSERT INTO tally_sync_vouchers(run_id,account_id,source_id,voucher_date,gross_value_paise) VALUES($1,$2,'v1','2026-06-01',12500)`, [run, account]);
+  await as(user);
+  const blocked = await scalar('SELECT tally_reconcile_run($1)', [run]);
+  assert.match(JSON.stringify(blocked), /missing_control_totals/);
+  await db.exec('RESET ROLE');
+  await db.exec('SET ROLE service_role');
+  const run2 = '10000000-0000-4000-8000-000000000002';
+  const controls = { source: 'tally_sales_register', collection_method: 'operator_readback', metric_scope: 'posted_sales_gross_v1', voucher_count: 1, gross_value_paise: 12500, period_start: '2026-06-01', period_end: '2026-10-08', captured_at: '2026-10-09T20:00:00Z' };
+  await sql(`INSERT INTO tally_sync_runs(id,account_id,payload_sha256,company_name,company_fingerprint,tally_release,source_period_start,source_period_end,counts,gross_value_paise,control_totals) VALUES($1,$2,$3,'SHALIMAR FASHIONS',$4,'7.1','2026-06-01','2026-10-08','{"ledgers":0,"vouchers":1,"stock_items":0}',12500,$5::jsonb)`, [run2, account, '3'.repeat(64), '4'.repeat(64), JSON.stringify(controls)]);
+  await sql(`INSERT INTO tally_sync_vouchers(run_id,account_id,source_id,voucher_date,gross_value_paise) VALUES($1,$2,'v2','2026-06-01',12500)`, [run2, account]);
+  await as(user);
+  const reconciled = await scalar('SELECT tally_reconcile_run($1)', [run2]);
+  assert.match(JSON.stringify(reconciled), /reconciled/);
+  assert.equal(await scalar('SELECT metric_version FROM tally_report_snapshots WHERE run_id=$1', [run2]), 'tally-v2');
 });
 await db.close();

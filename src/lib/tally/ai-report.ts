@@ -4,6 +4,7 @@ import type { AiConfig } from '@/lib/ai/types'
 export type ReportLanguage = 'en' | 'ml'
 export type ReportEvidence = { id: string; label: string; value: string | number; source: string }
 export type TallyReportSnapshot = {
+  snapshot_id?: string | null
   source_period?: { start?: string; end?: string } | null
   reconciliation_status?: 'reconciled' | 'blocked' | 'empty' | string
   coverage?: Record<string, unknown>

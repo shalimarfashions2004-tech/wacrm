@@ -3,7 +3,9 @@ Write-Host 'Shalimar Tally CRM sync (read-only Tally access)'
 $env:TALLY_RELEASE = Read-Host 'Tally release (for example 7.1)'
 $env:TALLY_PERIOD_START = Read-Host 'Closed period start (YYYY-MM-DD)'
 $env:TALLY_PERIOD_END = Read-Host 'Closed period end (YYYY-MM-DD)'
+$env:TALLY_SALES_VOUCHER_COUNT = Read-Host 'Tally Sales Register posted sales voucher count'
+$env:TALLY_SALES_GROSS_INR = Read-Host 'Tally Sales Register posted sales gross amount in INR (for example 1234.05)'
 $secure = Read-Host 'Paste the CRM tally:sync key (hidden)' -AsSecureString
 $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
 try { $env:CRM_API_KEY = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr); node (Join-Path $PSScriptRoot 'dist\cli.js') }
-finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr); Remove-Item Env:CRM_API_KEY -ErrorAction SilentlyContinue }
+finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr); Remove-Item Env:CRM_API_KEY,Env:TALLY_SALES_VOUCHER_COUNT,Env:TALLY_SALES_GROSS_INR -ErrorAction SilentlyContinue }

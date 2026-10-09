@@ -12,8 +12,9 @@ export type ReportFilters = {
   page?: number
   pageSize?: number
   inactiveDays?: number
+  snapshotId?: string
 }
-export type ReportMeta = { source_period: { start: string; end: string } | null; currency: 'INR'; coverage: Record<string, unknown>; last_sync_at: string | null; reconciliation_status: 'reconciled' | 'pending' | 'blocked' | 'empty' }
+export type ReportMeta = { source_period: { start: string; end: string } | null; snapshot_id: string | null; currency: 'INR'; coverage: Record<string, unknown>; last_sync_at: string | null; reconciliation_status: 'reconciled' | 'pending' | 'blocked' | 'empty' }
 export type SalesOverview = ReportMeta & { revenue_paise: number; invoice_count: number; units: number; average_order_value_paise: number; active_customers: number; previous_period?: { revenue_paise: number; invoice_count: number } | null; comparison_status: 'unavailable' | 'available' }
 export type CustomerSegment = { customer: string; gross_value_paise: number; invoice_count: number; last_purchase: string | null; segment: 'high_value' | 'frequent' | 'recent' | 'inactive' }
 export type CustomerSegmentReport = ReportMeta & { rows: CustomerSegment[]; total: number; inactive_days: number; page: number; page_size: number }
@@ -26,6 +27,8 @@ type Row = Record<string, any>
 const PAGE_MAX = 100
 const PAGE_INDEX_MAX = 1000
 const DAY = 86400000
+const REPORT_FETCH_PAGE = 1000
+const REPORT_FETCH_MAX = 250000
 function isoDate(v: unknown): string | undefined { return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v ? v : undefined }
 function bounded(filters: ReportFilters) {
   const end = isoDate(filters.end) ?? new Date().toISOString().slice(0, 10)
@@ -38,36 +41,47 @@ function bounded(filters: ReportFilters) {
   const inactiveDays = Number.isInteger(filters.inactiveDays) && (filters.inactiveDays as number) >= 1 && (filters.inactiveDays as number) <= 730 ? filters.inactiveDays as number : 90
   return { start, end, page, pageSize, inactiveDays }
 }
+async function readAll<T>(query: any): Promise<T[]> {
+  const rows: T[] = []
+  for (let offset = 0; offset < REPORT_FETCH_MAX; offset += REPORT_FETCH_PAGE) {
+    const result = await query.range(offset, offset + REPORT_FETCH_PAGE - 1)
+    if (result.error) throw result.error
+    const page = (result.data ?? []) as T[]
+    rows.push(...page)
+    if (page.length < REPORT_FETCH_PAGE) return rows
+  }
+  throw new Error('Tally report exceeds the safe row limit')
+}
 async function load(filters: ReportFilters) {
   const { supabase, accountId } = filters
-  const latest = await supabase.from('tally_sync_runs').select('id,source_period_start,source_period_end,received_at,reconciliation_status,reconciliation_reason_codes').eq('account_id', accountId).order('received_at', { ascending: false }).limit(1).maybeSingle()
-  if (latest.error) throw latest.error
-  const validResult = await supabase.from('tally_report_snapshots').select('id,run_id,period_start,period_end,coverage,currency,created_at').eq('account_id', accountId).order('period_end', { ascending: false }).limit(2)
+  const validQuery = supabase.from('tally_report_snapshots').select('id,run_id,period_start,period_end,coverage,currency,metric_version,created_at').eq('account_id', accountId).eq('metric_version', 'tally-v2')
+  const validResult = await (filters.snapshotId ? validQuery.eq('id', filters.snapshotId).limit(1) : validQuery.order('period_end', { ascending: false }).limit(2))
   if (validResult.error) throw validResult.error
   const validRows = validResult.data ?? []
   const valid = { data: validRows[0] ?? null }
-  const priorSnapshot = validRows[1] ?? null
+  const priorSnapshot = filters.snapshotId ? null : validRows[1] ?? null
   const runId = valid.data?.run_id as string | undefined
   const run = runId ? await supabase.from('tally_sync_runs').select('id,source_period_start,source_period_end,received_at,reconciliation_status').eq('account_id', accountId).eq('id', runId).maybeSingle() : { data: null, error: null }
   if (run.error) throw run.error
-  const status = latest.data?.reconciliation_status === 'pending'
+  const latest = runId ? run : await supabase.from('tally_sync_runs').select('id,source_period_start,source_period_end,received_at,reconciliation_status,reconciliation_reason_codes').eq('account_id', accountId).order('received_at', { ascending: false }).limit(1).maybeSingle()
+  if (latest.error) throw latest.error
+  const status = run.data?.reconciliation_status === 'pending'
     ? 'pending'
-    : latest.data?.reconciliation_status === 'blocked'
+    : run.data?.reconciliation_status === 'blocked' || (!runId && latest.data?.reconciliation_status === 'blocked')
       ? 'blocked'
       : valid.data
         ? 'reconciled'
         : 'empty'
   const source = valid.data ? { start: valid.data.period_start, end: valid.data.period_end } : null
-  const meta: ReportMeta = { source_period: source, currency: 'INR', coverage: (valid.data?.coverage as Record<string, unknown>) ?? {}, last_sync_at: latest.data?.received_at ?? run.data?.received_at ?? null, reconciliation_status: status }
+  const meta: ReportMeta = { source_period: source, snapshot_id: (valid.data?.id as string | undefined) ?? null, currency: 'INR', coverage: (valid.data?.coverage as Record<string, unknown>) ?? {}, last_sync_at: run.data?.received_at ?? latest.data?.received_at ?? null, reconciliation_status: status }
   if (!runId) return { meta, vouchers: [] as Row[], priorVouchers: [] as Row[], lines: [] as Row[], stock: [] as Row[] }
   const [vouchers, lines, stock, priorVouchers] = await Promise.all([
-    supabase.from('tally_sync_vouchers').select('id,source_id,voucher_date,party,gross_value_paise').eq('account_id', accountId).eq('run_id', runId),
-    supabase.from('tally_sync_voucher_lines').select('voucher_id,item,quantity,value_paise').eq('account_id', accountId).eq('run_id', runId),
-    supabase.from('tally_sync_stock_items').select('name,quantity,value_paise,item_group').eq('account_id', accountId).eq('run_id', runId),
-    priorSnapshot ? supabase.from('tally_sync_vouchers').select('id,source_id,voucher_date,party,gross_value_paise').eq('account_id', accountId).eq('run_id', priorSnapshot.run_id) : Promise.resolve({ data: [], error: null } as any),
+    readAll<Row>(supabase.from('tally_sync_vouchers').select('id,source_id,voucher_date,party,gross_value_paise').eq('account_id', accountId).eq('run_id', runId)),
+    readAll<Row>(supabase.from('tally_sync_voucher_lines').select('voucher_id,item,quantity,value_paise').eq('account_id', accountId).eq('run_id', runId)),
+    readAll<Row>(supabase.from('tally_sync_stock_items').select('name,quantity,value_paise,item_group').eq('account_id', accountId).eq('run_id', runId)),
+    priorSnapshot ? readAll<Row>(supabase.from('tally_sync_vouchers').select('id,source_id,voucher_date,party,gross_value_paise').eq('account_id', accountId).eq('run_id', priorSnapshot.run_id)) : Promise.resolve([] as Row[]),
   ])
-  for (const result of [vouchers, lines, stock]) if (result.error) throw result.error
-  return { meta, vouchers: vouchers.data ?? [], priorVouchers: priorVouchers.data ?? [], lines: lines.data ?? [], stock: stock.data ?? [] }
+  return { meta, vouchers, priorVouchers, lines, stock }
 }
 function inRange(row: Row, start: string, end: string) { return row.voucher_date >= start && row.voucher_date <= end }
 function paise(value: unknown): number { const n = Number(value ?? 0); if (!Number.isSafeInteger(n)) throw new Error('Report contains unsafe paise value'); return n }

@@ -50,6 +50,8 @@ from live Tally sync:
 | 3 | `054_tally_reconciliation.sql` | Reconciliation status/reason codes and immutable `tally_report_snapshots` | A reconciled run with snapshot id, checksum, period, and coverage |
 | 4 | `055_tally_identity_mapping.sql` | Ledger-to-contact review queue and evidence fields | Admin review queue readback; unresolved rows remain blocked |
 | 5 | `056_tally_report_views.sql` | Account-scoped report views/queries | Report response with source period, INR currency, coverage, last sync, and reconciliation state |
+| 6 | `057_tally_independent_controls.sql` | Independent Sales Register controls and `tally-v2` reconciliation gate | Hosted column/function receipt and exact control match |
+| 7 | `058_tally_legacy_reconciliation_gate.sql` | Blocks retained legacy self-consistency runs without deleting their audit rows | Latest legacy run shows `blocked` with `missing_control_totals` |
 
 The intake route is `POST /api/v1/tally/sync`. It requires an API key with
 `tally:sync`, limits the JSON body to 2 MiB and 50,000 rows per collection, and
@@ -92,8 +94,9 @@ distinct 15-minute cycles:
    `delivery_enabled: false`.
 3. As an authenticated admin, call
    `POST /api/tally/reconcile?run_id=<run-id>` once. The function compares the
-   staged voucher count and gross value with the declared payload. Keep the
-   returned status, differences, reason codes, and snapshot id.
+   independent Sales Register count and gross value with the agent payload and
+   stored voucher rows. Keep the returned status, differences, reason codes,
+   and snapshot id.
 4. If status is `blocked`, stop. Do not edit staged rows to force a match;
    correct the source mapping or period and submit a new checksum.
 5. As an authenticated viewer/admin, call
@@ -153,7 +156,7 @@ local tests or code review.
 | Tally identity | Owner-observed `SHALIMAR FASHIONS`, release 7.1, port 9000 receipt | Pending live closed-month run |
 | Local read | Closed-month control totals match local agent receipt; upload false | Pending |
 | Private network | Port 9000 is not publicly reachable; worker uses private route | Pending network check |
-| Database schema | Hosted Supabase receipts for migrations 053–056 (and 052 if used) | Pending hosted readback |
+| Database schema | Hosted Supabase receipts for migrations 052–058 | Verified 9 Oct 2026 for 052, 057, 058; 053–056 pre-existing and read back |
 | Three cycles | Three distinct intake receipts with counts/checksums | Pending |
 | Reconciliation | Three exact count/gross matches and snapshot ids | Pending |
 | CRM reports | Authenticated readback of period, INR, coverage, sync time, and state | Pending |

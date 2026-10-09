@@ -20,6 +20,20 @@ function integer(value: unknown, min: number, max: number): number | undefined {
 }
 function money(value: unknown): number | undefined { return integer(value, -99_999_999_999_999_999, 99_999_999_999_999_999); }
 function quantity(value: unknown): number | undefined { return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1e15 ? value : undefined; }
+function controlTotals(value: unknown, start: string, end: string): boolean {
+  if (value === undefined) return true; // Legacy receipts remain retained but cannot reconcile into a v2 report snapshot.
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const controls = value as Row;
+  return controls.source === 'tally_sales_register'
+    && controls.collection_method === 'operator_readback'
+    && controls.metric_scope === 'posted_sales_gross_v1'
+    && integer(controls.voucher_count, 0, MAX_ROWS) !== undefined
+    && integer(controls.gross_value_paise, 0, 99_999_999_999_999_999) !== undefined
+    && controls.period_start === start
+    && controls.period_end === end
+    && typeof controls.captured_at === 'string'
+    && !Number.isNaN(Date.parse(controls.captured_at));
+}
 
 function validate(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return 'JSON body must be an object';
@@ -32,9 +46,11 @@ function validate(payload: unknown): string | null {
   const counts = p.counts as Row;
   if (!counts || typeof counts !== 'object' || arrays.some((k) => counts[k] !== (p[k] as unknown[]).length)) return 'Counts do not match rows';
   if (integer(p.gross_value_paise, 0, 99_999_999_999_999_999) === undefined) return 'Invalid gross value';
+  if (p.metric_scope !== 'posted_sales_gross_v1') return 'Invalid metric scope';
+  if (!controlTotals(p.control_totals, p.source_period_start, p.source_period_end)) return 'Invalid control totals';
   for (const row of p.ledgers as Row[]) if (!textValue(row.id) || !textValue(row.name) || (row.phone !== undefined && textValue(row.phone) === undefined) || (row.address !== undefined && textValue(row.address, 1000) === undefined)) return 'Invalid ledger row';
   for (const row of p.vouchers as Row[]) {
-    if (!textValue(row.id) || !validDate(row.date) || money(row.grossValuePaise) === undefined || (row.number !== undefined && textValue(row.number) === undefined) || (row.party !== undefined && textValue(row.party) === undefined)) return 'Invalid voucher row';
+    if (!textValue(row.id) || !validDate(row.date) || row.isSales !== true || row.isCancelled !== false || row.isOptional !== false || money(row.grossValuePaise) === undefined || (row.number !== undefined && textValue(row.number) === undefined) || (row.party !== undefined && textValue(row.party) === undefined) || (row.voucherType !== undefined && textValue(row.voucherType) === undefined)) return 'Invalid voucher row';
     if (!Array.isArray(row.lines) || row.lines.length > 1000) return 'Invalid voucher lines';
     for (const line of row.lines as Row[]) if ((line.item !== undefined && textValue(line.item) === undefined) || (line.quantity !== undefined && quantity(line.quantity) === undefined) || (line.ratePaise !== undefined && money(line.ratePaise) === undefined) || (line.valuePaise !== undefined && money(line.valuePaise) === undefined)) return 'Invalid voucher line';
   }

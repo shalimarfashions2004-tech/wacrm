@@ -21,6 +21,7 @@ __pycache__/
 
 # production
 /build
+tally-agent/dist/
 
 # misc
 .DS_Store

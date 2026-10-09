@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Vendored minified opus-recorder encoder worker (served statically).
     "public/opus/**",
+    // Packaged CommonJS output, generated only when building the Windows kit.
+    "tally-agent/dist/**",
   ]),
 ]);
 

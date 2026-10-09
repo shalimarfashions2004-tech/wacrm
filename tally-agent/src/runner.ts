@@ -1,8 +1,8 @@
 import { gzipSync } from 'node:zlib';
-import { AgentConfig, Period, SyncPayload } from './config';
+import { AgentConfig, Period, SyncPayload, SalesControls } from './config';
 import { extractSyncPayload } from './extract';
 import { BoundedQueue } from './queue';
-export async function runOnce(config: AgentConfig, period: Period): Promise<SyncPayload | null> { return extractSyncPayload(config, period); }
+export async function runOnce(config: AgentConfig, period: Period, controlTotals?: SalesControls): Promise<SyncPayload | null> { return extractSyncPayload(config, period, controlTotals); }
 export { BoundedQueue };
 
 /** Submit one already-validated receipt to CRM. The key is never logged. */

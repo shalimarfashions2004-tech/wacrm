@@ -1,4 +1,5 @@
 import { runOnce, uploadSyncPayload } from './runner';
+import { parseSalesControls } from './controls';
 
 function required(name: string): string {
   const value = process.env[name]?.trim();
@@ -20,7 +21,8 @@ async function main() {
     crmApiKey: required('CRM_API_KEY'),
   };
   const period = { start: required('TALLY_PERIOD_START'), end: required('TALLY_PERIOD_END') };
-  const payload = await runOnce(config, period);
+  const controls = parseSalesControls(required('TALLY_SALES_VOUCHER_COUNT'), required('TALLY_SALES_GROSS_INR'), period);
+  const payload = await runOnce(config, period, controls);
   if (!payload) throw new Error('Tally company identity did not match SHALIMAR FASHIONS');
   const receipt = await uploadSyncPayload(config, payload) as { data?: { run?: unknown }; error?: unknown };
   console.log(JSON.stringify({ status: 'uploaded', receipt: receipt.data?.run ?? receipt.error ?? receipt }, null, 2));

@@ -1,4 +1,4 @@
-import { AgentConfig, Period, SyncPayload, Ledger, Voucher, StockItem } from './config';
+import { AgentConfig, Period, SyncPayload, Ledger, Voucher, StockItem, SalesControls } from './config';
 import { readTallyXml, sha256, text, descendants, XmlNode } from './tally-xml';
 
 const escapeXml = (value: string) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('\"', '&quot;').replaceAll("'", '&apos;');
@@ -21,12 +21,16 @@ const request = (company: string, period: Period, collection: 'ShalimarCompany' 
   const escaped = escapeXml(company);
   if (collection === 'ShalimarCompany') return `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>ShalimarConnectionCompany</ID></HEADER><BODY><DESC><STATICVARIABLES><SVCURRENTCOMPANY>${escaped}</SVCURRENTCOMPANY><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT></STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="ShalimarConnectionCompany" ISMODIFY="No"><TYPE>Company</TYPE><NATIVEMETHOD>Name</NATIVEMETHOD><NATIVEMETHOD>GUID</NATIVEMETHOD><FILTER>ShalimarRequestedCompany</FILTER></COLLECTION><SYSTEM TYPE="Formulae" NAME="ShalimarRequestedCompany">$Name = ##SVCurrentCompany</SYSTEM></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
   const type = collection === 'ShalimarLedgers' ? 'Ledger' : collection === 'ShalimarVouchers' ? 'Voucher' : 'StockItem';
-  const fields = collection === 'ShalimarLedgers' ? ['GUID', 'Name', 'Phone', 'Address', 'Parent'] : collection === 'ShalimarVouchers' ? ['GUID', 'VoucherNumber', 'Date', 'PartyLedgerName', 'Amount'] : ['GUID', 'Name', 'Parent', 'BaseUnits', 'ClosingBalance', 'ClosingValue'];
+  const fields = collection === 'ShalimarLedgers' ? ['GUID', 'Name', 'Phone', 'Address', 'Parent'] : collection === 'ShalimarVouchers' ? ['GUID', 'VoucherNumber', 'Date', 'PartyLedgerName', 'VoucherTypeName', 'IsSales', 'IsCancelled', 'IsOptional', 'Amount'] : ['GUID', 'Name', 'Parent', 'BaseUnits', 'ClosingBalance', 'ClosingValue'];
   const fieldXml = fields.map((field) => {
     const expression = field === 'Date'
       ? 'if $$IsEmpty:$Date then "" else $$PyrlYYYYMMDDFormat:$Date:"-"'
       // Tally renders amount values with debit/credit decorations in some
       // releases. Export a plain signed number so the CRM can reconcile it.
+      : field === 'IsSales'
+        ? '$$IsSales:$VoucherTypeName'
+      : field === 'IsCancelled' || field === 'IsOptional'
+        ? `$${field}`
       : field === 'Amount'
         ? 'if $$IsEmpty:$Amount then 0 else $$StringFindAndReplace:(if $$IsDebit:$Amount then -$$NumValue:$Amount else $$NumValue:$Amount):"(-)":"-"'
         : `$${field}`;
@@ -36,7 +40,7 @@ const request = (company: string, period: Period, collection: 'ShalimarCompany' 
   // Inventory lines drive product reports; ledger masters are read separately.
   // Avoid fetching every ledger allocation inside each voucher because it
   // makes large closed-period responses much slower without adding CRM data.
-  const fetch = collection === 'ShalimarVouchers' ? '<FETCH>AllInventoryEntries,PartyLedgerName</FETCH>' : '';
+  const fetch = collection === 'ShalimarVouchers' ? '<FETCH>AllInventoryEntries,PartyLedgerName,VoucherTypeName,IsSales,IsCancelled,IsOptional</FETCH>' : '';
   const fullObject = collection === 'ShalimarVouchers' ? '<FULLOBJECT>Yes</FULLOBJECT>' : '';
   return `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Data</TYPE><ID>ShalimarLiveReport</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT><SVCURRENTCOMPANY>${escaped}</SVCURRENTCOMPANY><SVFROMDATE>${period.start.replaceAll('-', '')}</SVFROMDATE><SVTODATE>${period.end.replaceAll('-', '')}</SVTODATE></STATICVARIABLES><TDL><TDLMESSAGE><REPORT NAME="ShalimarLiveReport"><FORMS>ShalimarForm</FORMS></REPORT><FORM NAME="ShalimarForm"><PARTS>ShalimarPart</PARTS><XMLTAG>DATA</XMLTAG></FORM><PART NAME="ShalimarPart"><LINES>ShalimarLine</LINES><REPEAT>ShalimarLine : ShalimarCollection</REPEAT><SCROLLED>Vertical</SCROLLED></PART><LINE NAME="ShalimarLine"><FIELDS>${names}</FIELDS><XMLTAG>ROW</XMLTAG>${fullObject}</LINE>${fieldXml}<COLLECTION NAME="ShalimarCollection"><TYPE>${type}</TYPE>${fetch}</COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
 };
@@ -54,10 +58,22 @@ const quantity = (s: string) => {
   const n = Number((s.trim().replaceAll(',', '').match(/-?\d+(?:\.\d+)?/) ?? [])[0]);
   return Number.isFinite(n) ? n : undefined;
 };
+const tallyDate = (raw: string) => {
+  const value = raw.trim();
+  const normalized = /^\d{8}$/.test(value) ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}` : value;
+  return validDate(normalized) ? normalized : '';
+};
+const tallyBoolean = (raw: string, field: string) => {
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized) throw new Error(`Tally sales classification missing (${field})`);
+  if (['yes', 'true', '1'].includes(normalized)) return true;
+  if (['no', 'false', '0'].includes(normalized)) return false;
+  throw new Error(`Invalid Tally sales classification (${field})`);
+};
 function first(root: XmlNode, ...names: string[]) { for (const n of names) { const x = child(root, n); if (x) return text(x); } return ''; }
 function value(root: XmlNode, ...names: string[]) { for (const n of names) { const attr = root.getAttribute(n); if (attr) return attr.trim(); const x = child(root, n); if (x) return text(x); } return ''; }
 
-export async function extractSyncPayload(config: AgentConfig, period: Period): Promise<SyncPayload | null> {
+export async function extractSyncPayload(config: AgentConfig, period: Period, controlTotals?: SalesControls): Promise<SyncPayload | null> {
   const doc = await readTallyXml(config.tallyUrl, request(config.companyName, period, 'ShalimarCompany'), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
   const root = (doc as unknown as { documentElement: XmlNode }).documentElement;
   // TallyPrime returns the company identity as COMPANYNAME in some releases and
@@ -81,11 +97,20 @@ export async function extractSyncPayload(config: AgentConfig, period: Period): P
   for (const window of periodWindows(period)) voucherRoots.push(await readCollection('ShalimarVouchers', window));
   const stockRoot = await readCollection('ShalimarStockItems', period);
   const ledgers: Ledger[] = rows(ledgerRoot, 'LEDGER').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `ledger-${i + 1}`, name: value(n, 'NAME', 'LEDGERNAME'), phone: value(n, 'PHONE', 'PHONENO') || undefined, address: value(n, 'ADDRESS') || undefined })).filter(x => x.name);
+  const seenVoucherIds = new Set<string>();
   const vouchers: Voucher[] = voucherRoots.flatMap((voucherRoot) => rows(voucherRoot, 'VOUCHER')).map((n, i) => {
     const inventory = [...descendants(n, 'ALLINVENTORYENTRIES.LIST'), ...descendants(n, 'INVENTORYENTRIES.LIST')];
-    return { id: value(n, 'GUID', 'MASTERID') || `voucher-${i + 1}`, number: value(n, 'VOUCHERNUMBER', 'VOUCHERNO') || undefined, date: value(n, 'DATE'), party: value(n, 'PARTYLEDGERNAME', 'PARTYNAME') || undefined, grossValuePaise: money(value(n, 'AMOUNT', 'GROSSVALUE')), lines: inventory.map(l => ({ item: value(l, 'STOCKITEMNAME', 'ITEM'), quantity: quantity(value(l, 'ACTUALQTY', 'BILLEDQTY', 'QUANTITY')), ratePaise: money(value(l, 'RATE')), valuePaise: money(value(l, 'AMOUNT')) })) };
-  });
+    const id = value(n, 'GUID', 'MASTERID') || `voucher-${i + 1}`;
+    if (seenVoucherIds.has(id)) throw new Error(`Duplicate voucher ${id}`);
+    seenVoucherIds.add(id);
+    const date = tallyDate(value(n, 'DATE'));
+    if (!date || date < period.start || date > period.end) throw new Error(`Voucher ${id} is outside the requested period`);
+    const isSales = tallyBoolean(value(n, 'ISSALES'), 'IsSales');
+    const isCancelled = tallyBoolean(value(n, 'ISCANCELLED'), 'IsCancelled');
+    const isOptional = tallyBoolean(value(n, 'ISOPTIONAL'), 'IsOptional');
+    return { id, number: value(n, 'VOUCHERNUMBER', 'VOUCHERNO') || undefined, date, party: value(n, 'PARTYLEDGERNAME', 'PARTYNAME') || undefined, voucherType: value(n, 'VOUCHERTYPENAME') || undefined, isSales, isCancelled, isOptional, grossValuePaise: money(value(n, 'AMOUNT', 'GROSSVALUE')), lines: inventory.map(l => ({ item: value(l, 'STOCKITEMNAME', 'ITEM'), quantity: quantity(value(l, 'ACTUALQTY', 'BILLEDQTY', 'QUANTITY')), ratePaise: money(value(l, 'RATE')), valuePaise: money(value(l, 'AMOUNT')) })) };
+  }).filter((voucher) => voucher.isSales && !voucher.isCancelled && !voucher.isOptional);
   const stock_items: StockItem[] = rows(stockRoot, 'STOCKITEM').map((n, i) => ({ id: value(n, 'GUID', 'MASTERID') || `stock-${i + 1}`, name: value(n, 'NAME', 'STOCKITEMNAME'), group: value(n, 'PARENT', 'GROUP') || undefined, unit: value(n, 'BASEUNITS', 'UNIT') || undefined, quantity: Number(value(n, 'CLOSINGBALANCE', 'QUANTITY')) || undefined, ratePaise: money(value(n, 'RATE')), valuePaise: money(value(n, 'CLOSINGVALUE', 'VALUE')) })).filter(x => x.name);
-  const payloadBase = { company_name: company, company_fingerprint: fingerprint, tally_release: config.tallyRelease, source_period_start: period.start, source_period_end: period.end, ledgers, vouchers, stock_items, counts: { ledgers: ledgers.length, vouchers: vouchers.length, stock_items: stock_items.length }, gross_value_paise: vouchers.reduce((sum, v) => sum + v.grossValuePaise, 0) };
+  const payloadBase = { company_name: company, company_fingerprint: fingerprint, tally_release: config.tallyRelease, source_period_start: period.start, source_period_end: period.end, ledgers, vouchers, stock_items, counts: { ledgers: ledgers.length, vouchers: vouchers.length, stock_items: stock_items.length }, gross_value_paise: vouchers.reduce((sum, v) => sum + v.grossValuePaise, 0), metric_scope: 'posted_sales_gross_v1' as const, ...(controlTotals ? { control_totals: controlTotals } : {}) };
   return { ...payloadBase, payload_sha256: sha256(JSON.stringify(payloadBase)) };
 }
