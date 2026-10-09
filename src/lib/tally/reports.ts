@@ -13,7 +13,7 @@ export type ReportFilters = {
   pageSize?: number
   inactiveDays?: number
 }
-export type ReportMeta = { source_period: { start: string; end: string } | null; currency: 'INR'; coverage: Record<string, unknown>; last_sync_at: string | null; reconciliation_status: 'reconciled' | 'blocked' | 'empty' }
+export type ReportMeta = { source_period: { start: string; end: string } | null; currency: 'INR'; coverage: Record<string, unknown>; last_sync_at: string | null; reconciliation_status: 'reconciled' | 'pending' | 'blocked' | 'empty' }
 export type SalesOverview = ReportMeta & { revenue_paise: number; invoice_count: number; units: number; average_order_value_paise: number; active_customers: number; previous_period?: { revenue_paise: number; invoice_count: number } | null; comparison_status: 'unavailable' | 'available' }
 export type CustomerSegment = { customer: string; gross_value_paise: number; invoice_count: number; last_purchase: string | null; segment: 'high_value' | 'frequent' | 'recent' | 'inactive' }
 export type CustomerSegmentReport = ReportMeta & { rows: CustomerSegment[]; total: number; inactive_days: number; page: number; page_size: number }
@@ -50,7 +50,13 @@ async function load(filters: ReportFilters) {
   const runId = valid.data?.run_id as string | undefined
   const run = runId ? await supabase.from('tally_sync_runs').select('id,source_period_start,source_period_end,received_at,reconciliation_status').eq('account_id', accountId).eq('id', runId).maybeSingle() : { data: null, error: null }
   if (run.error) throw run.error
-  const status = latest.data && latest.data.reconciliation_status !== 'reconciled' ? 'blocked' : valid.data ? 'reconciled' : 'empty'
+  const status = latest.data?.reconciliation_status === 'pending'
+    ? 'pending'
+    : latest.data?.reconciliation_status === 'blocked'
+      ? 'blocked'
+      : valid.data
+        ? 'reconciled'
+        : 'empty'
   const source = valid.data ? { start: valid.data.period_start, end: valid.data.period_end } : null
   const meta: ReportMeta = { source_period: source, currency: 'INR', coverage: (valid.data?.coverage as Record<string, unknown>) ?? {}, last_sync_at: latest.data?.received_at ?? run.data?.received_at ?? null, reconciliation_status: status }
   if (!runId) return { meta, vouchers: [] as Row[], priorVouchers: [] as Row[], lines: [] as Row[], stock: [] as Row[] }
