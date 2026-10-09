@@ -15,7 +15,9 @@ import type {
   PipelineStageSlice,
   ResponseTimeBucket,
   ResponseTimeSummary,
+  TallyDashboardMetrics,
 } from './types'
+import { snapshotState } from '@/lib/tally/tab-contracts'
 
 // ------------------------------------------------------------
 // All client-side aggregation. RLS scopes every query to the
@@ -97,6 +99,25 @@ export async function loadMetrics(db: DB): Promise<MetricsBundle> {
       previous: messagesYesterday.count ?? 0,
     },
   }
+}
+
+/** Read the latest reconciled Tally snapshot for the dashboard. This query is
+ * deliberately separate from WhatsApp metrics so a missing/blocked Tally
+ * snapshot cannot hide or alter the existing CRM cards. */
+export async function loadTallyDashboardMetrics(db: DB): Promise<TallyDashboardMetrics> {
+  const [snapshotResult, runResult] = await Promise.all([
+    db.from('tally_report_snapshots').select('id,source_checksum,period_start,period_end,created_at,coverage').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    db.from('tally_sync_runs').select('id,reconciliation_status,received_at').order('received_at', { ascending: false }).limit(1).maybeSingle(),
+  ])
+  if (snapshotResult.error) throw snapshotResult.error
+  if (runResult.error) throw runResult.error
+  const snapshot = snapshotResult.data as { id?: string; source_checksum?: string | null; period_start?: string; period_end?: string; created_at?: string } | null
+  const run = runResult.data as { reconciliation_status?: 'reconciled' | 'pending' | 'blocked'; received_at?: string } | null
+  const dataState = snapshotState(snapshot?.id ? { id: snapshot.id, checksum: snapshot.source_checksum, periodStart: snapshot.period_start, periodEnd: snapshot.period_end, reconciliationState: run?.reconciliation_status, receivedAt: run?.received_at ?? snapshot.created_at } : null)
+  const coverage = (snapshotResult.data as { coverage?: Record<string, unknown> } | null)?.coverage ?? {}
+  const value = typeof coverage.gross_value_paise === 'number' ? coverage.gross_value_paise : Number(coverage.gross_value_paise ?? 0)
+  const invoices = typeof coverage.voucher_count === 'number' ? coverage.voucher_count : Number(coverage.voucher_count ?? 0)
+  return { revenuePaise: Number.isFinite(value) ? value : 0, invoiceCount: Number.isFinite(invoices) ? invoices : 0, sourcePeriod: snapshot?.period_start && snapshot?.period_end ? { start: snapshot.period_start, end: snapshot.period_end } : null, dataState }
 }
 
 // --- 2. Conversations over time ---------------------------------------

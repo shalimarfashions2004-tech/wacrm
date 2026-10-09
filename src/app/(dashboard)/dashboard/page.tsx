@@ -18,6 +18,7 @@ import {
   loadMetrics,
   loadPipelineDonut,
   loadResponseTime,
+  loadTallyDashboardMetrics,
 } from '@/lib/dashboard/queries'
 import type {
   ActivityItem,
@@ -25,6 +26,7 @@ import type {
   MetricsBundle,
   PipelineDonutData,
   ResponseTimeSummary,
+  TallyDashboardMetrics,
 } from '@/lib/dashboard/types'
 
 import { MetricCard } from '@/components/dashboard/metric-card'
@@ -66,6 +68,7 @@ export default function DashboardPage() {
 
   const [activity, setActivity] = useState<ActivityItem[] | null>(null)
   const [activityLoading, setActivityLoading] = useState(true)
+  const [tallyMetrics, setTallyMetrics] = useState<TallyDashboardMetrics | null>(null)
 
   const loadAll = useCallback(() => {
     const db = createClient()
@@ -100,6 +103,10 @@ export default function DashboardPage() {
       .then((a) => setActivity(a))
       .catch((err) => console.error('[dashboard] activity failed:', err))
       .finally(() => setActivityLoading(false))
+
+    void loadTallyDashboardMetrics(db)
+      .then((m) => setTallyMetrics(m))
+      .catch((err) => console.error('[dashboard] Tally metrics failed:', err))
   }, [])
 
   useEffect(() => {
@@ -201,6 +208,22 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {tallyMetrics && tallyMetrics.dataState !== 'missing' && (
+        <section aria-label="Tally historical metrics" className="rounded-2xl border border-border/70 bg-card p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-heading text-lg">Tally sales context</h2>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              {tallyMetrics.dataState === 'live_reconciled' ? 'Live reconciled snapshot' : tallyMetrics.dataState === 'historical_imported' ? 'Historical imported snapshot' : 'Stale or blocked snapshot'}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-6 text-sm">
+            <span><strong>{(tallyMetrics.revenuePaise / 100).toLocaleString(undefined, { style: 'currency', currency: 'INR' })}</strong> revenue</span>
+            <span><strong>{tallyMetrics.invoiceCount.toLocaleString()}</strong> invoices</span>
+            {tallyMetrics.sourcePeriod && <span className="text-muted-foreground">{tallyMetrics.sourcePeriod.start} – {tallyMetrics.sourcePeriod.end}</span>}
+          </div>
+        </section>
+      )}
 
       {/* Quick actions */}
       <QuickActions />

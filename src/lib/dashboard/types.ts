@@ -15,6 +15,13 @@ export interface MetricsBundle {
   messagesSentToday: MetricDelta
 }
 
+export interface TallyDashboardMetrics {
+  revenuePaise: number
+  invoiceCount: number
+  sourcePeriod: { start: string; end: string } | null
+  dataState: 'live_reconciled' | 'historical_imported' | 'stale' | 'missing'
+}
+
 export interface ConversationsSeriesPoint {
   day: string // YYYY-MM-DD local
   incoming: number
