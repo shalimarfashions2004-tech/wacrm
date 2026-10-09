@@ -25,3 +25,8 @@
 - Added `tally_sync_ingest` as a service-role-only Postgres function so run and child inserts commit atomically.
 - Voucher lines now use a composite `(voucher_id, run_id, account_id)` foreign key and matching uniqueness constraint.
 - Unique checksum races re-read the account-scoped run and return the documented duplicate result.
+
+## Re-review fixes
+
+- Removed dead post-RPC child mapping code.
+- Added RPC-level array/count bounds and added route coverage proving successful persistence uses the atomic RPC path.

@@ -61,15 +61,7 @@ export async function POST(request: Request) {
       throw runInsert.error;
     }
     const runData = runInsert.data as Row;
-    const runId = runData?.id;
-    if (!runId) throw new Error('Run insert failed');
-    const ledgers = (p.ledgers as Row[]).map((r) => ({ run_id: runId, account_id: ctx.accountId, source_id: r.id, name: r.name, phone: r.phone, address: r.address }));
-    const vouchers = (p.vouchers as Row[]).map((r) => ({ run_id: runId, account_id: ctx.accountId, source_id: r.id, voucher_number: r.number, voucher_date: r.date, party: r.party, gross_value_paise: r.grossValuePaise }));
-    /* Child writes are performed by the transaction RPC above. */
-    const voucherIds: Record<string, string> = {};
-    for (const row of vouchers) voucherIds[String(row.source_id)] = '';
-    const lines = (p.vouchers as Row[]).flatMap((voucher) => (voucher.lines as Row[]).map((line, index) => ({ voucher_id: voucherIds[String(voucher.id)], run_id: runId, account_id: ctx.accountId, line_no: index + 1, item: line.item, quantity: line.quantity, rate_paise: line.ratePaise, value_paise: line.valuePaise })));
-    const stocks = (p.stock_items as Row[]).map((r) => ({ run_id: runId, account_id: ctx.accountId, source_id: r.id, name: r.name, item_group: r.group, unit: r.unit, quantity: r.quantity, rate_paise: r.ratePaise, value_paise: r.valuePaise }));
+    if (!runData?.id) throw new Error('Run insert failed');
     return ok({ run: runData, delivery_enabled: false }, 201);
   } catch (error) { return toApiErrorResponse(error); }
 }

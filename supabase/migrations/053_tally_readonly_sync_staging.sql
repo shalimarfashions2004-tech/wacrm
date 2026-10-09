@@ -58,6 +58,8 @@ CREATE OR REPLACE FUNCTION public.tally_sync_ingest(p_account_id uuid, p_payload
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE run uuid; r jsonb; v uuid; n integer;
 BEGIN
+  IF jsonb_typeof(p_payload) <> 'object' OR jsonb_array_length(p_payload->'ledgers') > 50000 OR jsonb_array_length(p_payload->'vouchers') > 50000 OR jsonb_array_length(p_payload->'stock_items') > 50000 THEN RAISE EXCEPTION 'tally_sync_bounds'; END IF;
+  IF (p_payload->'counts'->>'ledgers')::integer <> jsonb_array_length(p_payload->'ledgers') OR (p_payload->'counts'->>'vouchers')::integer <> jsonb_array_length(p_payload->'vouchers') OR (p_payload->'counts'->>'stock_items')::integer <> jsonb_array_length(p_payload->'stock_items') THEN RAISE EXCEPTION 'tally_sync_counts'; END IF;
   INSERT INTO tally_sync_runs(account_id,payload_sha256,company_name,company_fingerprint,tally_release,source_period_start,source_period_end,counts,gross_value_paise)
   VALUES(p_account_id,p_payload->>'payload_sha256',p_payload->>'company_name',p_payload->>'company_fingerprint',p_payload->>'tally_release',(p_payload->>'source_period_start')::date,(p_payload->>'source_period_end')::date,p_payload->'counts',(p_payload->>'gross_value_paise')::bigint) RETURNING id INTO run;
   FOR r IN SELECT value FROM jsonb_array_elements(p_payload->'ledgers') LOOP INSERT INTO tally_sync_ledgers(run_id,account_id,source_id,name,phone,address) VALUES(run,p_account_id,r->>'id',r->>'name',r->>'phone',r->>'address'); END LOOP;
