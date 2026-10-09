@@ -74,7 +74,23 @@ function first(root: XmlNode, ...names: string[]) { for (const n of names) { con
 function value(root: XmlNode, ...names: string[]) { for (const n of names) { const attr = root.getAttribute(n); if (attr) return attr.trim(); const x = child(root, n); if (x) return text(x); } return ''; }
 
 export async function extractSyncPayload(config: AgentConfig, period: Period, controlTotals?: SalesControls): Promise<SyncPayload | null> {
-  const doc = await readTallyXml(config.tallyUrl, request(config.companyName, period, 'ShalimarCompany'), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
+  const progress = (message: string) => config.onProgress?.(message);
+  const label = (collection: 'ShalimarCompany' | 'ShalimarLedgers' | 'ShalimarVouchers' | 'ShalimarStockItems') => ({ ShalimarCompany: 'company identity', ShalimarLedgers: 'ledgers', ShalimarVouchers: 'vouchers', ShalimarStockItems: 'stock items' }[collection]);
+  const readTallyDocument = async (collection: 'ShalimarCompany' | 'ShalimarLedgers' | 'ShalimarVouchers' | 'ShalimarStockItems', sourcePeriod: Period) => {
+    progress(`Loading ${label(collection)} (${sourcePeriod.start} to ${sourcePeriod.end})...`);
+    try {
+      const result = await readTallyXml(config.tallyUrl, request(config.companyName, sourcePeriod, collection), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
+      progress(`Loaded ${label(collection)} (${sourcePeriod.start} to ${sourcePeriod.end}).`);
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (error instanceof DOMException && error.name === 'AbortError' || /operation was aborted|aborted/i.test(message)) {
+        throw new Error(`Tally ${collection} read timed out for ${sourcePeriod.start} to ${sourcePeriod.end}`);
+      }
+      throw error;
+    }
+  };
+  const doc = await readTallyDocument('ShalimarCompany', period);
   const root = (doc as unknown as { documentElement: XmlNode }).documentElement;
   // TallyPrime returns the company identity as COMPANYNAME in some releases and
   // as COMPANY NAME="..." in others. Accept only an exact match in either shape.
@@ -85,7 +101,7 @@ export async function extractSyncPayload(config: AgentConfig, period: Period, co
   if (!companyId) return null;
   const fingerprint = sha256(`${company}\n${companyId}`);
   const readCollection = async (collection: 'ShalimarLedgers' | 'ShalimarVouchers' | 'ShalimarStockItems', sourcePeriod: Period) => {
-    const result = await readTallyXml(config.tallyUrl, request(config.companyName, sourcePeriod, collection), { maxResponseBytes: config.maxResponseBytes, timeoutMs: config.requestTimeoutMs, fetchImpl: config.fetchImpl });
+    const result = await readTallyDocument(collection, sourcePeriod);
     return (result as unknown as { documentElement: XmlNode }).documentElement;
   };
   const splitPeriod = (sourcePeriod: Period): [Period, Period] | null => {
@@ -104,6 +120,7 @@ export async function extractSyncPayload(config: AgentConfig, period: Period, co
       // A busy shop can have one unusually large month. Split only that
       // window, retaining the bounded response limit and the full period.
       if (!(error instanceof Error) || !/response exceeds size limit/i.test(error.message)) throw error;
+      progress(`That voucher window is large; splitting it into smaller windows.`);
       const split = splitPeriod(sourcePeriod);
       if (!split) throw error;
       const [left, right] = split;
