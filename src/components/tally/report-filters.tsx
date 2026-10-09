@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
@@ -7,7 +7,6 @@ export type ReportFilterValues = { start: string; end: string; customer: string;
 const empty: ReportFilterValues = { start: '', end: '', customer: '', product: '', category: '', staff: '', language: '' }
 export function ReportFilters({ value, onChange }: { value: ReportFilterValues; onChange: (value: ReportFilterValues) => void }) {
   const [draft, setDraft] = useState(value)
-  useEffect(() => setDraft(value), [value])
   const update = (key: keyof ReportFilterValues, next: string) => setDraft((old) => ({ ...old, [key]: next }))
   const apply = () => onChange(draft)
   const clear = () => { setDraft(empty); onChange(empty) }

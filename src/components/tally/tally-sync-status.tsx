@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
-type SyncStatus = { status: string; lastRun: any; snapshot: any; counts: Record<string, number>; checksum?: string | null; reconciliation?: string }
+type SyncStatus = { status: string; lastRun: { received_at: string; source_period_start?: string | null; source_period_end?: string | null; reconciliation_status?: string }; snapshot?: { id?: string } | null; counts: Record<string, number>; checksum?: string | null; reconciliation?: string }
 export function TallySyncStatus() {
  const [data, setData] = useState<SyncStatus | null>(null); const [error, setError] = useState<string | null>(null); const [loading, setLoading] = useState(true)
  const load = () => { setLoading(true); fetch('/api/tally/sync-status', { cache: 'no-store' }).then(async r => { if (!r.ok) throw new Error('Unable to load sync status'); return r.json() }).then((x) => setData(x.data)).catch((e) => setError(e.message)).finally(() => setLoading(false)) }
